@@ -323,6 +323,33 @@ new Date().toLocaleTimeString();
 },1000);
 
 </script>
+<script>
 
+const socket = new WebSocket(
+'wss://ws.derivws.com/websockets/v3?app_id=1089'
+);
+
+socket.onopen = function() {
+
+socket.send(JSON.stringify({
+ticks: "R_100"
+}));
+
+};
+
+socket.onmessage = function(msg){
+
+const data = JSON.parse(msg.data);
+
+if(data.tick){
+
+document.getElementById("price").innerHTML =
+data.tick.quote;
+
+}
+
+};
+
+</script>
 </body>
 </html>
