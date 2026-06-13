@@ -3,21 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>JANAKA SIGNALS</title>
+
+<title>JANAKA SIGNALS V2</title>
 
 <style>
+
 body{
 background:#08111f;
 font-family:Arial;
 color:white;
 padding:15px;
+margin:0;
 }
 
 .header{
-font-size:35px;
+text-align:center;
+font-size:32px;
 font-weight:bold;
 color:#00ff88;
-text-align:center;
+margin-top:10px;
 margin-bottom:20px;
 }
 
@@ -26,36 +30,33 @@ background:#111d33;
 padding:15px;
 border-radius:15px;
 margin-bottom:15px;
-border:1px solid #1d3557;
+border:1px solid #1f3555;
 }
 
 .signal{
-font-size:45px;
+font-size:42px;
 font-weight:bold;
-color:#00ff88;
 text-align:center;
+color:#00ff88;
 }
 
-.buy{
-color:#00ff88;
+select{
+width:100%;
+padding:12px;
+border-radius:10px;
+font-size:16px;
 }
 
 .scan{
 width:100%;
 padding:15px;
-font-size:22px;
+font-size:20px;
 font-weight:bold;
 background:#00ff88;
 border:none;
 border-radius:10px;
 }
 
-select{
-width:100%;
-padding:10px;
-font-size:18px;
-border-radius:10px;
-}
 </style>
 </head>
 
@@ -66,37 +67,80 @@ JANAKA SIGNALS
 </div>
 
 <div class="card">
+<h3>⏰ Live Time</h3>
+<h2 id="clock">00:00:00</h2>
+</div>
+
+<div class="card">
 <h3>Select Asset</h3>
 
 <select>
-<option>Volatility 100</option>
-<option>Volatility 75</option>
+<option>Volatility 10</option>
+<option>Volatility 10 (1s)</option>
+
+<option>Volatility 25</option>
+<option>Volatility 25 (1s)</option>
+
 <option>Volatility 50</option>
+<option>Volatility 50 (1s)</option>
+
+<option>Volatility 75</option>
+<option>Volatility 75 (1s)</option>
+
+<option>Volatility 100</option>
+<option>Volatility 100 (1s)</option>
+
+<option>Jump 10</option>
+<option>Jump 25</option>
+
+<option>Jump 50</option>
+<option>Jump 75</option>
+
+<option>Jump 100</option>
+
+<option>Bull Market</option>
+<option>Bear Market</option>
+
 <option>EUR/USD</option>
 <option>GBP/USD</option>
-<option>XAU/USD</option>
+
+<option>USD/JPY</option>
+<option>AUD/USD</option>
+
+<option>USD/CHF</option>
+
+<option>XAU/USD (Gold)</option>
+<option>XAG/USD (Silver)</option>
+
 </select>
 
-</div>
-
-<div class="card">
+</div><div class="card">
 <h3>Current Signal</h3>
-<div class="signal buy">
+
+<div class="signal">
 BUY ↑
 </div>
+
 </div>
 
 <div class="card">
+
 <h3>Confidence</h3>
-<h1>87%</h1>
+
+<h1>84%</h1>
+
 </div>
 
 <div class="card">
+
 <h3>Trend</h3>
+
 <h2>UPTREND 📈</h2>
+
 </div>
 
 <div class="card">
+
 <h3>Market Structure</h3>
 
 ✅ HH<br>
@@ -107,28 +151,80 @@ BUY ↑
 </div>
 
 <div class="card">
+
 <h3>Confirmations</h3>
 
 ✅ FVG<br>
-✅ Trend Line<br>
 ✅ Support Zone<br>
+✅ Trend Line<br>
 ✅ Hidden Open Point
 
 </div>
 
 <div class="card">
-<h3>Next Candle Prediction</h3>
 
-BUY ↑<br><br>
+<h3>🔔 Alert Center</h3>
+
+<div style="color:#00ff88;font-size:22px;">
+
+BUY SIGNAL FOUND
+
+</div>
+
+Volatility 100 (1s)
+
+</div>
+
+<div class="card">
+
+<h3>📊 Win Rate</h3>
+
+<h1>68%</h1>
+
+Wins : 17<br>
+Losses : 8
+
+</div><div class="card">
+
+<h3>📋 Signal History</h3>
+
+BUY ✅<br>
+SELL ❌<br>
+BUY ✅<br>
+BUY ✅<br>
+SELL ❌
+
+</div>
+
+<div class="card">
+
+<h3>🎯 Next Candle Prediction</h3>
+
+BUY ↑
+
+<br><br>
 
 Expected:
-2-4 Candles
+2 - 4 Candles
 
 </div>
 
 <button class="scan">
+
 SCAN MARKET
+
 </button>
+
+<script>
+
+setInterval(function(){
+
+document.getElementById("clock").innerHTML =
+new Date().toLocaleTimeString();
+
+},1000);
+
+</script>
 
 </body>
 </html>
