@@ -133,7 +133,15 @@ JANAKA SIGNALS
 <option>XAG/USD (Silver)</option>
 
 </select>
+<div class="card">
 
+<h3>🎯 Selected Market</h3>
+
+<h1 id="selectedMarket">
+Volatility 100 (1s)
+</h1>
+
+</div>
 </div><div class="card">
 <h3>Current Signal</h3>
 
@@ -313,8 +321,19 @@ new Date().toLocaleTimeString();
 
 },1000);
 
+</select>
+<script>
 
+const marketSelect = document.querySelector("select");
 
+marketSelect.addEventListener("change", function(){
+
+document.getElementById("selectedMarket").innerHTML =
+this.value;
+
+});
+
+</script>
 
 
 
