@@ -2,49 +2,40 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>JANAKA SIGNALS V2</title>
+<title>Janaka Signals V2</title>
 
 <style>
 
 body{
 background:#08111f;
-font-family:Arial;
 color:white;
-padding:15px;
+font-family:Arial,sans-serif;
 margin:0;
+padding:15px;
 }
 
-.header{
+h1{
 text-align:center;
-font-size:32px;
-font-weight:bold;
 color:#00ff88;
-margin-top:10px;
-margin-bottom:20px;
 }
 
 .card{
-background:#111d33;
+background:#101b2d;
+border:1px solid #00ff88;
+border-radius:12px;
 padding:15px;
-border-radius:15px;
 margin-bottom:15px;
-border:1px solid #1f3555;
-}
-
-.signal{
-font-size:42px;
-font-weight:bold;
-text-align:center;
-color:#00ff88;
 }
 
 select{
 width:100%;
 padding:12px;
-border-radius:10px;
-font-size:16px;
+border-radius:8px;
+background:#08111f;
+color:white;
+border:1px solid #00ff88;
 }
 
 .scan{
@@ -55,107 +46,49 @@ font-weight:bold;
 background:#00ff88;
 border:none;
 border-radius:10px;
+cursor:pointer;
+}
+
+.signal{
+font-size:32px;
+font-weight:bold;
+color:#00ff88;
+text-align:center;
 }
 
 </style>
 </head>
-<script>
-const socket = new WebSocket(
-'wss://ws.derivws.com/websockets/v3?app_id=1089'
-);
 
-socket.onopen = function() {
-
-socket.send(JSON.stringify({
-ticks: "R_100"
-}));
-
-};
-
-socket.onmessage = function(msg){
-
-const data = JSON.parse(msg.data);
-
-console.log(data);
-
-};
-</script>
 <body>
 
-<div class="header">
-JANAKA SIGNALS
-</div>
+<h1>JANAKA SIGNALS</h1>
 
 <div class="card">
-<h3>⏰ Live Time</h3>
-<h2 id="clock">00:00:00</h2>
-</div>
 
-<div class="card">
 <h3>Select Asset</h3>
 
 <select>
-<option>Volatility 10</option>
-<option>Volatility 10 (1s)</option>
-
-<option>Volatility 25</option>
-<option>Volatility 25 (1s)</option>
-
-<option>Volatility 50</option>
-<option>Volatility 50 (1s)</option>
-
-<option>Volatility 75</option>
-<option>Volatility 75 (1s)</option>
 
 <option>Volatility 100</option>
-<option>Volatility 100 (1s)</option>
-
-<option>Jump 10</option>
-<option>Jump 25</option>
-
-<option>Jump 50</option>
-<option>Jump 75</option>
-
+<option>Volatility 75</option>
 <option>Jump 100</option>
-
 <option>Bull Market</option>
 <option>Bear Market</option>
-
 <option>EUR/USD</option>
 <option>GBP/USD</option>
-
-<option>USD/JPY</option>
-<option>AUD/USD</option>
-
-<option>USD/CHF</option>
-
 <option>XAU/USD (Gold)</option>
-<option>XAG/USD (Silver)</option>
 
 </select>
-<div class="card">
-
-<h3>🎯 Selected Market</h3>
-
-<h1 id="selectedMarket">
-Volatility 100 (1s)
-</h1>
 
 </div>
-</div><div class="card">
+
+<div class="card">
+
 <h3>Current Signal</h3>
 
 <div class="signal">
-BUY ↑
+BUY 🟢
 </div>
-
-</div>
-
-<div class="card">
-
-<h3>Confidence</h3>
-
-<h1>84%</h1>
 
 </div>
 
@@ -169,176 +102,17 @@ BUY ↑
 
 <div class="card">
 
-<h3>Market Structure</h3>
+<h3>Signal History</h3>
 
-✅ HH<br>
-✅ HL<br>
-✅ BOS<br>
-❌ CHOCH
-
-</div>
-
-<div class="card">
-
-<h3>Confirmations</h3>
-
-✅ FVG<br>
-✅ Support Zone<br>
-✅ Trend Line<br>
-✅ Hidden Open Point
+<p>BUY - Volatility 100</p>
+<p>SELL - EUR/USD</p>
+<p>BUY - Gold</p>
 
 </div>
 
-<div class="card">
-
-<h3>🔔 Alert Center</h3>
-
-<div style="color:#00ff88;font-size:22px;">
-
-BUY SIGNAL FOUND
-
-</div>
-
-Volatility 100 (1s)
-
-</div>
-
-<div class="card">
-
-<h3>📊 Win Rate</h3>
-
-<h1>68%</h1>
-
-Wins : 17<br>
-Losses : 8
-
-</div><div class="card">
-
-<h3>📋 Signal History</h3>
-
-BUY ✅<br>
-SELL ❌<br>
-BUY ✅<br>
-BUY ✅<br>
-SELL ❌
-
-</div>
-
-<div class="card">
-
-<h3>🎯 Next Candle Prediction</h3>
-
-BUY ↑
-
-<br><br>
-
-Expected:
-2 - 4 Candles
-
-</div>
-<div class="card">
-
-<h3>📈 Live Chart Area</h3>
-
-<div style="
-height:200px;
-background:#08111f;
-border:1px solid #00ff88;
-border-radius:10px;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:60px;
-">
-
-📈
-
-</div>
-
-
-
-<h3>🧠 Signal Engine</h3>
-
-Trend Score : 20<br>
-Structure Score : 20<br>
-FVG Score : 20<br>
-Support Score : 10<br>
-Volume Score : 10<br><br>
-
-<h2>Total Score : 80</h2>
-
-<h1 style="color:#00ff88;">
-BUY 🟢
-</h1>
-
-</div>
-<div class="card">
-
-<h1>84 / 100</h1>
-
-<div style="
-background:#333;
-height:20px;
-border-radius:10px;
-">
-
-<div style="
-background:#00ff88;
-width:84%;
-height:20px;
-border-radius:10px;
-">
-
-</div>
-
-</div>
-
-</div>
-
-<div class="card">
-
-<h3>🔔 Alarm Test</h3>
-
-<button onclick="alert('BUY SIGNAL FOUND!')">
-
-TEST ALARM
-
-</button>
-
-</div>
 <button class="scan">
-
 SCAN MARKET
-
 </button>
 
-<script>
-
-setInterval(function(){
-
-document.getElementById("clock").innerHTML =
-new Date().toLocaleTimeString();
-
-},1000);
-
-</select>
-<script>
-
-const marketSelect = document.querySelector("select");
-
-marketSelect.addEventListener("change", function(){
-
-document.getElementById("selectedMarket").innerHTML =
-this.value;
-
-});
-
-</script>
-
-
-
-
-
-</script>
 </body>
-<
+</html>
