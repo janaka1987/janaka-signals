@@ -3,116 +3,101 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Janaka Signals V2</title>
-
+<title>Janaka Signals V3</title>
 <style>
-
-body{
-background:#08111f;
-color:white;
-font-family:Arial,sans-serif;
-margin:0;
-padding:15px;
-}
-
-h1{
-text-align:center;
-color:#00ff88;
-}
-
-.card{
-background:#101b2d;
-border:1px solid #00ff88;
-border-radius:12px;
-padding:15px;
-margin-bottom:15px;
-}
-
-select{
-width:100%;
-padding:12px;
-border-radius:8px;
-background:#08111f;
-color:white;
-border:1px solid #00ff88;
-}
-
-.scan{
-width:100%;
-padding:15px;
-font-size:20px;
-font-weight:bold;
-background:#00ff88;
-border:none;
-border-radius:10px;
-cursor:pointer;
-}
-
-.signal{
-font-size:32px;
-font-weight:bold;
-color:#00ff88;
-text-align:center;
-}
-
+body{background:#0b1220;color:white;font-family:Arial,sans-serif;margin:0;padding:15px}
+h1{text-align:center;color:#00ff88}
+.card{background:#111c2e;border:1px solid #1f3b5b;border-radius:14px;padding:15px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+select,button{width:100%;padding:12px;border-radius:10px}
+select{background:#0b1220;color:white;border:1px solid #00ff88}
+.chart{height:180px;display:flex;align-items:center;justify-content:center;font-size:60px}
+.value{text-align:center;font-size:28px;font-weight:bold;color:#00ff88}
+button{background:#00ff88;border:none;font-weight:bold;font-size:18px}
 </style>
 </head>
-
 <body>
 
-<h1>JANAKA SIGNALS</h1>
+<h1>JANAKA SIGNALS V3</h1>
 
 <div class="card">
-
 <h3>Select Asset</h3>
-
 <select>
-
-<option>Volatility 100</option>
+<option>Volatility 10</option>
+<option>Volatility 10 (1s)</option>
+<option>Volatility 25</option>
+<option>Volatility 25 (1s)</option>
+<option>Volatility 50</option>
+<option>Volatility 50 (1s)</option>
 <option>Volatility 75</option>
+<option>Volatility 75 (1s)</option>
+<option>Volatility 100</option>
+<option>Volatility 100 (1s)</option>
+<option>Jump 10</option>
+<option>Jump 25</option>
+<option>Jump 50</option>
+<option>Jump 75</option>
 <option>Jump 100</option>
 <option>Bull Market</option>
 <option>Bear Market</option>
 <option>EUR/USD</option>
 <option>GBP/USD</option>
+<option>USD/JPY</option>
+<option>AUD/USD</option>
+<option>USD/CHF</option>
+<option>NZD/USD</option>
+<option>USD/CAD</option>
+<option>EUR/GBP</option>
+<option>EUR/JPY</option>
+<option>GBP/JPY</option>
+<option>AUD/JPY</option>
 <option>XAU/USD (Gold)</option>
-
+<option>XAG/USD (Silver)</option>
 </select>
-
 </div>
 
 <div class="card">
+<h3>📈 Market Chart</h3>
+<div class="chart">📈</div>
+</div>
 
+<div class="grid">
+<div class="card">
 <h3>Current Signal</h3>
-
-<div class="signal">
-BUY 🟢
-</div>
-
+<div class="value">BUY 🟢</div>
 </div>
 
 <div class="card">
+<h3>Confidence</h3>
+<div class="value">87%</div>
+</div>
+</div>
 
+<div class="grid">
+<div class="card">
 <h3>Trend</h3>
-
-<h2>UPTREND 📈</h2>
-
+<div class="value">UPTREND</div>
 </div>
 
 <div class="card">
+<h3>Win Rate</h3>
+<div class="value">68%</div>
+</div>
+</div>
 
+<div class="card">
+<h3>Signal Score</h3>
+<div class="value">84 / 100</div>
+</div>
+
+<div class="card">
 <h3>Signal History</h3>
-
 <p>BUY - Volatility 100</p>
 <p>SELL - EUR/USD</p>
 <p>BUY - Gold</p>
-
 </div>
 
-<button class="scan">
-SCAN MARKET
-</button>
+<button>SCAN MARKET</button>
 
 </body>
 </html>
