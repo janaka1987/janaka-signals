@@ -98,6 +98,36 @@ button{background:#00ff88;border:none;font-weight:bold;font-size:18px}
 </div>
 
 <button>SCAN MARKET</button>
+<script>
 
+function scanMarket(){
+
+let signals = [
+"BUY 🟢",
+"SELL 🔴",
+"WAIT 🟡"
+];
+
+let signal =
+signals[Math.floor(Math.random()*signals.length)];
+
+let confidence =
+Math.floor(Math.random()*21)+80;
+
+document.getElementById("signal").innerHTML =
+signal;
+
+document.getElementById("confidence").innerHTML =
+confidence + "%";
+
+document.getElementById("history").innerHTML =
+"<p>" + signal + " - " +
+new Date().toLocaleTimeString() +
+"</p>" +
+document.getElementById("history").innerHTML;
+
+}
+
+</script>
 </body>
 </html>
