@@ -53,15 +53,16 @@ button{background:#00ff88;border:none;font-weight:bold;font-size:18px}
 <option>AUD/JPY</option>
 <option>XAU/USD (Gold)</option>
 <option>XAG/USD (Silver)</option>
-</select>
+<select id="asset">
 </div>
 
 <div class="card">
 
 <h3>📈 Market Chart</h3>
 
-<iframe
+<iframe id="chart"
 src="https://s.tradingview.com/widgetembed/?symbol=FX:EURUSD&interval=1&theme=dark"
+
 width="100%"
 height="350"
 frameborder="0">
@@ -120,7 +121,47 @@ Volume Score : <span id="volumeScore">20</span><br><br>
 </div>
 
 <button>SCAN MARKET</button>
-<script>
+
+
+document.getElementById("asset").onchange = function(){
+
+let market =
+document.getElementById("asset").value;
+
+let chart =
+document.getElementById("chart");
+
+if(market=="EUR/USD"){
+
+chart.src =
+"https://s.tradingview.com/widgetembed/?symbol=FX:EURUSD&interval=1&theme=dark";
+
+}
+
+else if(market=="GBP/USD"){
+
+chart.src =
+"https://s.tradingview.com/widgetembed/?symbol=FX:GBPUSD&interval=1&theme=dark";
+
+}
+
+else if(market=="XAU/USD (Gold)"){
+
+chart.src =
+"https://s.tradingview.com/widgetembed/?symbol=TVC:GOLD&interval=1&theme=dark";
+
+}
+
+else if(market=="XAG/USD (Silver)"){
+
+chart.src =
+"https://s.tradingview.com/widgetembed/?symbol=TVC:SILVER&interval=1&theme=dark";
+
+}
+
+};
+
+</script>
 
 function scanMarket(){
 
