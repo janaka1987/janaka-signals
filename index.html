@@ -1,128 +1,148 @@
+
 <!DOCTYPE html>
+
 <html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Janaka Signals V3</title>
+
+<title>JANAKA SIGNALS V13.1</title>
+
 <style>
-body{background:#0b1220;color:white;font-family:Arial,sans-serif;margin:0;padding:15px}
-h1{text-align:center;color:#00ff88}
-.card{background:#111c2e;border:1px solid #1f3b5b;border-radius:14px;padding:15px;margin-bottom:12px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-select,button{width:100%;padding:12px;border-radius:10px}
-select{background:#0b1220;color:white;border:1px solid #00ff88}
-.chart{height:180px;display:flex;align-items:center;justify-content:center;font-size:60px}
-.value{text-align:center;font-size:28px;font-weight:bold;color:#00ff88}
-button{background:#00ff88;border:none;font-weight:bold;font-size:18px}
+
+body{
+background:#0b1220;
+color:white;
+font-family:Arial,sans-serif;
+padding:15px;
+}
+
+h1{
+text-align:center;
+color:#00ff88;
+}
+
+.card{
+background:#111c2e;
+border:1px solid #1f3b5b;
+border-radius:14px;
+padding:15px;
+margin-bottom:15px;
+}
+
+.value{
+font-size:28px;
+font-weight:bold;
+color:#00ff88;
+}
+
 </style>
+
 </head>
+
 <body>
 
-<h1>JANAKA SIGNALS V3</h1>
-
-<div class="card">
-<h3>Select Asset</h3>
-<select>
-<option>Volatility 10</option>
-<option>Volatility 10 (1s)</option>
-<option>Volatility 25</option>
-<option>Volatility 25 (1s)</option>
-<option>Volatility 50</option>
-<option>Volatility 50 (1s)</option>
-<option>Volatility 75</option>
-<option>Volatility 75 (1s)</option>
-<option>Volatility 100</option>
-<option>Volatility 100 (1s)</option>
-<option>Jump 10</option>
-<option>Jump 25</option>
-<option>Jump 50</option>
-<option>Jump 75</option>
-<option>Jump 100</option>
-<option>Bull Market</option>
-<option>Bear Market</option>
-<option>EUR/USD</option>
-<option>GBP/USD</option>
-<option>USD/JPY</option>
-<option>AUD/USD</option>
-<option>USD/CHF</option>
-<option>NZD/USD</option>
-<option>USD/CAD</option>
-<option>EUR/GBP</option>
-<option>EUR/JPY</option>
-<option>GBP/JPY</option>
-<option>AUD/JPY</option>
-<option>XAU/USD (Gold)</option>
-<option>XAG/USD (Silver)</option>
-<select id="asset">
-</div>
+<h1>JANAKA SIGNALS V13.1</h1>
 
 <div class="card">
 
-<h3>📈 Market Chart</h3>
+<h3>📡 Deriv Connection</h3>
 
-<iframe id="chart"
-src="https://s.tradingview.com/widgetembed/?symbol=FX:EURUSD&interval=1&theme=dark"
+<p>Status:
+<span id="status">Disconnected</span>
+</p>
 
-width="100%"
-height="350"
-frameborder="0">
-</iframe>
+<p>Current Price:
+<span id="price">0</span>
+</p>
 
-</div>
+<p>Direction:
+<span id="direction">WAIT</span>
+</p>
 
-
-
-<div class="grid">
-<div class="card">
-<h3>Current Signal</h3>
-<div class="value">BUY 🟢</div>
-</div>
-
-<div class="card">
-<h3>Confidence</h3>
-<div class="value">87%</div>
-</div>
-</div>
-
-<div class="grid">
-<div class="card">
-<h3>Trend</h3>
-<div class="value">UPTREND</div>
-</div>
-
-<div class="card">
-<h3>Win Rate</h3>
-<div class="value">68%</div>
-</div>
-</div>
-
-<div class="card">
-<h3>Signal Score</h3>
-<div class="value">84 / 100</div>
-</div>
-<div class="card">
-
-<h3>🧠 Signal Engine</h3>
-
-Trend Score : <span id="trendScore">20</span><br>
-Structure Score : <span id="structureScore">20</span><br>
-FVG Score : <span id="fvgScore">20</span><br>
-Support Score : <span id="supportScore">20</span><br>
-Volume Score : <span id="volumeScore">20</span><br><br>
-
-<h2>Total Score : <span id="totalScore">100</span></h2>
+<p>Ticks Received:
+<span id="ticks">0</span>
+</p>
 
 </div>
-<div class="card">
-<h3>Signal History</h3>
-<p>BUY - Volatility 100</p>
-<p>SELL - EUR/USD</p>
-<p>BUY - Gold</p>
-</div>
 
+<script>
 
+const APP_ID = "YOUR_APP_ID";
 
+const ws =
+new WebSocket(
+`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`
+);
+
+let lastPrice = 0;
+let tickCount = 0;
+
+ws.onopen = () => {
+
+document.getElementById("status").innerHTML =
+"Connected 🟢";
+
+ws.send(JSON.stringify({
+
+ticks:"R_100",
+
+subscribe:1
+
+}));
+
+};
+
+ws.onmessage = (msg) => {
+
+const data = JSON.parse(msg.data);
+
+if(data.tick){
+
+const price = data.tick.quote;
+
+document.getElementById("price").innerHTML =
+price;
+
+tickCount++;
+
+document.getElementById("ticks").innerHTML =
+tickCount;
+
+if(price > lastPrice){
+
+document.getElementById("direction").innerHTML =
+"UP 🟢";
+
+}
+else if(price < lastPrice){
+
+document.getElementById("direction").innerHTML =
+"DOWN 🔴";
+
+}
+
+lastPrice = price;
+
+}
+
+};
+
+ws.onerror = () => {
+
+document.getElementById("status").innerHTML =
+"Error 🔴";
+
+};
+
+ws.onclose = () => {
+
+document.getElementById("status").innerHTML =
+"Closed ⚫";
+
+};
 
 </script>
+
 </body>
 </html>
