@@ -129,12 +129,12 @@ color:#ffd54f;
 
 <script>
 
-const 
-
+const APP_ID = "YOUR_APP_ID";
 
 const ws = new WebSocket(
-"wss://ws.derivws.com/websockets/v3?app_id=1089"
+`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`
 );
+
 let prices = [];
 let tickCount = 0;
 let lastPrice = 0;
@@ -307,19 +307,17 @@ lastPrice = price;
 
 };
 
-ws.onerror = (e) => {
+ws.onerror = () => {
 
 document.getElementById("status").innerHTML =
 "Error 🔴";
 
-console.log(e);
-
 };
 
-ws.onclose = (e) => {
+ws.onclose = () => {
 
 document.getElementById("status").innerHTML =
-"Closed ⚫ " + e.code;
+"Closed ⚫";
 
 };
 
