@@ -205,7 +205,47 @@ prices.shift();
 }
 
 let trend = "WAIT";
+let trendStrength = "WAIT";
 let trendScore = 0;
+
+if(prices.length >= 50){
+
+let shortTrend = price - prices[10];
+let mediumTrend = price - prices[25];
+let longTrend = price - prices[50];
+
+if(
+shortTrend > 0 &&
+mediumTrend > 0 &&
+longTrend > 0
+){
+
+trend = "UPTREND 🟢";
+trendStrength = "STRONG 🟢";
+trendScore = 70;
+
+}
+else if(
+shortTrend < 0 &&
+mediumTrend < 0 &&
+longTrend < 0
+){
+
+trend = "DOWNTREND 🔴";
+trendStrength = "STRONG 🔴";
+trendScore = 70;
+
+}
+else{
+
+trend = "SIDEWAYS 🟡";
+trendStrength = "WEAK 🟡";
+trendScore = 30;
+
+}
+
+}
+
 let momentumScore = 0;
 
 if(prices.length >= 20){
