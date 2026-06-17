@@ -307,10 +307,12 @@ lastPrice = price;
 
 };
 
-ws.onerror = () => {
+ws.onerror = (e) => {
 
 document.getElementById("status").innerHTML =
 "Error 🔴";
+
+console.log(e);
 
 };
 
