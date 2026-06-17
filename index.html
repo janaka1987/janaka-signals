@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 
 <html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>JANAKA SIGNALS V13.1</title>
+<title>JANAKA SIGNALS V14</title>
 
 <style>
-
 body{
 background:#0b1220;
 color:white;
 font-family:Arial,sans-serif;
 padding:15px;
+margin:0;
 }
 
 h1{
@@ -27,29 +25,56 @@ background:#111c2e;
 border:1px solid #1f3b5b;
 border-radius:14px;
 padding:15px;
-margin-bottom:15px;
+margin-bottom:12px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
 }
 
 .value{
-font-size:28px;
+font-size:26px;
 font-weight:bold;
+text-align:center;
 color:#00ff88;
 }
 
+.small{
+font-size:14px;
+color:#cccccc;
+}
+
+.history{
+max-height:220px;
+overflow:auto;
+}
+
+.buy{
+color:#00ff88;
+}
+
+.sell{
+color:#ff5252;
+}
+
+.wait{
+color:#ffd54f;
+}
 </style>
 
 </head>
 
 <body>
 
-<h1>JANAKA SIGNALS V13.1</h1>
+<h1>JANAKA SIGNALS V14</h1>
 
 <div class="card">
-
 <h3>📡 Deriv Connection</h3>
 
 <p>Status:
-<span id="status">Disconnected</span>
+<span id="status">Connecting...</span>
 </p>
 
 <p>Current Price:
@@ -60,23 +85,70 @@ color:#00ff88;
 <span id="direction">WAIT</span>
 </p>
 
-<p>Ticks Received:
-<span id="ticks">0</span>
+<p>Trend:
+<span id="trend">WAIT</span>
 </p>
 
+<p>Ticks:
+<span id="ticks">0</span>
+</p>
+</div>
+
+<div class="grid">
+
+<div class="card">
+<h3>Signal</h3>
+<div class="value" id="signal">WAIT 🟡</div>
+</div>
+
+<div class="card">
+<h3>Confidence</h3>
+<div class="value" id="confidence">0%</div>
+</div>
+
+</div>
+
+<div class="grid">
+
+<div class="card">
+<h3>Trend Score</h3>
+<div class="value" id="trendScore">0</div>
+</div>
+
+<div class="card">
+<h3>Momentum Score</h3>
+<div class="value" id="momentumScore">0</div>
+</div>
+
+</div>
+
+<div class="card">
+<h3>Signal History</h3>
+<div class="history" id="history"></div>
 </div>
 
 <script>
 
-const APP_ID = "33yT1dsi34DD6WXIM9hB6";
+const APP_ID = "YOUR_APP_ID";
 
-const ws =
-new WebSocket(
+const ws = new WebSocket(
 `wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`
 );
 
-let lastPrice = 0;
+let prices = [];
 let tickCount = 0;
+let lastPrice = 0;
+
+function addHistory(text){
+
+const div =
+document.getElementById("history");
+
+div.innerHTML =
+"<p>"+text+"</p>" +
+div.innerHTML;
+
+}
 
 ws.onopen = () => {
 
@@ -97,9 +169,9 @@ ws.onmessage = (msg) => {
 
 const data = JSON.parse(msg.data);
 
-if(data.tick){
+if(!data.tick) return;
 
-const price = data.tick.quote;
+const price = Number(data.tick.quote);
 
 document.getElementById("price").innerHTML =
 price;
@@ -122,9 +194,116 @@ document.getElementById("direction").innerHTML =
 
 }
 
-lastPrice = price;
+prices.push(price);
+
+if(prices.length > 50){
+
+prices.shift();
 
 }
+
+let trend = "WAIT";
+let trendScore = 0;
+let momentumScore = 0;
+
+if(prices.length >= 20){
+
+if(price > prices[0]){
+
+trend = "UPTREND 🟢";
+trendScore = 50;
+
+}
+else if(price < prices[0]){
+
+trend = "DOWNTREND 🔴";
+trendScore = 50;
+
+}
+else{
+
+trend = "SIDEWAYS 🟡";
+
+}
+
+}
+
+document.getElementById("trend").innerHTML =
+trend;
+
+if(lastPrice > 0){
+
+const diff =
+Math.abs(price - lastPrice);
+
+if(diff > 0.3){
+
+momentumScore = 50;
+
+}
+else{
+
+momentumScore = 20;
+
+}
+
+}
+
+document.getElementById("trendScore").innerHTML =
+trendScore;
+
+document.getElementById("momentumScore").innerHTML =
+momentumScore;
+
+const totalScore =
+trendScore + momentumScore;
+
+let signal = "WAIT 🟡";
+
+if(
+trend.includes("UPTREND")
+&& totalScore >= 80
+){
+
+signal = "BUY 🟢";
+
+}
+else if(
+trend.includes("DOWNTREND")
+&& totalScore >= 80
+){
+
+signal = "SELL 🔴";
+
+}
+
+document.getElementById("signal").innerHTML =
+signal;
+
+document.getElementById("confidence").innerHTML =
+totalScore + "%";
+
+if(
+tickCount % 25 === 0
+){
+
+addHistory(
+new Date().toLocaleTimeString()
++
+" | "
++
+signal
++
+" | "
++
+totalScore
++
+"%"
+);
+
+}
+
+lastPrice = price;
 
 };
 
