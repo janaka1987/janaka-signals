@@ -262,7 +262,7 @@ let signal = "WAIT 🟡";
 
 if(
 trend.includes("UPTREND")
-&& totalScore >= 80
+&& totalScore >= 70
 ){
 
 signal = "BUY 🟢";
@@ -270,12 +270,16 @@ signal = "BUY 🟢";
 }
 else if(
 trend.includes("DOWNTREND")
-&& totalScore >= 80
+&& totalScore >= 70
 ){
 
 signal = "SELL 🔴";
 
 }
+
+
+
+
 
 document.getElementById("signal").innerHTML =
 signal;
