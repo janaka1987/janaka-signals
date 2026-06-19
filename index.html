@@ -142,6 +142,7 @@ const ws = new WebSocket(
 let prices = [];
 let tickCount = 0;
 let lastPrice = 0;
+let lastSignal = "WAIT";
 
 function addHistory(text){
 
