@@ -235,7 +235,17 @@ trend = "SIDEWAYS 🟡";
 
 document.getElementById("trend").innerHTML =
 trend;
+let trendStrength = "WEAK 🟡";
 
+if(trend.includes("UPTREND")){
+    trendStrength = "STRONG UP 🟢";
+}
+else if(trend.includes("DOWNTREND")){
+    trendStrength = "STRONG DOWN 🔴";
+}
+
+document.getElementById("trendStrength").innerHTML =
+trendStrength;
 if(lastPrice > 0){
 
 const diff =
