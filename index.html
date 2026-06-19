@@ -302,9 +302,7 @@ signal;
 document.getElementById("confidence").innerHTML =
 totalScore + "%";
 
-if(
-tickCount % 25 === 0
-){
+if(signal !== lastSignal){
 
 addHistory(
 new Date().toLocaleTimeString()
@@ -319,6 +317,8 @@ totalScore
 +
 "%"
 );
+
+lastSignal = signal;
 
 }
 
