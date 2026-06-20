@@ -325,7 +325,9 @@ lastSignal = signal;
 signalCooldown = 20;
 
 }
-
+if(signalCooldown > 0){
+signalCooldown--;
+}
 lastPrice = price;
 
 };
