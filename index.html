@@ -235,7 +235,41 @@ if(prices.length >= 21){
 
     document.getElementById("emaSlow").innerHTML =
     emaSlow.toFixed(2);
+/* ===== RSI ===== */
 
+if(prices.length >= 14){
+
+let gains = 0;
+let losses = 0;
+
+for(let i = prices.length - 14; i < prices.length; i++){
+
+let diff = prices[i] - prices[i - 1];
+
+if(diff > 0){
+gains += diff;
+}else{
+losses += Math.abs(diff);
+}
+
+}
+
+if(losses === 0){
+rsi = 100;
+}else{
+
+let rs = gains / losses;
+
+rsi =
+100 -
+(100 / (1 + rs));
+
+}
+
+document.getElementById("rsi").innerHTML =
+rsi.toFixed(0);
+
+}
 }
 let trend = "WAIT";
 
