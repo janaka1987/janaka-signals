@@ -194,7 +194,23 @@ trend = "DOWNTREND 🔴";
 }
 
 document.getElementById("trend").innerHTML = trend;
+let trendStrength = "WEAK 🟡";
 
+if(prices.length >= 20){
+
+ let move = Math.abs(price - prices[0]);
+
+ if(move > 2){
+   trendStrength = "STRONG 🟢";
+ }
+ else if(move > 1){
+   trendStrength = "MEDIUM 🟠";
+ }
+
+}
+
+document.getElementById("trendStrength").innerHTML =
+trendStrength;
 /* ===== ADD 1: STRUCTURE ===== */
 
 let high = Math.max(...prices);
