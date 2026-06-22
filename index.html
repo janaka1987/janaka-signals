@@ -50,21 +50,31 @@ color:#00ff88;
 
 <h1>JANAKA SIGNALS V17</h1>
 
-<!-- STRUCTURE CARD -->
+<!-- V16 CORE (UNCHANGED BASE) -->
 <div class="card">
-<h3>📊 Structure Card</h3>
-<p>Trend: <span id="trend">WAIT</span></p>
-<p>Structure: <span id="structure">WAIT</span></p>
+<h3>📡 Deriv Connection</h3>
+<p>Status: <span id="status">Connecting...</span></p>
 <p>Price: <span id="price">0</span></p>
+<p>Direction: <span id="direction">WAIT</span></p>
+<p>Trend: <span id="trend">WAIT</span></p>
+<p>Ticks: <span id="ticks">0</span></p>
 </div>
 
-<!-- BOS CARD -->
+<!-- STRUCTURE CARD (NEW) -->
+<div class="card">
+<h3>📊 Structure Card</h3>
+<p>Structure: <span id="structure">WAIT</span></p>
+<p>High: <span id="high">0</span></p>
+<p>Low: <span id="low">0</span></p>
+</div>
+
+<!-- BOS CARD (NEW) -->
 <div class="card">
 <h3>⚡ BOS Card</h3>
 <p id="bos">WAIT</p>
 </div>
 
-<!-- COUNTERS -->
+<!-- COUNTERS (NEW) -->
 <div class="grid">
 
 <div class="card">
@@ -85,6 +95,9 @@ const APP_ID = "1089";
 
 let ws;
 let prices = [];
+let tickCount = 0;
+
+let lastPrice = 0;
 
 let buyCount = 0;
 let sellCount = 0;
@@ -92,21 +105,19 @@ let sellCount = 0;
 let lastHigh = 0;
 let lastLow = 999999;
 
-let reconnecting = false;
-
 function connect(){
 
 ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
 
 ws.onopen = () => {
-console.log("Connected");
+
+document.getElementById("status").innerHTML = "Connected 🟢";
 
 ws.send(JSON.stringify({
 ticks:"R_100",
 subscribe:1
 }));
 
-reconnecting = false;
 };
 
 ws.onmessage = (msg) => {
@@ -115,15 +126,27 @@ const data = JSON.parse(msg.data);
 if(!data.tick) return;
 
 const price = Number(data.tick.quote);
+
 document.getElementById("price").innerHTML = price;
+
+tickCount++;
+document.getElementById("ticks").innerHTML = tickCount;
+
+// ---------------- V16 CORE ----------------
+if(price > lastPrice){
+document.getElementById("direction").innerHTML = "UP 🟢";
+}
+else if(price < lastPrice){
+document.getElementById("direction").innerHTML = "DOWN 🔴";
+}
 
 prices.push(price);
 if(prices.length > 50) prices.shift();
 
-// ---------------- TREND ----------------
 let trend = "WAIT";
 
-if(prices.length > 10){
+if(prices.length >= 10){
+
 if(price > prices[0]){
 trend = "UPTREND 🟢";
 }
@@ -134,11 +157,14 @@ trend = "DOWNTREND 🔴";
 
 document.getElementById("trend").innerHTML = trend;
 
-// ---------------- STRUCTURE ----------------
-let structure = "WAIT";
-
+// ---------------- STRUCTURE CARD (NEW ONLY) ----------------
 let high = Math.max(...prices);
 let low = Math.min(...prices);
+
+document.getElementById("high").innerHTML = high;
+document.getElementById("low").innerHTML = low;
+
+let structure = "RANGE 🟡";
 
 if(price > high * 0.999){
 structure = "BULLISH STRUCTURE 🟢";
@@ -150,7 +176,7 @@ structure = "BEARISH STRUCTURE 🔴";
 
 document.getElementById("structure").innerHTML = structure;
 
-// ---------------- BOS ----------------
+// ---------------- BOS CARD (NEW ONLY) ----------------
 let bos = "NO BREAK";
 
 if(price > lastHigh && lastHigh !== 0){
@@ -163,32 +189,27 @@ bos = "BOS DOWN 🔥";
 sellCount++;
 }
 
+document.getElementById("bos").innerHTML = bos;
+
+// update levels AFTER check
 lastHigh = high;
 lastLow = low;
-
-document.getElementById("bos").innerHTML = bos;
 
 // ---------------- COUNTERS ----------------
 document.getElementById("buyCount").innerHTML = buyCount;
 document.getElementById("sellCount").innerHTML = sellCount;
 
+lastPrice = price;
+
 };
 
-// ERROR HANDLING
 ws.onerror = () => {
-console.log("WebSocket Error");
+document.getElementById("status").innerHTML = "Error 🔴";
 };
 
-// AUTO RECONNECT (IMPORTANT)
 ws.onclose = () => {
-
-if(!reconnecting){
-reconnecting = true;
-setTimeout(() => {
-connect();
-}, 3000);
-}
-
+document.getElementById("status").innerHTML = "Reconnecting... ⚫";
+setTimeout(connect, 3000);
 };
 
 }
