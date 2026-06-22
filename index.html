@@ -40,25 +40,9 @@ text-align:center;
 color:#00ff88;
 }
 
-.small{
-font-size:14px;
-color:#ccc;
-}
-
-.buy{
-color:#00ff88;
-font-weight:bold;
-}
-
-.sell{
-color:#ff5252;
-font-weight:bold;
-}
-
-.wait{
-color:#ffd54f;
-font-weight:bold;
-}
+.buy{ color:#00ff88; font-weight:bold; }
+.sell{ color:#ff5252; font-weight:bold; }
+.wait{ color:#ffd54f; font-weight:bold; }
 </style>
 </head>
 
@@ -68,7 +52,7 @@ font-weight:bold;
 
 <!-- STRUCTURE CARD -->
 <div class="card">
-<h3>📊 Structure</h3>
+<h3>📊 Structure Card</h3>
 <p>Trend: <span id="trend">WAIT</span></p>
 <p>Structure: <span id="structure">WAIT</span></p>
 <p>Price: <span id="price">0</span></p>
@@ -76,7 +60,7 @@ font-weight:bold;
 
 <!-- BOS CARD -->
 <div class="card">
-<h3>⚡ BOS (Break of Structure)</h3>
+<h3>⚡ BOS Card</h3>
 <p id="bos">WAIT</p>
 </div>
 
@@ -98,6 +82,7 @@ font-weight:bold;
 <script>
 
 const APP_ID = "1089";
+
 let ws;
 let prices = [];
 
@@ -107,15 +92,21 @@ let sellCount = 0;
 let lastHigh = 0;
 let lastLow = 999999;
 
+let reconnecting = false;
+
 function connect(){
 
 ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
 
 ws.onopen = () => {
+console.log("Connected");
+
 ws.send(JSON.stringify({
 ticks:"R_100",
 subscribe:1
 }));
+
+reconnecting = false;
 };
 
 ws.onmessage = (msg) => {
@@ -124,7 +115,6 @@ const data = JSON.parse(msg.data);
 if(!data.tick) return;
 
 const price = Number(data.tick.quote);
-
 document.getElementById("price").innerHTML = price;
 
 prices.push(price);
@@ -132,8 +122,8 @@ if(prices.length > 50) prices.shift();
 
 // ---------------- TREND ----------------
 let trend = "WAIT";
-if(prices.length > 10){
 
+if(prices.length > 10){
 if(price > prices[0]){
 trend = "UPTREND 🟢";
 }
@@ -150,30 +140,31 @@ let structure = "WAIT";
 let high = Math.max(...prices);
 let low = Math.min(...prices);
 
-if(high > lastHigh){
+if(price > high * 0.999){
 structure = "BULLISH STRUCTURE 🟢";
 }
-else if(low < lastLow){
+
+if(price < low * 1.001){
 structure = "BEARISH STRUCTURE 🔴";
 }
-
-lastHigh = high;
-lastLow = low;
 
 document.getElementById("structure").innerHTML = structure;
 
 // ---------------- BOS ----------------
 let bos = "NO BREAK";
 
-if(price > lastHigh){
+if(price > lastHigh && lastHigh !== 0){
 bos = "BOS UP 🔥";
 buyCount++;
 }
 
-if(price < lastLow){
+if(price < lastLow && lastLow !== 999999){
 bos = "BOS DOWN 🔥";
 sellCount++;
 }
+
+lastHigh = high;
+lastLow = low;
 
 document.getElementById("bos").innerHTML = bos;
 
@@ -183,17 +174,26 @@ document.getElementById("sellCount").innerHTML = sellCount;
 
 };
 
+// ERROR HANDLING
 ws.onerror = () => {
-console.log("Error");
+console.log("WebSocket Error");
 };
 
+// AUTO RECONNECT (IMPORTANT)
 ws.onclose = () => {
-setTimeout(connect, 3000); // AUTO RECONNECT
+
+if(!reconnecting){
+reconnecting = true;
+setTimeout(() => {
+connect();
+}, 3000);
+}
+
 };
 
 }
 
-// start
+// START
 connect();
 
 </script>
