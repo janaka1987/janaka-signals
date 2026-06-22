@@ -199,7 +199,34 @@ document.getElementById("direction").innerHTML = "DOWN 🔴";
 
 prices.push(price);
 if(prices.length > 50) prices.shift();
+/* ===== EMA CALCULATION ===== */
 
+let emaFast = 0;
+let emaSlow = 0;
+
+if(prices.length >= 21){
+
+    let fastPeriod = 9;
+    let slowPeriod = 21;
+
+    let fastPrices = prices.slice(-fastPeriod);
+    let slowPrices = prices.slice(-slowPeriod);
+
+    emaFast =
+    fastPrices.reduce((a,b)=>a+b,0)
+    / fastPeriod;
+
+    emaSlow =
+    slowPrices.reduce((a,b)=>a+b,0)
+    / slowPeriod;
+
+    document.getElementById("emaFast").innerHTML =
+    emaFast.toFixed(2);
+
+    document.getElementById("emaSlow").innerHTML =
+    emaSlow.toFixed(2);
+
+}
 let trend = "WAIT";
 
 if(prices.length >= 10){
