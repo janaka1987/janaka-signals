@@ -306,7 +306,27 @@ signal;
 /* ===== V16 LAST PRICE ===== */
 
 lastPrice = price;
+if(
+signal !== lastSignal &&
+signal !== "WAIT 🟡"
+){
 
+addHistory(
+new Date().toLocaleTimeString()
++
+" | "
++
+signal
++
+" | "
++
+confidence
++
+"%"
+);
+
+lastSignal = signal;
+}
 };
 
 /* ================= ERROR ================= */
