@@ -246,7 +246,43 @@ structure = "BEARISH STRUCTURE 🔴";
 }
 
 document.getElementById("structure").innerHTML = structure;
+/* ===== HH HL LH LL ===== */
 
+if(price >= high){
+    lastHH = price;
+}
+
+if(price <= low){
+    lastLL = price;
+}
+
+if(
+lastHH > 0 &&
+price < lastHH &&
+price > low
+){
+    lastHL = price;
+}
+
+if(
+lastLL > 0 &&
+price > lastLL &&
+price < high
+){
+    lastLH = price;
+}
+
+document.getElementById("hh").innerHTML =
+lastHH.toFixed(2);
+
+document.getElementById("hl").innerHTML =
+lastHL.toFixed(2);
+
+document.getElementById("lh").innerHTML =
+lastLH.toFixed(2);
+
+document.getElementById("ll").innerHTML =
+lastLL.toFixed(2);
 /* ===== ADD 2: BOS ===== */
 
 let bos = "NO BREAK";
