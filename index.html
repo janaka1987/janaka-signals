@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JANAKA SIGNALS V18 PRO</title>
+<title>JANAKA SIGNALS V17</title>
 
 <style>
 body{
@@ -40,45 +40,50 @@ text-align:center;
 color:#00ff88;
 }
 
-.buy{ color:#00ff88; font-weight:bold; }
-.sell{ color:#ff5252; font-weight:bold; }
-.wait{ color:#ffd54f; font-weight:bold; }
+.buy{ color:#00ff88; }
+.sell{ color:#ff5252; }
+.wait{ color:#ffd54f; }
 </style>
 </head>
 
 <body>
 
-<h1>JANAKA SIGNALS V18 + V19 PRO</h1>
+<h1>JANAKA SIGNALS V17</h1>
 
-<!-- STATUS -->
+<!-- V16 CORE -->
 <div class="card">
-<h3>📡 Connection</h3>
+<h3>📡 Deriv Connection</h3>
 <p>Status: <span id="status">Connecting...</span></p>
 <p>Price: <span id="price">0</span></p>
+<p>Direction: <span id="direction">WAIT</span></p>
 <p>Trend: <span id="trend">WAIT</span></p>
-<p>RSI: <span id="rsi">0</span></p>
-<p>EMA: <span id="ema">0</span></p>
+<p>Ticks: <span id="ticks">0</span></p>
 </div>
 
-<!-- STRUCTURE (V18) -->
+<!-- STRUCTURE CARD -->
 <div class="card">
-<h3>📊 Market Structure (V18)</h3>
+<h3>📊 Structure Card</h3>
 <p>Structure: <span id="structure">WAIT</span></p>
-<p>HH / HL / LH / LL: <span id="ms">WAIT</span></p>
+<p>HH/HL/LH/LL: <span id="ms">WAIT</span></p>
+</div>
+
+<!-- BOS CARD -->
+<div class="card">
+<h3>⚡ BOS Card</h3>
+<p id="bos">WAIT</p>
 <p>CHOCH: <span id="choch">NONE</span></p>
-<p>BOS: <span id="bos">WAIT</span></p>
 </div>
 
 <!-- COUNTERS -->
 <div class="grid">
 
 <div class="card">
-<h3>🟢 BUY Count</h3>
+<h3>🟢 BUY Counter</h3>
 <div class="value" id="buyCount">0</div>
 </div>
 
 <div class="card">
-<h3>🔴 SELL Count</h3>
+<h3>🔴 SELL Counter</h3>
 <div class="value" id="sellCount">0</div>
 </div>
 
@@ -88,6 +93,8 @@ color:#00ff88;
 <div class="card">
 <h3>🔥 SIGNAL ENGINE</h3>
 <div class="value" id="signal">WAIT 🟡</div>
+<p>RSI: <span id="rsi">50</span></p>
+<p>EMA: <span id="ema">0</span></p>
 <p>Win Rate: <span id="winrate">0%</span></p>
 </div>
 
@@ -98,38 +105,37 @@ const APP_ID = "1089";
 let ws;
 let prices = [];
 
+let tickCount = 0;
+let lastPrice = 0;
+
 let buyCount = 0;
 let sellCount = 0;
 
 let lastHigh = 0;
 let lastLow = 999999;
 
-let ema = 0;
-let rsi = 50;
-
 let wins = 0;
 let totalSignals = 0;
 
-// SIMPLE EMA
-function calcEMA(prices, period=10){
+/* ===== EMA ===== */
+function calcEMA(arr, period=10){
 let k = 2/(period+1);
-let ema = prices[0];
-
-for(let i=1;i<prices.length;i++){
-ema = prices[i]*k + ema*(1-k);
+let ema = arr[0];
+for(let i=1;i<arr.length;i++){
+ema = arr[i]*k + ema*(1-k);
 }
 return ema;
 }
 
-// SIMPLE RSI
-function calcRSI(prices, period=10){
-if(prices.length < period) return 50;
+/* ===== RSI ===== */
+function calcRSI(arr, period=10){
+if(arr.length < period) return 50;
 
 let gain=0, loss=0;
 
-for(let i=prices.length-period;i<prices.length;i++){
-let diff = prices[i] - prices[i-1];
-if(diff>=0) gain += diff;
+for(let i=arr.length-period;i<arr.length;i++){
+let diff = arr[i] - arr[i-1];
+if(diff >= 0) gain += diff;
 else loss -= diff;
 }
 
@@ -138,6 +144,7 @@ let rs = gain/loss;
 return 100 - (100/(1+rs));
 }
 
+/* ===== CONNECT ===== */
 function connect(){
 
 ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
@@ -160,31 +167,37 @@ const price = Number(data.tick.quote);
 
 document.getElementById("price").innerHTML = price;
 
+tickCount++;
+document.getElementById("ticks").innerHTML = tickCount;
+
+/* ===== V16 CORE ===== */
+if(price > lastPrice){
+document.getElementById("direction").innerHTML = "UP 🟢";
+}else{
+document.getElementById("direction").innerHTML = "DOWN 🔴";
+}
+
 prices.push(price);
 if(prices.length > 100) prices.shift();
 
-/* ===== EMA + RSI ===== */
-ema = calcEMA(prices,10);
-rsi = calcRSI(prices,10);
+/* ===== TREND ===== */
+let ema = calcEMA(prices,10);
+let rsi = calcRSI(prices,10);
 
 document.getElementById("ema").innerHTML = ema.toFixed(2);
 document.getElementById("rsi").innerHTML = rsi.toFixed(2);
 
-/* ===== TREND ===== */
-let trend = "WAIT";
-if(price > ema) trend = "UPTREND 🟢";
-else trend = "DOWNTREND 🔴";
-
+let trend = price > ema ? "UPTREND 🟢" : "DOWNTREND 🔴";
 document.getElementById("trend").innerHTML = trend;
 
-/* ===== MARKET STRUCTURE (V18) ===== */
+/* ===== STRUCTURE (V18) ===== */
 let high = Math.max(...prices);
 let low = Math.min(...prices);
 
 let ms = "WAIT";
 let structure = "RANGE 🟡";
+let bos = "NO BREAK";
 let choch = "NONE";
-let bos = "WAIT";
 
 if(price > lastHigh){
 ms = "HH / HL 🟢";
@@ -198,56 +211,51 @@ bos = "BOS DOWN 🔥";
 sellCount++;
 }
 
+/* CHOCH (V18) */
 if(price < ema && trend === "UPTREND 🟢"){
-choch = "CHOCH 🔴 (Reversal)";
+choch = "CHOCH 🔴";
 }
 
 if(price > ema && trend === "DOWNTREND 🔴"){
-choch = "CHOCH 🟢 (Reversal)";
+choch = "CHOCH 🟢";
 }
 
 lastHigh = high;
 lastLow = low;
 
-document.getElementById("structure").innerHTML = structure;
+/* update UI */
 document.getElementById("ms").innerHTML = ms;
+document.getElementById("structure").innerHTML = structure;
 document.getElementById("bos").innerHTML = bos;
 document.getElementById("choch").innerHTML = choch;
 
-/* ===== COUNTERS ===== */
 document.getElementById("buyCount").innerHTML = buyCount;
 document.getElementById("sellCount").innerHTML = sellCount;
 
-/* ===== SIGNAL ENGINE (V19 PRO FILTER) ===== */
+/* ===== SIGNAL ENGINE (V19 PRO) ===== */
 
 let signal = "WAIT 🟡";
 
-if(
-trend === "UPTREND 🟢" &&
-rsi < 70 &&
-bos === "BOS UP 🔥"
-){
+if(trend === "UPTREND 🟢" && rsi < 70 && bos === "BOS UP 🔥"){
 signal = "BUY 🟢";
 }
 
-else if(
-trend === "DOWNTREND 🔴" &&
-rsi > 30 &&
-bos === "BOS DOWN 🔥"
-){
+else if(trend === "DOWNTREND 🔴" && rsi > 30 && bos === "BOS DOWN 🔥"){
 signal = "SELL 🔴";
 }
 
-/* WIN RATE LOGIC */
+/* WIN RATE */
 totalSignals++;
 
 if(signal !== "WAIT 🟡"){
-wins++; // simulation tracking
+wins++;
 }
 
-let winrate = (wins/totalSignals)*100;
+let winrate = totalSignals > 0 ? (wins/totalSignals)*100 : 0;
 document.getElementById("signal").innerHTML = signal;
 document.getElementById("winrate").innerHTML = winrate.toFixed(1) + "%";
+
+lastPrice = price;
 
 };
 
