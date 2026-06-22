@@ -9,7 +9,7 @@
 body{
 background:#0b1220;
 color:white;
-font-family:Arial;
+font-family:Arial,sans-serif;
 padding:15px;
 margin:0;
 }
@@ -40,27 +40,49 @@ text-align:center;
 color:#00ff88;
 }
 
-.buy{ color:#00ff88; font-weight:bold; }
-.sell{ color:#ff5252; font-weight:bold; }
-.wait{ color:#ffd54f; font-weight:bold; }
+.buy{ color:#00ff88; }
+.sell{ color:#ff5252; }
+.wait{ color:#ffd54f; }
+
+.history{
+max-height:200px;
+overflow:auto;
+}
 </style>
+
 </head>
 
 <body>
 
 <h1>JANAKA SIGNALS V17</h1>
 
-<!-- V16 CORE (UNCHANGED BASE) -->
+<!-- ================= V16 ORIGINAL CARD ================= -->
 <div class="card">
 <h3>📡 Deriv Connection</h3>
 <p>Status: <span id="status">Connecting...</span></p>
-<p>Price: <span id="price">0</span></p>
+<p>Current Price: <span id="price">0</span></p>
 <p>Direction: <span id="direction">WAIT</span></p>
 <p>Trend: <span id="trend">WAIT</span></p>
+<p>Trend Strength: <span id="trendStrength">WAIT</span></p>
 <p>Ticks: <span id="ticks">0</span></p>
 </div>
 
-<!-- STRUCTURE CARD (NEW) -->
+<!-- ================= SIGNAL CARD (V16) ================= -->
+<div class="grid">
+
+<div class="card">
+<h3>Signal</h3>
+<div class="value" id="signal">WAIT 🟡</div>
+</div>
+
+<div class="card">
+<h3>Confidence</h3>
+<div class="value" id="confidence">0%</div>
+</div>
+
+</div>
+
+<!-- ================= ADD 1: STRUCTURE CARD ================= -->
 <div class="card">
 <h3>📊 Structure Card</h3>
 <p>Structure: <span id="structure">WAIT</span></p>
@@ -68,13 +90,13 @@ color:#00ff88;
 <p>Low: <span id="low">0</span></p>
 </div>
 
-<!-- BOS CARD (NEW) -->
+<!-- ================= ADD 2: BOS CARD ================= -->
 <div class="card">
 <h3>⚡ BOS Card</h3>
 <p id="bos">WAIT</p>
 </div>
 
-<!-- COUNTERS (NEW) -->
+<!-- ================= ADD 3 & 4: COUNTERS ================= -->
 <div class="grid">
 
 <div class="card">
@@ -87,6 +109,12 @@ color:#00ff88;
 <div class="value" id="sellCount">0</div>
 </div>
 
+</div>
+
+<!-- ================= ADD 5: HISTORY ================= -->
+<div class="card">
+<h3>Signal History</h3>
+<div class="history" id="history"></div>
 </div>
 
 <script>
@@ -105,6 +133,16 @@ let sellCount = 0;
 let lastHigh = 0;
 let lastLow = 999999;
 
+let signalCooldown = 0;
+let lastSignal = "WAIT";
+
+function addHistory(text){
+document.getElementById("history").innerHTML =
+"<p>"+text+"</p>" +
+document.getElementById("history").innerHTML;
+}
+
+/* ================= AUTO RECONNECT FUNCTION ================= */
 function connect(){
 
 ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
@@ -132,7 +170,8 @@ document.getElementById("price").innerHTML = price;
 tickCount++;
 document.getElementById("ticks").innerHTML = tickCount;
 
-// ---------------- V16 CORE ----------------
+/* ===== V16 LOGIC (UNCHANGED) ===== */
+
 if(price > lastPrice){
 document.getElementById("direction").innerHTML = "UP 🟢";
 }
@@ -146,7 +185,6 @@ if(prices.length > 50) prices.shift();
 let trend = "WAIT";
 
 if(prices.length >= 10){
-
 if(price > prices[0]){
 trend = "UPTREND 🟢";
 }
@@ -157,7 +195,8 @@ trend = "DOWNTREND 🔴";
 
 document.getElementById("trend").innerHTML = trend;
 
-// ---------------- STRUCTURE CARD (NEW ONLY) ----------------
+/* ===== ADD 1: STRUCTURE ===== */
+
 let high = Math.max(...prices);
 let low = Math.min(...prices);
 
@@ -176,7 +215,8 @@ structure = "BEARISH STRUCTURE 🔴";
 
 document.getElementById("structure").innerHTML = structure;
 
-// ---------------- BOS CARD (NEW ONLY) ----------------
+/* ===== ADD 2: BOS ===== */
+
 let bos = "NO BREAK";
 
 if(price > lastHigh && lastHigh !== 0){
@@ -191,22 +231,27 @@ sellCount++;
 
 document.getElementById("bos").innerHTML = bos;
 
-// update levels AFTER check
+/* update levels */
 lastHigh = high;
 lastLow = low;
 
-// ---------------- COUNTERS ----------------
+/* ===== ADD 3 & 4: COUNTERS ===== */
+
 document.getElementById("buyCount").innerHTML = buyCount;
 document.getElementById("sellCount").innerHTML = sellCount;
+
+/* ===== V16 LAST PRICE ===== */
 
 lastPrice = price;
 
 };
 
+/* ================= ERROR ================= */
 ws.onerror = () => {
 document.getElementById("status").innerHTML = "Error 🔴";
 };
 
+/* ================= AUTO RECONNECT ================= */
 ws.onclose = () => {
 document.getElementById("status").innerHTML = "Reconnecting... ⚫";
 setTimeout(connect, 3000);
@@ -214,7 +259,7 @@ setTimeout(connect, 3000);
 
 }
 
-// START
+/* START */
 connect();
 
 </script>
