@@ -1,16 +1,15 @@
 <!DOCTYPE html>
-
 <html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JANAKA SIGNALS V14</title>
+<title>JANAKA SIGNALS V17</title>
 
 <style>
 body{
 background:#0b1220;
 color:white;
-font-family:Arial,sans-serif;
+font-family:Arial;
 padding:15px;
 margin:0;
 }
@@ -43,308 +42,159 @@ color:#00ff88;
 
 .small{
 font-size:14px;
-color:#cccccc;
-}
-
-.history{
-max-height:220px;
-overflow:auto;
+color:#ccc;
 }
 
 .buy{
 color:#00ff88;
+font-weight:bold;
 }
 
 .sell{
 color:#ff5252;
+font-weight:bold;
 }
 
 .wait{
 color:#ffd54f;
+font-weight:bold;
 }
 </style>
-
 </head>
 
 <body>
 
-<h1>JANAKA SIGNALS V14</h1>
+<h1>JANAKA SIGNALS V17</h1>
 
+<!-- STRUCTURE CARD -->
 <div class="card">
-<h3>📡 Deriv Connection</h3>
-
-<p>Status:
-<span id="status">Connecting...</span>
-</p>
-
-<p>Current Price:
-<span id="price">0</span>
-</p>
-
-<p>Direction:
-<span id="direction">WAIT</span>
-</p>
-
-<p>Trend:
-<span id="trend">WAIT</span>
-</p>
-
-<p>Trend Strength:
-<span id="trendStrength">WAIT</span>
-</p>
-
-<p>Ticks:
-<span id="ticks">0</span>
-</p>
+<h3>📊 Structure</h3>
+<p>Trend: <span id="trend">WAIT</span></p>
+<p>Structure: <span id="structure">WAIT</span></p>
+<p>Price: <span id="price">0</span></p>
 </div>
 
+<!-- BOS CARD -->
+<div class="card">
+<h3>⚡ BOS (Break of Structure)</h3>
+<p id="bos">WAIT</p>
+</div>
+
+<!-- COUNTERS -->
 <div class="grid">
 
 <div class="card">
-<h3>Signal</h3>
-<div class="value" id="signal">WAIT 🟡</div>
+<h3>🟢 BUY Counter</h3>
+<div class="value" id="buyCount">0</div>
 </div>
 
 <div class="card">
-<h3>Confidence</h3>
-<div class="value" id="confidence">0%</div>
+<h3>🔴 SELL Counter</h3>
+<div class="value" id="sellCount">0</div>
 </div>
 
-</div>
-
-<div class="grid">
-
-<div class="card">
-<h3>Trend Score</h3>
-<div class="value" id="trendScore">0</div>
-</div>
-
-<div class="card">
-<h3>Momentum Score</h3>
-<div class="value" id="momentumScore">0</div>
-</div>
-
-</div>
-
-<div class="card">
-<h3>Signal History</h3>
-<div class="history" id="history"></div>
 </div>
 
 <script>
 
-const APP_ID = "1089"
-
-const ws = new WebSocket(
-`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`
-);
-
+const APP_ID = "1089";
+let ws;
 let prices = [];
-let tickCount = 0;
-let lastPrice = 0;
-let lastSignal = "WAIT";
-let signalCooldown = 0;
-function addHistory(text){
 
-const div =
-document.getElementById("history");
+let buyCount = 0;
+let sellCount = 0;
 
-div.innerHTML =
-"<p>"+text+"</p>" +
-div.innerHTML;
+let lastHigh = 0;
+let lastLow = 999999;
 
-}
+function connect(){
+
+ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
 
 ws.onopen = () => {
-
-document.getElementById("status").innerHTML =
-"Connected 🟢";
-
 ws.send(JSON.stringify({
-
 ticks:"R_100",
-
 subscribe:1
-
 }));
-
 };
 
 ws.onmessage = (msg) => {
 
 const data = JSON.parse(msg.data);
-
 if(!data.tick) return;
 
 const price = Number(data.tick.quote);
 
-document.getElementById("price").innerHTML =
-price;
-
-tickCount++;
-
-document.getElementById("ticks").innerHTML =
-tickCount;
-
-if(price > lastPrice){
-
-document.getElementById("direction").innerHTML =
-"UP 🟢";
-
-}
-else if(price < lastPrice){
-
-document.getElementById("direction").innerHTML =
-"DOWN 🔴";
-
-}
+document.getElementById("price").innerHTML = price;
 
 prices.push(price);
+if(prices.length > 50) prices.shift();
 
-if(prices.length > 50){
-
-prices.shift();
-
-}
-
+// ---------------- TREND ----------------
 let trend = "WAIT";
-let trendScore = 0;
-let momentumScore = 0;
-
-if(prices.length >= 20){
+if(prices.length > 10){
 
 if(price > prices[0]){
-
 trend = "UPTREND 🟢";
-trendScore = 50;
-
 }
 else if(price < prices[0]){
-
 trend = "DOWNTREND 🔴";
-trendScore = 50;
-
 }
-else{
-
-trend = "SIDEWAYS 🟡";
-
 }
 
+document.getElementById("trend").innerHTML = trend;
+
+// ---------------- STRUCTURE ----------------
+let structure = "WAIT";
+
+let high = Math.max(...prices);
+let low = Math.min(...prices);
+
+if(high > lastHigh){
+structure = "BULLISH STRUCTURE 🟢";
+}
+else if(low < lastLow){
+structure = "BEARISH STRUCTURE 🔴";
 }
 
-document.getElementById("trend").innerHTML =
-trend;
-let trendStrength = "WEAK 🟡";
+lastHigh = high;
+lastLow = low;
 
-if(trend.includes("UPTREND")){
-    trendStrength = "STRONG UP 🟢";
-}
-else if(trend.includes("DOWNTREND")){
-    trendStrength = "STRONG DOWN 🔴";
-}
+document.getElementById("structure").innerHTML = structure;
 
-document.getElementById("trendStrength").innerHTML =
-trendStrength;
-if(lastPrice > 0){
+// ---------------- BOS ----------------
+let bos = "NO BREAK";
 
-const diff =
-Math.abs(price - lastPrice);
-
-if(diff > 0.3){
-
-momentumScore = 50;
-
-}
-else{
-
-momentumScore = 20;
-
+if(price > lastHigh){
+bos = "BOS UP 🔥";
+buyCount++;
 }
 
+if(price < lastLow){
+bos = "BOS DOWN 🔥";
+sellCount++;
 }
 
-document.getElementById("trendScore").innerHTML =
-trendScore;
+document.getElementById("bos").innerHTML = bos;
 
-document.getElementById("momentumScore").innerHTML =
-momentumScore;
-
-const totalScore =
-trendScore + momentumScore;
-
-let signal = "WAIT 🟡";
-
-if(
-trend.includes("UPTREND")
-&& totalScore >= 70
-){
-
-signal = "BUY 🟢";
-
-}
-else if(
-trend.includes("DOWNTREND")
-&& totalScore >= 70
-){
-
-signal = "SELL 🔴";
-
-}
-
-
-
-
-
-document.getElementById("signal").innerHTML =
-signal;
-
-document.getElementById("confidence").innerHTML =
-totalScore + "%";
-
-if(
-signal !== lastSignal &&
-signalCooldown <= 0
-){
-
-addHistory(
-new Date().toLocaleTimeString()
-+
-" | "
-+
-signal
-+
-" | "
-+
-totalScore
-+
-"%"
-);
-
-lastSignal = signal;
-signalCooldown = 20;
-
-}
-if(signalCooldown > 0){
-signalCooldown--;
-}
-lastPrice = price;
+// ---------------- COUNTERS ----------------
+document.getElementById("buyCount").innerHTML = buyCount;
+document.getElementById("sellCount").innerHTML = sellCount;
 
 };
 
 ws.onerror = () => {
-
-document.getElementById("status").innerHTML =
-"Error 🔴";
-
+console.log("Error");
 };
 
 ws.onclose = () => {
-
-document.getElementById("status").innerHTML =
-"Closed ⚫";
-
+setTimeout(connect, 3000); // AUTO RECONNECT
 };
+
+}
+
+// start
+connect();
 
 </script>
 
