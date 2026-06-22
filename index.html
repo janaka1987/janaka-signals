@@ -298,7 +298,28 @@ sellCount++;
 }
 
 document.getElementById("bos").innerHTML = bos;
+/* ===== CHOCH ===== */
 
+choch = "NONE";
+
+if(
+trend === "UPTREND 🟢" &&
+lastHL > 0 &&
+price < lastHL
+){
+    choch = "CHOCH DOWN 🔴";
+}
+
+if(
+trend === "DOWNTREND 🔴" &&
+lastLH > 0 &&
+price > lastLH
+){
+    choch = "CHOCH UP 🟢";
+}
+
+document.getElementById("choch").innerHTML =
+choch;
 /* update levels */
 lastHigh = high;
 lastLow = low;
