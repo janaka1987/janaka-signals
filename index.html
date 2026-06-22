@@ -417,16 +417,24 @@ confidence + "%";
 
 let signal = "WAIT 🟡";
 
+/* BUY */
+
 if(
 trend === "UPTREND 🟢" &&
-bos === "BOS UP 🔥"
+bos === "BOS UP 🔥" &&
+emaFast > emaSlow &&
+rsi > 55
 ){
  signal = "BUY 🟢";
 }
 
+/* SELL */
+
 if(
 trend === "DOWNTREND 🔴" &&
-bos === "BOS DOWN 🔥"
+bos === "BOS DOWN 🔥" &&
+emaFast < emaSlow &&
+rsi < 45
 ){
  signal = "SELL 🔴";
 }
