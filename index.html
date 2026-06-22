@@ -9,7 +9,7 @@
 body{
 background:#0b1220;
 color:white;
-font-family:Arial;
+font-family:Arial,sans-serif;
 padding:15px;
 margin:0;
 }
@@ -43,38 +43,60 @@ color:#00ff88;
 .buy{ color:#00ff88; }
 .sell{ color:#ff5252; }
 .wait{ color:#ffd54f; }
+
+.history{
+max-height:200px;
+overflow:auto;
+}
 </style>
+
 </head>
 
 <body>
 
 <h1>JANAKA SIGNALS V17</h1>
 
-<!-- V16 CORE -->
+<!-- ================= V16 ORIGINAL CARD ================= -->
 <div class="card">
 <h3>📡 Deriv Connection</h3>
 <p>Status: <span id="status">Connecting...</span></p>
-<p>Price: <span id="price">0</span></p>
+<p>Current Price: <span id="price">0</span></p>
 <p>Direction: <span id="direction">WAIT</span></p>
 <p>Trend: <span id="trend">WAIT</span></p>
+<p>Trend Strength: <span id="trendStrength">WAIT</span></p>
 <p>Ticks: <span id="ticks">0</span></p>
 </div>
 
-<!-- STRUCTURE CARD -->
+<!-- ================= SIGNAL CARD (V16) ================= -->
+<div class="grid">
+
+<div class="card">
+<h3>Signal</h3>
+<div class="value" id="signal">WAIT 🟡</div>
+</div>
+
+<div class="card">
+<h3>Confidence</h3>
+<div class="value" id="confidence">0%</div>
+</div>
+
+</div>
+
+<!-- ================= ADD 1: STRUCTURE CARD ================= -->
 <div class="card">
 <h3>📊 Structure Card</h3>
 <p>Structure: <span id="structure">WAIT</span></p>
-<p>HH/HL/LH/LL: <span id="ms">WAIT</span></p>
+<p>High: <span id="high">0</span></p>
+<p>Low: <span id="low">0</span></p>
 </div>
 
-<!-- BOS CARD -->
+<!-- ================= ADD 2: BOS CARD ================= -->
 <div class="card">
 <h3>⚡ BOS Card</h3>
 <p id="bos">WAIT</p>
-<p>CHOCH: <span id="choch">NONE</span></p>
 </div>
 
-<!-- COUNTERS -->
+<!-- ================= ADD 3 & 4: COUNTERS ================= -->
 <div class="grid">
 
 <div class="card">
@@ -89,13 +111,10 @@ color:#00ff88;
 
 </div>
 
-<!-- SIGNAL -->
+<!-- ================= ADD 5: HISTORY ================= -->
 <div class="card">
-<h3>🔥 SIGNAL ENGINE</h3>
-<div class="value" id="signal">WAIT 🟡</div>
-<p>RSI: <span id="rsi">50</span></p>
-<p>EMA: <span id="ema">0</span></p>
-<p>Win Rate: <span id="winrate">0%</span></p>
+<h3>Signal History</h3>
+<div class="history" id="history"></div>
 </div>
 
 <script>
@@ -104,8 +123,8 @@ const APP_ID = "1089";
 
 let ws;
 let prices = [];
-
 let tickCount = 0;
+
 let lastPrice = 0;
 
 let buyCount = 0;
@@ -114,48 +133,29 @@ let sellCount = 0;
 let lastHigh = 0;
 let lastLow = 999999;
 
-let wins = 0;
-let totalSignals = 0;
+let signalCooldown = 0;
+let lastSignal = "WAIT";
 
-/* ===== EMA ===== */
-function calcEMA(arr, period=10){
-let k = 2/(period+1);
-let ema = arr[0];
-for(let i=1;i<arr.length;i++){
-ema = arr[i]*k + ema*(1-k);
-}
-return ema;
+function addHistory(text){
+document.getElementById("history").innerHTML =
+"<p>"+text+"</p>" +
+document.getElementById("history").innerHTML;
 }
 
-/* ===== RSI ===== */
-function calcRSI(arr, period=10){
-if(arr.length < period) return 50;
-
-let gain=0, loss=0;
-
-for(let i=arr.length-period;i<arr.length;i++){
-let diff = arr[i] - arr[i-1];
-if(diff >= 0) gain += diff;
-else loss -= diff;
-}
-
-if(loss === 0) return 100;
-let rs = gain/loss;
-return 100 - (100/(1+rs));
-}
-
-/* ===== CONNECT ===== */
+/* ================= AUTO RECONNECT FUNCTION ================= */
 function connect(){
 
 ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
 
 ws.onopen = () => {
+
 document.getElementById("status").innerHTML = "Connected 🟢";
 
 ws.send(JSON.stringify({
 ticks:"R_100",
 subscribe:1
 }));
+
 };
 
 ws.onmessage = (msg) => {
@@ -170,99 +170,88 @@ document.getElementById("price").innerHTML = price;
 tickCount++;
 document.getElementById("ticks").innerHTML = tickCount;
 
-/* ===== V16 CORE ===== */
+/* ===== V16 LOGIC (UNCHANGED) ===== */
+
 if(price > lastPrice){
 document.getElementById("direction").innerHTML = "UP 🟢";
-}else{
+}
+else if(price < lastPrice){
 document.getElementById("direction").innerHTML = "DOWN 🔴";
 }
 
 prices.push(price);
-if(prices.length > 100) prices.shift();
+if(prices.length > 50) prices.shift();
 
-/* ===== TREND ===== */
-let ema = calcEMA(prices,10);
-let rsi = calcRSI(prices,10);
+let trend = "WAIT";
 
-document.getElementById("ema").innerHTML = ema.toFixed(2);
-document.getElementById("rsi").innerHTML = rsi.toFixed(2);
+if(prices.length >= 10){
+if(price > prices[0]){
+trend = "UPTREND 🟢";
+}
+else if(price < prices[0]){
+trend = "DOWNTREND 🔴";
+}
+}
 
-let trend = price > ema ? "UPTREND 🟢" : "DOWNTREND 🔴";
 document.getElementById("trend").innerHTML = trend;
 
-/* ===== STRUCTURE (V18) ===== */
+/* ===== ADD 1: STRUCTURE ===== */
+
 let high = Math.max(...prices);
 let low = Math.min(...prices);
 
-let ms = "WAIT";
-let structure = "RANGE 🟡";
-let bos = "NO BREAK";
-let choch = "NONE";
+document.getElementById("high").innerHTML = high;
+document.getElementById("low").innerHTML = low;
 
-if(price > lastHigh){
-ms = "HH / HL 🟢";
+let structure = "RANGE 🟡";
+
+if(price > high * 0.999){
+structure = "BULLISH STRUCTURE 🟢";
+}
+
+if(price < low * 1.001){
+structure = "BEARISH STRUCTURE 🔴";
+}
+
+document.getElementById("structure").innerHTML = structure;
+
+/* ===== ADD 2: BOS ===== */
+
+let bos = "NO BREAK";
+
+if(price > lastHigh && lastHigh !== 0){
 bos = "BOS UP 🔥";
 buyCount++;
 }
 
-if(price < lastLow){
-ms = "LH / LL 🔴";
+if(price < lastLow && lastLow !== 999999){
 bos = "BOS DOWN 🔥";
 sellCount++;
 }
 
-/* CHOCH (V18) */
-if(price < ema && trend === "UPTREND 🟢"){
-choch = "CHOCH 🔴";
-}
+document.getElementById("bos").innerHTML = bos;
 
-if(price > ema && trend === "DOWNTREND 🔴"){
-choch = "CHOCH 🟢";
-}
-
+/* update levels */
 lastHigh = high;
 lastLow = low;
 
-/* update UI */
-document.getElementById("ms").innerHTML = ms;
-document.getElementById("structure").innerHTML = structure;
-document.getElementById("bos").innerHTML = bos;
-document.getElementById("choch").innerHTML = choch;
+/* ===== ADD 3 & 4: COUNTERS ===== */
 
 document.getElementById("buyCount").innerHTML = buyCount;
 document.getElementById("sellCount").innerHTML = sellCount;
 
-/* ===== SIGNAL ENGINE (V19 PRO) ===== */
-
-let signal = "WAIT 🟡";
-
-if(trend === "UPTREND 🟢" && rsi < 70 && bos === "BOS UP 🔥"){
-signal = "BUY 🟢";
-}
-
-else if(trend === "DOWNTREND 🔴" && rsi > 30 && bos === "BOS DOWN 🔥"){
-signal = "SELL 🔴";
-}
-
-/* WIN RATE */
-totalSignals++;
-
-if(signal !== "WAIT 🟡"){
-wins++;
-}
-
-let winrate = totalSignals > 0 ? (wins/totalSignals)*100 : 0;
-document.getElementById("signal").innerHTML = signal;
-document.getElementById("winrate").innerHTML = winrate.toFixed(1) + "%";
+/* ===== V16 LAST PRICE ===== */
 
 lastPrice = price;
 
 };
 
+/* ================= ERROR ================= */
 ws.onerror = () => {
 document.getElementById("status").innerHTML = "Error 🔴";
 };
 
+/* ================= AUTO RECONNECT ================= */
 ws.onclose = () => {
 document.getElementById("status").innerHTML = "Reconnecting... ⚫";
 setTimeout(connect, 3000);
@@ -270,6 +259,7 @@ setTimeout(connect, 3000);
 
 }
 
+/* START */
 connect();
 
 </script>
