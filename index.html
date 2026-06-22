@@ -403,14 +403,37 @@ document.getElementById("buyCount").innerHTML = buyCount;
 document.getElementById("sellCount").innerHTML = sellCount;
 let confidence = 0;
 
-if(trend.includes("UPTREND"))
+/* Trend */
+if(
+trend === "UPTREND 🟢" ||
+trend === "DOWNTREND 🔴"
+){
 confidence += 30;
+}
 
-if(trend.includes("DOWNTREND"))
+/* BOS */
+if(
+bos === "BOS UP 🔥" ||
+bos === "BOS DOWN 🔥"
+){
 confidence += 30;
+}
 
-if(bos === "BOS UP 🔥" || bos === "BOS DOWN 🔥")
-confidence += 40;
+/* EMA */
+if(
+emaFast > emaSlow ||
+emaFast < emaSlow
+){
+confidence += 20;
+}
+
+/* RSI */
+if(
+rsi > 55 ||
+rsi < 45
+){
+confidence += 20;
+}
 
 document.getElementById("confidence").innerHTML =
 confidence + "%";
