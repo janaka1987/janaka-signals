@@ -271,7 +271,38 @@ lastLow = low;
 
 document.getElementById("buyCount").innerHTML = buyCount;
 document.getElementById("sellCount").innerHTML = sellCount;
+let confidence = 0;
 
+if(trend.includes("UPTREND"))
+confidence += 30;
+
+if(trend.includes("DOWNTREND"))
+confidence += 30;
+
+if(bos === "BOS UP 🔥" || bos === "BOS DOWN 🔥")
+confidence += 40;
+
+document.getElementById("confidence").innerHTML =
+confidence + "%";
+
+let signal = "WAIT 🟡";
+
+if(
+trend === "UPTREND 🟢" &&
+bos === "BOS UP 🔥"
+){
+ signal = "BUY 🟢";
+}
+
+if(
+trend === "DOWNTREND 🔴" &&
+bos === "BOS DOWN 🔥"
+){
+ signal = "SELL 🔴";
+}
+
+document.getElementById("signal").innerHTML =
+signal;
 /* ===== V16 LAST PRICE ===== */
 
 lastPrice = price;
