@@ -147,7 +147,11 @@ let lastLow = 999999;
 
 let signalCooldown = 0;
 let lastSignal = "WAIT";
-
+let lastHH = 0;
+let lastHL = 0;
+let lastLH = 0;
+let lastLL = 0;
+let choch = "NONE";
 function addHistory(text){
 document.getElementById("history").innerHTML =
 "<p>"+text+"</p>" +
