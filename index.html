@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JANAKA SIGNALS V17 - V18 - V19</title>
+<title>JANAKA SIGNALS V17</title>
 
 <style>
 body{
@@ -48,11 +48,11 @@ color:#00ff88;
 
 <body>
 
-<h1>JANAKA SIGNALS V17 • V18 • V19</h1>
+<h1>JANAKA SIGNALS V17</h1>
 
-<!-- ================= V17 CORE ================= -->
+<!-- V16 CORE -->
 <div class="card">
-<h3>📡 V17 Core Engine</h3>
+<h3>📡 Deriv Connection</h3>
 <p>Status: <span id="status">Connecting...</span></p>
 <p>Price: <span id="price">0</span></p>
 <p>Direction: <span id="direction">WAIT</span></p>
@@ -60,16 +60,21 @@ color:#00ff88;
 <p>Ticks: <span id="ticks">0</span></p>
 </div>
 
-<!-- ================= V18 STRUCTURE ================= -->
+<!-- STRUCTURE CARD -->
 <div class="card">
-<h3>📊 V18 Market Structure</h3>
+<h3>📊 Structure Card</h3>
 <p>Structure: <span id="structure">WAIT</span></p>
-<p>HH / HL / LH / LL: <span id="ms">WAIT</span></p>
-<p>CHOCH: <span id="choch">NONE</span></p>
-<p>BOS: <span id="bos">WAIT</span></p>
+<p>HH/HL/LH/LL: <span id="ms">WAIT</span></p>
 </div>
 
-<!-- ================= COUNTERS ================= -->
+<!-- BOS CARD -->
+<div class="card">
+<h3>⚡ BOS Card</h3>
+<p id="bos">WAIT</p>
+<p>CHOCH: <span id="choch">NONE</span></p>
+</div>
+
+<!-- COUNTERS -->
 <div class="grid">
 
 <div class="card">
@@ -84,13 +89,12 @@ color:#00ff88;
 
 </div>
 
-<!-- ================= V19 SIGNAL ENGINE ================= -->
+<!-- SIGNAL -->
 <div class="card">
-<h3>🔥 V19 Signal Engine</h3>
+<h3>🔥 SIGNAL ENGINE</h3>
 <div class="value" id="signal">WAIT 🟡</div>
-
-<p>EMA: <span id="ema">0</span></p>
 <p>RSI: <span id="rsi">50</span></p>
+<p>EMA: <span id="ema">0</span></p>
 <p>Win Rate: <span id="winrate">0%</span></p>
 </div>
 
@@ -113,7 +117,7 @@ let lastLow = 999999;
 let wins = 0;
 let totalSignals = 0;
 
-/* ================= EMA ================= */
+/* ===== EMA ===== */
 function calcEMA(arr, period=10){
 let k = 2/(period+1);
 let ema = arr[0];
@@ -123,7 +127,7 @@ ema = arr[i]*k + ema*(1-k);
 return ema;
 }
 
-/* ================= RSI ================= */
+/* ===== RSI ===== */
 function calcRSI(arr, period=10){
 if(arr.length < period) return 50;
 
@@ -140,7 +144,7 @@ let rs = gain/loss;
 return 100 - (100/(1+rs));
 }
 
-/* ================= CONNECT ================= */
+/* ===== CONNECT ===== */
 function connect(){
 
 ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
@@ -166,25 +170,27 @@ document.getElementById("price").innerHTML = price;
 tickCount++;
 document.getElementById("ticks").innerHTML = tickCount;
 
-/* ================= V17 CORE ================= */
-document.getElementById("direction").innerHTML =
-price > lastPrice ? "UP 🟢" : "DOWN 🔴";
+/* ===== V16 CORE ===== */
+if(price > lastPrice){
+document.getElementById("direction").innerHTML = "UP 🟢";
+}else{
+document.getElementById("direction").innerHTML = "DOWN 🔴";
+}
 
 prices.push(price);
 if(prices.length > 100) prices.shift();
 
-/* ================= EMA + RSI (V19) ================= */
+/* ===== TREND ===== */
 let ema = calcEMA(prices,10);
 let rsi = calcRSI(prices,10);
 
 document.getElementById("ema").innerHTML = ema.toFixed(2);
 document.getElementById("rsi").innerHTML = rsi.toFixed(2);
 
-/* ================= TREND ================= */
 let trend = price > ema ? "UPTREND 🟢" : "DOWNTREND 🔴";
-document.getElementById("trend")?.innerHTML = trend;
+document.getElementById("trend").innerHTML = trend;
 
-/* ================= V18 STRUCTURE ================= */
+/* ===== STRUCTURE (V18) ===== */
 let high = Math.max(...prices);
 let low = Math.min(...prices);
 
@@ -205,19 +211,19 @@ bos = "BOS DOWN 🔥";
 sellCount++;
 }
 
-/* CHOCH */
+/* CHOCH (V18) */
 if(price < ema && trend === "UPTREND 🟢"){
-choch = "CHOCH 🔴 (Reversal)";
+choch = "CHOCH 🔴";
 }
 
 if(price > ema && trend === "DOWNTREND 🔴"){
-choch = "CHOCH 🟢 (Reversal)";
+choch = "CHOCH 🟢";
 }
 
 lastHigh = high;
 lastLow = low;
 
-/* ================= UI UPDATE ================= */
+/* update UI */
 document.getElementById("ms").innerHTML = ms;
 document.getElementById("structure").innerHTML = structure;
 document.getElementById("bos").innerHTML = bos;
@@ -226,7 +232,7 @@ document.getElementById("choch").innerHTML = choch;
 document.getElementById("buyCount").innerHTML = buyCount;
 document.getElementById("sellCount").innerHTML = sellCount;
 
-/* ================= V19 SIGNAL ENGINE ================= */
+/* ===== SIGNAL ENGINE (V19 PRO) ===== */
 
 let signal = "WAIT 🟡";
 
