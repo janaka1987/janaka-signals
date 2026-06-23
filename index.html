@@ -465,11 +465,11 @@ if(
 (signal === "BUY 🟢" || signal === "SELL 🔴")
 && activeSignal === null
 && tradeLock === false
-)
+){
     activeSignal = signal;
     signalPrice = price;
     signalTime = Date.now();
-tradeLock = true;
+    tradeLock = true;
 }
 /* ================= CONFIDENCE ================= */
 
