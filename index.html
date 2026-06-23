@@ -535,7 +535,53 @@ rsi > 20
 document.getElementById("signal").innerHTML =
 signal;
 /* ===== V16 LAST PRICE ===== */
+/* ===== RESULT CHECK ===== */
 
+if(activeSignal !== null){
+
+let elapsed =
+(Date.now() - signalTime) / 1000;
+
+if(elapsed >= 120){
+
+totalTrades++;
+
+if(
+activeSignal === "BUY 🟢" &&
+price > signalPrice
+){
+    wins++;
+}
+else if(
+activeSignal === "SELL 🔴" &&
+price < signalPrice
+){
+    wins++;
+}
+else{
+    losses++;
+}
+
+document.getElementById("wins").innerHTML =
+wins;
+
+document.getElementById("losses").innerHTML =
+losses;
+
+document.getElementById("totalTrades").innerHTML =
+totalTrades;
+
+let winRate =
+((wins / totalTrades) * 100).toFixed(0);
+
+document.getElementById("winrate").innerHTML =
+winRate + "%";
+
+activeSignal = null;
+
+}
+
+}
 lastPrice = price;
 if(
 signal !== lastSignal &&
