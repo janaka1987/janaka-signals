@@ -412,48 +412,72 @@ lastLow = low;
 
 document.getElementById("buyCount").innerHTML = buyCount;
 document.getElementById("sellCount").innerHTML = sellCount;
+let signal = "WAIT 🟡";
+
+/* BUY */
+if(
+trend === "UPTREND 🟢" &&
+bos === "BOS UP 🔥" &&
+emaFast > emaSlow &&
+rsi > 55 &&
+rsi < 80
+){
+ signal = "BUY 🟢";
+}
+
+/* SELL */
+if(
+trend === "DOWNTREND 🔴" &&
+bos === "BOS DOWN 🔥" &&
+emaFast < emaSlow &&
+rsi < 45 &&
+rsi > 20
+){
+ signal = "SELL 🔴";
+}
+
+document.getElementById("signal").innerHTML =
+signal;
+
+/* ================= CONFIDENCE ================= */
+
 let confidence = 0;
 
-/* Trend */
 if(
 trend === "UPTREND 🟢" ||
 trend === "DOWNTREND 🔴"
 ){
-confidence += 30;
+ confidence += 30;
 }
 
-/* BOS */
 if(
 bos === "BOS UP 🔥" ||
 bos === "BOS DOWN 🔥"
 ){
-confidence += 30;
+ confidence += 30;
 }
 
-/* EMA */
 if(
 emaFast > emaSlow ||
 emaFast < emaSlow
 ){
-confidence += 20;
+ confidence += 20;
 }
 
-/* RSI */
 if(
 rsi > 55 ||
 rsi < 45
 ){
-confidence += 20;
+ confidence += 20;
 }
-/* WAIT signal confidence limit */
 
+/* WAIT limit */
 if(signal === "WAIT 🟡"){
-    confidence = Math.min(confidence, 50);
+ confidence = Math.min(confidence, 50);
 }
+
 document.getElementById("confidence").innerHTML =
 confidence + "%";
-
-let signal = "WAIT 🟡";
 
 /* BUY */
 
