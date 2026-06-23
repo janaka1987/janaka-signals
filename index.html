@@ -394,12 +394,22 @@ lastLL.toFixed(2);
 
 let bos = "NO BREAK";
 
-if(price > lastHigh && lastHigh !== 0){
+let breakDistance = Math.abs(price - lastPrice);
+
+if(
+price > lastHigh &&
+lastHigh !== 0 &&
+breakDistance > 0.05
+){
 bos = "BOS UP 🔥";
 buyCount++;
 }
 
-if(price < lastLow && lastLow !== 999999){
+if(
+price < lastLow &&
+lastLow !== 999999 &&
+breakDistance > 0.05
+){
 bos = "BOS DOWN 🔥";
 sellCount++;
 }
