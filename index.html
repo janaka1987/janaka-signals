@@ -161,7 +161,13 @@ let lastLL = 0;
 
 let choch = "NONE";
 let rsi = 50;
+let wins = 0;
+let losses = 0;
+let totalTrades = 0;
 
+let activeSignal = null;
+let signalPrice = 0;
+let signalTime = 0;
 function addHistory(text){
 
 document.getElementById("history").innerHTML =
