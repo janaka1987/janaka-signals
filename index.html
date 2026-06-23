@@ -440,6 +440,7 @@ let signal = "WAIT 🟡";
 /* BUY */
 if(
 trend === "UPTREND 🟢" &&
+structure === "BULLISH STRUCTURE 🟢" &&
 bos === "BOS UP 🔥" &&
 emaFast > emaSlow &&
 rsi > 55 &&
@@ -451,6 +452,7 @@ rsi < 80
 /* SELL */
 if(
 trend === "DOWNTREND 🔴" &&
+structure === "BEARISH STRUCTURE 🔴" &&
 bos === "BOS DOWN 🔥" &&
 emaFast < emaSlow &&
 rsi < 45 &&
