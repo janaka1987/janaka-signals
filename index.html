@@ -184,6 +184,7 @@ let totalTrades = 0;
 let activeSignal = null;
 let signalPrice = 0;
 let signalTime = 0;
+let tradeLock = false;
 function addHistory(text){
 
 document.getElementById("history").innerHTML =
