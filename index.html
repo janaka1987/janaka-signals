@@ -552,15 +552,24 @@ activeSignal === "BUY 🟢" &&
 price > signalPrice
 ){
     wins++;
+
+    document.getElementById("lastResult").innerHTML =
+    "WIN 🏆";
 }
 else if(
 activeSignal === "SELL 🔴" &&
 price < signalPrice
 ){
     wins++;
+
+    document.getElementById("lastResult").innerHTML =
+    "WIN 🏆";
 }
 else{
     losses++;
+
+    document.getElementById("lastResult").innerHTML =
+    "LOSS ❌";
 }
 
 document.getElementById("wins").innerHTML =
