@@ -310,15 +310,26 @@ document.getElementById("low").innerHTML = low;
 
 let structure = "RANGE 🟡";
 
-if(price > high * 0.999){
-structure = "BULLISH STRUCTURE 🟢";
+/* Structure + Trend Filter */
+
+if(
+trend === "UPTREND 🟢" &&
+price >= high * 0.999
+){
+    structure = "BULLISH STRUCTURE 🟢";
+}
+else if(
+trend === "DOWNTREND 🔴" &&
+price <= low * 1.001
+){
+    structure = "BEARISH STRUCTURE 🔴";
+}
+else{
+    structure = "RANGE 🟡";
 }
 
-if(price < low * 1.001){
-structure = "BEARISH STRUCTURE 🔴";
-}
-
-document.getElementById("structure").innerHTML = structure;
+document.getElementById("structure").innerHTML =
+structure;
 /* ===== HH HL LH LL ===== */
 
 if(price >= high){
