@@ -459,7 +459,14 @@ rsi > 20
 
 document.getElementById("signal").innerHTML =
 signal;
-
+if(
+(signal === "BUY 🟢" || signal === "SELL 🔴")
+&& activeSignal === null
+){
+    activeSignal = signal;
+    signalPrice = price;
+    signalTime = Date.now();
+}
 /* ================= CONFIDENCE ================= */
 
 let confidence = 0;
