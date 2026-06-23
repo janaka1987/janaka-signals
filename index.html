@@ -445,7 +445,11 @@ rsi < 45
 ){
 confidence += 20;
 }
+/* WAIT signal confidence limit */
 
+if(signal === "WAIT 🟡"){
+    confidence = Math.min(confidence, 50);
+}
 document.getElementById("confidence").innerHTML =
 confidence + "%";
 
