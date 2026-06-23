@@ -464,7 +464,8 @@ signal;
 if(
 (signal === "BUY 🟢" || signal === "SELL 🔴")
 && activeSignal === null
-){
+&& tradeLock === false
+)
     activeSignal = signal;
     signalPrice = price;
     signalTime = Date.now();
