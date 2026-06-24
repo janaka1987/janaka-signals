@@ -343,6 +343,40 @@ if(prices.length >= 20){
 
 document.getElementById("trendStrength").innerHTML =
 trendStrength;
+/* ===== MARKET MODE ===== */
+
+let marketMode = "RANGING ⚠️";
+
+if(
+trendStrength === "STRONG 🟢"
+){
+    marketMode = "TRENDING 🚀";
+}
+
+document.getElementById("marketMode").innerHTML =
+marketMode;
+
+/* ===== VOLATILITY ===== */
+
+let volatility = "LOW 🟢";
+
+if(prices.length >= 20){
+
+let range =
+Math.max(...prices) -
+Math.min(...prices);
+
+if(range > 2){
+    volatility = "HIGH 🔥";
+}
+else if(range > 1){
+    volatility = "MEDIUM 🟠";
+}
+
+}
+
+document.getElementById("volatility").innerHTML =
+volatility;
 /* ===== ADD 1: STRUCTURE ===== */
 
 let high = Math.max(...prices);
