@@ -491,6 +491,44 @@ rsi > 20
 
 document.getElementById("signal").innerHTML =
 signal;
+/* ===== SIGNAL REASONS ===== */
+
+document.getElementById("reason1").innerHTML = "-";
+document.getElementById("reason2").innerHTML = "-";
+document.getElementById("reason3").innerHTML = "-";
+document.getElementById("reason4").innerHTML = "-";
+
+if(signal === "BUY 🟢"){
+
+document.getElementById("reason1").innerHTML =
+"✔ Trend Up";
+
+document.getElementById("reason2").innerHTML =
+"✔ BOS Up";
+
+document.getElementById("reason3").innerHTML =
+"✔ EMA Bullish";
+
+document.getElementById("reason4").innerHTML =
+"✔ RSI Bullish";
+
+}
+
+if(signal === "SELL 🔴"){
+
+document.getElementById("reason1").innerHTML =
+"✔ Trend Down";
+
+document.getElementById("reason2").innerHTML =
+"✔ BOS Down";
+
+document.getElementById("reason3").innerHTML =
+"✔ EMA Bearish";
+
+document.getElementById("reason4").innerHTML =
+"✔ RSI Bearish";
+
+}
 if(
 (signal === "BUY 🟢" || signal === "SELL 🔴")
 && activeSignal === null
