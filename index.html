@@ -616,7 +616,8 @@ tradeLock = false;
 lastPrice = price;
 if(
 signal !== lastSignal &&
-signal !== "WAIT 🟡"
+signal !== "WAIT 🟡" &&
+confidence >= 80
 ){
 
 addHistory(
