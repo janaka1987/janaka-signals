@@ -2,12 +2,12 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Auto Working Chart</title>
+<title>TEST CHART</title>
 
 <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
 <style>
-body{margin:0;background:#0b1220;color:white;font-family:Arial;}
+body{margin:0;background:#0b1220;}
 #chart{height:100vh;}
 </style>
 </head>
@@ -17,45 +17,17 @@ body{margin:0;background:#0b1220;color:white;font-family:Arial;}
 <div id="chart"></div>
 
 <script>
-let chart = LightweightCharts.createChart(document.getElementById('chart'), {
-    layout:{background:{color:'#0b1220'},textColor:'#fff'},
-    timeScale:{timeVisible:true}
-});
+const chart = LightweightCharts.createChart(document.getElementById('chart'));
 
-let series = chart.addCandlestickSeries();
+const candleSeries = chart.addCandlestickSeries();
 
-let data = [];
-let time = Math.floor(Date.now()/1000);
-let price = 100;
+const data = [
+    { time: 1, open: 10, high: 12, low: 9, close: 11 },
+    { time: 2, open: 11, high: 13, low: 10, close: 12 },
+    { time: 3, open: 12, high: 14, low: 11, close: 13 }
+];
 
-// candle generator
-function makeCandle(){
-
-    let open = price;
-    let close = open + (Math.random()-0.5)*2;
-    let high = Math.max(open,close) + Math.random();
-    let low = Math.min(open,close) - Math.random();
-
-    price = close;
-
-    data.push({
-        time: time++,
-        open,
-        high,
-        low,
-        close
-    });
-
-    if(data.length > 60) data.shift();
-
-    series.setData(data);
-}
-
-// 🔥 AUTO START (no button)
-setInterval(()=>{
-    makeCandle();
-},1000);
-
+candleSeries.setData(data);
 </script>
 
 </body>
