@@ -257,6 +257,19 @@ document.getElementById("direction").innerHTML = "DOWN 🔴";
 
 prices.push(price);
 if(prices.length > 50) prices.shift();
+chartData.push(price);
+
+if(chartData.length > 50){
+chartData.shift(); 
+}
+
+liveChart.data.labels =
+chartData.map((_,i)=>i);
+
+liveChart.data.datasets[0].data =
+chartData;
+
+liveChart.update();
 /* ===== EMA CALCULATION ===== */
 
 let emaFast = 0;
