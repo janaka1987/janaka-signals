@@ -2,23 +2,17 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>LIVE WORKING CHART</title>
+<title>Auto Working Chart</title>
 
 <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
 <style>
 body{margin:0;background:#0b1220;color:white;font-family:Arial;}
-header{padding:10px;background:#111a2e;}
-button{padding:8px;border:none;border-radius:5px;}
-#chart{height:90vh;}
+#chart{height:100vh;}
 </style>
 </head>
 
 <body>
-
-<header>
-<button id="btn">START CHART</button>
-</header>
 
 <div id="chart"></div>
 
@@ -52,19 +46,16 @@ function makeCandle(){
         close
     });
 
-    if(data.length > 50) data.shift();
+    if(data.length > 60) data.shift();
 
     series.setData(data);
 }
 
-// START button FIX
-document.getElementById("btn").addEventListener("click", function(){
+// 🔥 AUTO START (no button)
+setInterval(()=>{
+    makeCandle();
+},1000);
 
-    setInterval(()=>{
-        makeCandle();
-    },1000);
-
-});
 </script>
 
 </body>
