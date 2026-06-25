@@ -818,6 +818,15 @@ display:false
 }
 
 });
+document
+.getElementById("marketSelect")
+.addEventListener("change", function(){
+
+currentMarket = this.value;
+
+ws.close();
+
+});
 /* START */
 connect();
 
