@@ -253,7 +253,7 @@ ws.onopen = () => {
 document.getElementById("status").innerHTML = "Connected 🟢";
 
 ws.send(JSON.stringify({
-ticks:"R_100",
+ticks: currentMarket,
 subscribe:1
 }));
 
