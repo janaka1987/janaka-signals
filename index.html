@@ -302,18 +302,6 @@ document.getElementById("direction").innerHTML = "DOWN 🔴";
 prices.push(price);
 if(prices.length > 50) prices.shift();
 chartData.push(price);
-chartLabels.push("");
-
-if(chartLabels.length > 50)
-chartLabels.shift();
-
-chart.data.labels =
-chartLabels;
-
-chart.data.datasets[0].data =
-prices;
-
-chart.update();
 if(chartData.length > 50){
 chartData.shift(); 
 }
