@@ -854,6 +854,50 @@ this.options[this.selectedIndex].text;
 ws.close();
 
 });
+const ctx =
+document
+.getElementById("liveChart")
+.getContext("2d");
+
+chart = new Chart(ctx, {
+
+type: "line",
+
+data: {
+
+labels: [],
+
+datasets: [{
+
+label: "Price",
+
+data: [],
+
+borderWidth: 2,
+
+fill: false
+
+}]
+
+},
+
+options: {
+
+responsive: true,
+
+animation: false,
+
+scales: {
+
+x: {
+display: false
+}
+
+}
+
+}
+
+});
 /* START */
 connect();
 
