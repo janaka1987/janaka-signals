@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Working Chart FIX</title>
+<title>LIVE WORKING CHART</title>
 
 <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
@@ -17,7 +17,7 @@ button{padding:8px;border:none;border-radius:5px;}
 <body>
 
 <header>
-<button onclick="start()">START CHART</button>
+<button id="btn">START CHART</button>
 </header>
 
 <div id="chart"></div>
@@ -34,7 +34,8 @@ let data = [];
 let time = Math.floor(Date.now()/1000);
 let price = 100;
 
-function generateCandle(){
+// candle generator
+function makeCandle(){
 
     let open = price;
     let close = open + (Math.random()-0.5)*2;
@@ -56,13 +57,14 @@ function generateCandle(){
     series.setData(data);
 }
 
-function start(){
+// START button FIX
+document.getElementById("btn").addEventListener("click", function(){
 
     setInterval(()=>{
-        generateCandle();
+        makeCandle();
     },1000);
 
-}
+});
 </script>
 
 </body>
