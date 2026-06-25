@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Live Trading Dashboard</title>
+<title>Live Trading Dashboard - Deriv</title>
 
 <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
@@ -28,6 +28,12 @@ select, button{
     border:none;
 }
 
+#status{
+    margin-left:10px;
+    font-size:14px;
+    opacity:0.8;
+}
+
 #chart{
     height:90vh;
 }
@@ -50,6 +56,7 @@ select, button{
         <option value="frxEURUSD">EUR/USD</option>
         <option value="frxGBPUSD">GBP/USD</option>
         <option value="frxUSDJPY">USD/JPY</option>
+        <option value="frxAUDUSD">AUD/USD</option>
     </select>
 
     <button onclick="connect()">Connect</button>
@@ -90,26 +97,27 @@ function connect(){
     ws = new WebSocket("wss://ws.binaryws.com/websockets/v3?app_id=1089");
 
     ws.onopen = function(){
+
         document.getElementById("status").innerText = "Connected";
 
-         ws.send(JSON.stringify({
-    ticks_history: currentMarket,
-    style: "candles",
-    granularity: 60,
-    count: 50,
-    subscribe: 1,
-    end: "latest"
-}));   
-            
-            
-            
+        ws.send(JSON.stringify({
+            ticks_history: currentMarket,
+            style: "candles",
+            granularity: 60,
+            count: 50,
+            end: "latest",
+            subscribe: 1
+        }));
     };
 
     ws.onmessage = function(msg){
         let data = JSON.parse(msg.data);
 
-        if(data.candles){
-            let candles = data.candles.map(c => ({
+        // initial candles
+        let candles = data.candles || (data.history && data.history.candles);
+
+        if(candles){
+            let formatted = candles.map(c => ({
                 time: c.epoch,
                 open: c.open,
                 high: c.high,
@@ -117,9 +125,10 @@ function connect(){
                 close: c.close
             }));
 
-            candleSeries.setData(candles);
+            candleSeries.setData(formatted);
         }
 
+        // live update candle
         if(data.candle){
             let c = data.candle;
 
@@ -135,6 +144,10 @@ function connect(){
 
     ws.onclose = function(){
         document.getElementById("status").innerText = "Disconnected";
+    };
+
+    ws.onerror = function(){
+        document.getElementById("status").innerText = "Error";
     };
 }
 </script>
