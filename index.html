@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Working Deriv Chart</title>
+<title>Stable Trading Dashboard</title>
 
 <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
@@ -38,15 +38,12 @@ select,button{
 
 <header>
 <select id="market">
-    <option value="R_10">Volatility 10</option>
-    <option value="R_25">Volatility 25</option>
-    <option value="R_50">Volatility 50</option>
-    <option value="R_75">Volatility 75</option>
-    <option value="R_100">Volatility 100</option>
-    <option value="frxEURUSD">EURUSD</option>
+    <option value="EUR/USD">EUR/USD</option>
+    <option value="GBP/USD">GBP/USD</option>
+    <option value="USD/JPY">USD/JPY</option>
 </select>
 
-<button onclick="loadData()">Load Chart</button>
+<button onclick="load()">Load</button>
 </header>
 
 <div id="chart"></div>
@@ -59,45 +56,30 @@ let chart = LightweightCharts.createChart(document.getElementById('chart'), {
 
 let series = chart.addCandlestickSeries();
 
-let ws;
+async function load(){
 
-function loadData(){
+    let market = document.getElementById("market").value;
 
-let market = document.getElementById("market").value;
+    // FREE PUBLIC CANDLE API (Twelve Data style endpoint example)
+    let url = `https://api.twelvedata.com/time_series?symbol=${market}&interval=1min&outputsize=50&apikey=demo`;
 
-ws = new WebSocket("wss://ws.binaryws.com/websockets/v3?app_id=1089");
+    let res = await fetch(url);
+    let data = await res.json();
 
-ws.onopen = function(){
-
-    ws.send(JSON.stringify({
-        ticks_history: market,
-        style: "candles",
-        granularity: 60,
-        count: 50,
-        end: "latest"
-    }));
-
-};
-
-ws.onmessage = function(msg){
-
-    let data = JSON.parse(msg.data);
-
-    if(data.candles){
-
-        let candles = data.candles.map(c=>({
-            time: c.epoch,
-            open: c.open,
-            high: c.high,
-            low: c.low,
-            close: c.close
-        }));
-
-        series.setData(candles);
-
-        ws.close(); // IMPORTANT: close after loading (stable version)
+    if(!data.values){
+        alert("Data load error (API limit or network)");
+        return;
     }
-};
+
+    let candles = data.values.map(c=>({
+        time: Math.floor(new Date(c.datetime).getTime()/1000),
+        open: parseFloat(c.open),
+        high: parseFloat(c.high),
+        low: parseFloat(c.low),
+        close: parseFloat(c.close)
+    })).reverse();
+
+    series.setData(candles);
 }
 </script>
 
