@@ -92,13 +92,17 @@ function connect(){
     ws.onopen = function(){
         document.getElementById("status").innerText = "Connected";
 
-        ws.send(JSON.stringify({
-            ticks_history: currentMarket,
-            style: "candles",
-            granularity: 60,
-            count: 50,
-            subscribe: 1
-        }));
+         ws.send(JSON.stringify({
+    ticks_history: currentMarket,
+    style: "candles",
+    granularity: 60,
+    count: 50,
+    subscribe: 1,
+    end: "latest"
+}));   
+            
+            
+            
     };
 
     ws.onmessage = function(msg){
