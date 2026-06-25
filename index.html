@@ -824,7 +824,8 @@ document
 .addEventListener("change", function(){
 
 currentMarket = this.value;
-
+document.getElementById("marketName").innerHTML =
+this.options[this.selectedIndex].text;
 ws.close();
 
 });
