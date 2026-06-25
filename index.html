@@ -2,48 +2,22 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Stable Trading Dashboard</title>
+<title>Working Chart FIX</title>
 
 <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
 <style>
-body{
-    margin:0;
-    background:#0b1220;
-    color:white;
-    font-family:Arial;
-}
-
-header{
-    padding:10px;
-    background:#111a2e;
-    display:flex;
-    gap:10px;
-    align-items:center;
-}
-
-select,button{
-    padding:8px;
-    border-radius:5px;
-    border:none;
-}
-
-#chart{
-    height:90vh;
-}
+body{margin:0;background:#0b1220;color:white;font-family:Arial;}
+header{padding:10px;background:#111a2e;}
+button{padding:8px;border:none;border-radius:5px;}
+#chart{height:90vh;}
 </style>
 </head>
 
 <body>
 
 <header>
-<select id="market">
-    <option value="EUR/USD">EUR/USD</option>
-    <option value="GBP/USD">GBP/USD</option>
-    <option value="USD/JPY">USD/JPY</option>
-</select>
-
-<button onclick="load()">Load</button>
+<button onclick="start()">START CHART</button>
 </header>
 
 <div id="chart"></div>
@@ -56,30 +30,38 @@ let chart = LightweightCharts.createChart(document.getElementById('chart'), {
 
 let series = chart.addCandlestickSeries();
 
-async function load(){
+let data = [];
+let time = Math.floor(Date.now()/1000);
+let price = 100;
 
-    let market = document.getElementById("market").value;
+function generateCandle(){
 
-    // FREE PUBLIC CANDLE API (Twelve Data style endpoint example)
-    let url = `https://api.twelvedata.com/time_series?symbol=${market}&interval=1min&outputsize=50&apikey=demo`;
+    let open = price;
+    let close = open + (Math.random()-0.5)*2;
+    let high = Math.max(open,close) + Math.random();
+    let low = Math.min(open,close) - Math.random();
 
-    let res = await fetch(url);
-    let data = await res.json();
+    price = close;
 
-    if(!data.values){
-        alert("Data load error (API limit or network)");
-        return;
-    }
+    data.push({
+        time: time++,
+        open,
+        high,
+        low,
+        close
+    });
 
-    let candles = data.values.map(c=>({
-        time: Math.floor(new Date(c.datetime).getTime()/1000),
-        open: parseFloat(c.open),
-        high: parseFloat(c.high),
-        low: parseFloat(c.low),
-        close: parseFloat(c.close)
-    })).reverse();
+    if(data.length > 50) data.shift();
 
-    series.setData(candles);
+    series.setData(data);
+}
+
+function start(){
+
+    setInterval(()=>{
+        generateCandle();
+    },1000);
+
 }
 </script>
 
