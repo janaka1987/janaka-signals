@@ -2,93 +2,50 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Live Trading Dashboard - Deriv</title>
+<title>Deriv Live Chart FIX</title>
 
 <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
 <style>
-body{
-    margin:0;
-    background:#0b1220;
-    color:white;
-    font-family:Arial;
-}
-
-header{
-    padding:10px;
-    background:#111a2e;
-    display:flex;
-    gap:10px;
-    align-items:center;
-}
-
-select, button{
-    padding:8px;
-    border-radius:5px;
-    border:none;
-}
-
-#status{
-    margin-left:10px;
-    font-size:14px;
-    opacity:0.8;
-}
-
-#chart{
-    height:90vh;
-}
+body{margin:0;background:#0b1220;color:white;font-family:Arial;}
+header{padding:10px;background:#111a2e;display:flex;gap:10px;align-items:center;}
+select,button{padding:8px;border-radius:5px;border:none;}
+#chart{height:90vh;}
 </style>
 </head>
 
 <body>
 
 <header>
-    <select id="market">
-        <option value="R_10">Volatility 10</option>
-        <option value="R_25">Volatility 25</option>
-        <option value="R_50">Volatility 50</option>
-        <option value="R_75">Volatility 75</option>
-        <option value="R_100">Volatility 100</option>
+<select id="market">
+<option value="R_10">Volatility 10</option>
+<option value="R_25">Volatility 25</option>
+<option value="R_50">Volatility 50</option>
+<option value="R_75">Volatility 75</option>
+<option value="R_100">Volatility 100</option>
+<option value="frxEURUSD">EURUSD</option>
+</select>
 
-        <option value="1HZ10V">Jump 10</option>
-        <option value="1HZ25V">Jump 25</option>
-
-        <option value="frxEURUSD">EUR/USD</option>
-        <option value="frxGBPUSD">GBP/USD</option>
-        <option value="frxUSDJPY">USD/JPY</option>
-        <option value="frxAUDUSD">AUD/USD</option>
-    </select>
-
-    <button onclick="connect()">Connect</button>
-    <span id="status">Disconnected</span>
+<button onclick="connect()">Connect</button>
+<span id="status">Disconnected</span>
 </header>
 
 <div id="chart"></div>
 
 <script>
 let chart = LightweightCharts.createChart(document.getElementById('chart'), {
-    layout: {
-        background: { color: '#0b1220' },
-        textColor: '#ffffff',
-    },
-    grid: {
-        vertLines: { color: '#1f2a44' },
-        horzLines: { color: '#1f2a44' },
-    },
-    timeScale: {
-        timeVisible: true,
-        secondsVisible: false,
-    }
+    layout:{background:{color:'#0b1220'},textColor:'#fff'},
+    timeScale:{timeVisible:true}
 });
 
-let candleSeries = chart.addCandlestickSeries();
+let series = chart.addCandlestickSeries();
 
 let ws;
-let currentMarket = "R_10";
+let market = "R_10";
 
-document.getElementById("market").addEventListener("change", e=>{
-    currentMarket = e.target.value;
-});
+document.getElementById("market").onchange = (e)=>{
+    market = e.target.value;
+};
 
 function connect(){
 
@@ -100,24 +57,22 @@ function connect(){
 
         document.getElementById("status").innerText = "Connected";
 
+        // 1️⃣ GET HISTORICAL CANDLES (CORRECT METHOD)
         ws.send(JSON.stringify({
-            ticks_history: currentMarket,
+            ticks_history: market,
             style: "candles",
             granularity: 60,
             count: 50,
-            end: "latest",
-            subscribe: 1
+            end: "latest"
         }));
     };
 
     ws.onmessage = function(msg){
         let data = JSON.parse(msg.data);
 
-        // initial candles
-        let candles = data.candles || (data.history && data.history.candles);
-
-        if(candles){
-            let formatted = candles.map(c => ({
+        // candles load
+        if(data.candles){
+            let candles = data.candles.map(c=>({
                 time: c.epoch,
                 open: c.open,
                 high: c.high,
@@ -125,30 +80,33 @@ function connect(){
                 close: c.close
             }));
 
-            candleSeries.setData(formatted);
+            series.setData(candles);
+
+            // 2️⃣ NOW START LIVE TICKS (IMPORTANT FIX)
+            ws.send(JSON.stringify({
+                ticks: market,
+                subscribe: 1
+            }));
         }
 
-        // live update candle
-        if(data.candle){
-            let c = data.candle;
+        // live tick → build candle
+        if(data.tick){
 
-            candleSeries.update({
-                time: c.epoch,
-                open: c.open,
-                high: c.high,
-                low: c.low,
-                close: c.close
+            let price = data.tick.quote;
+            let time = Math.floor(data.tick.epoch);
+
+            series.update({
+                time: time,
+                open: price,
+                high: price,
+                low: price,
+                close: price
             });
         }
     };
 
-    ws.onclose = function(){
-        document.getElementById("status").innerText = "Disconnected";
-    };
-
-    ws.onerror = function(){
-        document.getElementById("status").innerText = "Error";
-    };
+    ws.onerror = ()=> document.getElementById("status").innerText = "Error";
+    ws.onclose = ()=> document.getElementById("status").innerText = "Disconnected";
 }
 </script>
 
