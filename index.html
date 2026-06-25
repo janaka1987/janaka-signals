@@ -749,7 +749,37 @@ setTimeout(connect, 3000);
 };
 
 }
+const chartData = [];
 
+const ctx =
+document.getElementById("liveChart");
+
+const liveChart =
+new Chart(ctx,{
+
+type:"line",
+
+data:{
+labels:[],
+datasets:[{
+label:"Price",
+data:[],
+borderWidth:2,
+tension:0.2
+}]
+},
+
+options:{
+responsive:true,
+animation:false,
+scales:{
+x:{
+display:false
+}
+}
+}
+
+});
 /* START */
 connect();
 
