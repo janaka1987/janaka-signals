@@ -3,12 +3,102 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>JANAKA SMC DASHBOARD</title>
+
+<style>
+
+body{
+background:#0b1220;
+color:white;
+font-family:Arial,sans-serif;
+padding:15px;
+margin:0;
+}
+
+h1{
+text-align:center;
+color:#00ff88;
+}
+
+.card{
+background:#111c2e;
+border:1px solid #1f3b5b;
+border-radius:12px;
+padding:15px;
+margin-bottom:12px;
+}
+
+select{
+width:100%;
+padding:10px;
+font-size:16px;
+border-radius:8px;
+}
+
+</style>
 </head>
 
 <body>
 
 <h1>JANAKA SMC DASHBOARD</h1>
+
+<div class="card">
+
+<h3>Select Market</h3>
+
+<select id="market">
+
+<option value="R_10">Volatility 10</option>
+<option value="R_25">Volatility 25</option>
+<option value="R_50">Volatility 50</option>
+<option value="R_75">Volatility 75</option>
+<option value="R_100">Volatility 100</option>
+
+<option value="JD10">Jump 10</option>
+<option value="JD25">Jump 25</option>
+<option value="JD50">Jump 50</option>
+<option value="JD75">Jump 75</option>
+<option value="JD100">Jump 100</option>
+
+<option value="RDBEAR">Bear Market</option>
+<option value="RDBULL">Bull Market</option>
+
+<option value="frxEURUSD">EUR/USD</option>
+<option value="frxGBPUSD">GBP/USD</option>
+<option value="frxUSDJPY">USD/JPY</option>
+<option value="frxAUDUSD">AUD/USD</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h3>Market Info</h3>
+
+<p>
+Selected Market:
+<span id="marketName">
+Volatility 10
+</span>
+</p>
+
+</div>
+
+<script>
+
+const market =
+document.getElementById("market");
+
+market.addEventListener("change",()=>{
+
+document.getElementById("marketName").innerHTML =
+market.options[market.selectedIndex].text;
+
+});
+
+</script>
 
 </body>
 </html>
