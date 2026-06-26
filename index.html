@@ -2,33 +2,13 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>TEST CHART</title>
-
-<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
-
-<style>
-body{margin:0;background:#0b1220;}
-#chart{height:100vh;}
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JANAKA SMC DASHBOARD</title>
 </head>
 
 <body>
 
-<div id="chart"></div>
-
-<script>
-const chart = LightweightCharts.createChart(document.getElementById('chart'));
-
-const candleSeries = chart.addCandlestickSeries();
-
-const data = [
-    { time: 1, open: 10, high: 12, low: 9, close: 11 },
-    { time: 2, open: 11, high: 13, low: 10, close: 12 },
-    { time: 3, open: 12, high: 14, low: 11, close: 13 }
-];
-
-candleSeries.setData(data);
-</script>
+<h1>JANAKA SMC DASHBOARD</h1>
 
 </body>
 </html>
