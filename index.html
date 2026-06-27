@@ -5,7 +5,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>JANAKA SMC DASHBOARD</title>
+<title>JANAKA SMC DASHBOARD V2</title>
+
+<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
 <style>
 
@@ -37,17 +39,12 @@ font-size:16px;
 border-radius:8px;
 background:#0f172a;
 color:white;
+border:none;
 }
 
 #chart{
 height:500px;
-background:#0f172a;
-border-radius:10px;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:20px;
-color:#94a3b8;
+width:100%;
 }
 
 .grid{
@@ -58,34 +55,23 @@ gap:10px;
 
 .box{
 background:#0f172a;
-padding:10px;
+padding:12px;
 border-radius:10px;
 }
 
 .value{
-font-size:20px;
+font-size:18px;
 font-weight:bold;
 margin-top:5px;
 }
 
-.up{
-color:#00ff88;
-}
-
-.down{
-color:#ff4d4d;
-}
-
-.wait{
-color:#ffd166;
-}
-
 </style>
+
 </head>
 
 <body>
 
-<h1>JANAKA SMC DASHBOARD</h1>
+<h1>JANAKA SMC DASHBOARD V2</h1>
 
 <div class="card">
 
@@ -134,11 +120,7 @@ Volatility 10
 
 <h3>📈 Live Candlestick Chart</h3>
 
-<div id="chart">
-
-CANDLE DATA LOADING...
-
-</div>
+<div id="chart"></div>
 
 </div>
 
@@ -203,6 +185,79 @@ market.selectedIndex
 ].text;
 
 });
+
+const chart =
+LightweightCharts.createChart(
+document.getElementById('chart'),
+{
+layout:{
+background:{
+color:'#0f172a'
+},
+textColor:'#ffffff'
+},
+grid:{
+vertLines:{
+color:'#1f2937'
+},
+horzLines:{
+color:'#1f2937'
+}
+},
+width:
+document.getElementById('chart').clientWidth,
+height:500
+}
+);
+
+const candleSeries =
+chart.addSeries(
+LightweightCharts.CandlestickSeries
+);
+
+candleSeries.setData([
+
+{
+time:'2025-01-01',
+open:100,
+high:120,
+low:90,
+close:110
+},
+
+{
+time:'2025-01-02',
+open:110,
+high:130,
+low:105,
+close:125
+},
+
+{
+time:'2025-01-03',
+open:125,
+high:140,
+low:120,
+close:128
+},
+
+{
+time:'2025-01-04',
+open:128,
+high:145,
+low:118,
+close:140
+},
+
+{
+time:'2025-01-05',
+open:140,
+high:150,
+low:130,
+close:135
+}
+
+]);
 
 </script>
 
