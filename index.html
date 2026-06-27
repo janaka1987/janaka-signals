@@ -254,12 +254,13 @@ function connect(){
       granularity: TIMEFRAME,
       count: MAX_CANDLES,
       subscribe: 1
+    adjust_start_time: 1
     }));
   };
 
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
-console.log(data);
+
     if (data.error) {
       statusEl.innerText = "Error 🔴";
       infoTextEl.innerText = data.error.message || "API error";
