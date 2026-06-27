@@ -106,7 +106,18 @@ document.getElementById("marketName").innerHTML =
 market.options[market.selectedIndex].text;
 
 });
+const chart =
+LightweightCharts.createChart(
+document.getElementById("chart"),
+{
+width:
+document.getElementById("chart").clientWidth,
+height:500
+}
+);
 
+const candleSeries =
+chart.addCandlestickSeries();
 </script>
 
 </body>
