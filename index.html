@@ -259,7 +259,7 @@ function connect(){
 
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
-
+console.log(data);
     if (data.error) {
       statusEl.innerText = "Error 🔴";
       infoTextEl.innerText = data.error.message || "API error";
