@@ -249,7 +249,13 @@ function connect(){
 
   ws.onopen = () => {
     statusEl.innerText = "Connected 🟢";
-
+ws.send(JSON.stringify({
+  ticks_history: currentMarket,
+  end: "latest",
+  style: "candles",
+  granularity: 60,
+  count: 150
+}));
     ws.send(JSON.stringify({
   ticks: currentMarket,
   subscribe: 1
