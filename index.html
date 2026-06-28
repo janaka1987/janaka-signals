@@ -345,25 +345,7 @@ const minute = Math.floor(tickTime / 60) * 60;
       return;
     }
 
-    if (data.msg_type === "candles" && Array.isArray(data.candles)) {
-      const formatted = data.candles
-        .map(c => ({
-          time: Number(c.epoch),
-          open: Number(c.open),
-          high: Number(c.high),
-          low: Number(c.low),
-          close: Number(c.close)
-        }))
-        .filter(c => Number.isFinite(c.time) && Number.isFinite(c.open) && Number.isFinite(c.high) && Number.isFinite(c.low) && Number.isFinite(c.close));
-
-      candles = formatted;
-      candleSeries.setData(candles);
-      chart.timeScale().fitContent();
-
-      infoTextEl.innerText = `Loaded ${candles.length} candles`;
-      buildStructureFromCandles();
-      return;
-    }
+    
 
     if (data.msg_type === "history" && data.history && Array.isArray(data.history.prices) && Array.isArray(data.history.times)) {
       // Fallback if the API returns history arrays.
