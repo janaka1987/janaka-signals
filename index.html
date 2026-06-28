@@ -258,7 +258,10 @@ function connect(){
 
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
-
+if(data.msg_type === "tick"){
+  infoTextEl.innerText =
+    "Live Price: " + data.tick.quote;
+}
     if (data.error) {
       statusEl.innerText = "Error 🔴";
       infoTextEl.innerText = data.error.message || "API error";
