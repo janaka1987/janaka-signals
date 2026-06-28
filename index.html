@@ -505,7 +505,19 @@ function buildStructureFromCandles(){
   setText("choch", choch);
   setText("trend", trend);
 }
-drawStructureLabels();
+function drawStructureLabels(){
+
+if(!candles.length) return;
+
+console.log(
+"HH:", lastHH,
+"HL:", lastHL,
+"LH:", lastLH,
+"LL:", lastLL
+);
+
+}
+
 marketSelect.addEventListener("change", () => {
   currentMarket = marketSelect.value;
   updateMarketName();
