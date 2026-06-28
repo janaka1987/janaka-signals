@@ -505,7 +505,7 @@ function buildStructureFromCandles(){
   setText("choch", choch);
   setText("trend", trend);
 }
-
+drawStructureLabels();
 marketSelect.addEventListener("change", () => {
   currentMarket = marketSelect.value;
   updateMarketName();
