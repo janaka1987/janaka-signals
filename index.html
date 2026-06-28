@@ -265,8 +265,8 @@ if(data.msg_type === "tick"){
   infoTextEl.innerText =
     "Live Price: " + price;
 
-  const now = Math.floor(Date.now()/1000);
-  const minute = Math.floor(now/60)*60;
+  const tickTime = data.tick.epoch;
+const minute = Math.floor(tickTime / 60) * 60;
 
   if(currentMinute === null){
 
