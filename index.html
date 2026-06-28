@@ -259,8 +259,65 @@ function connect(){
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
 if(data.msg_type === "tick"){
+
+  const price = Number(data.tick.quote);
+
   infoTextEl.innerText =
-    "Live Price: " + data.tick.quote;
+    "Live Price: " + price;
+
+  const now = Math.floor(Date.now()/1000);
+  const minute = Math.floor(now/60)*60;
+
+  if(currentMinute === null){
+
+    currentMinute = minute;
+
+    currentCandle = {
+      time: minute,
+      open: price,
+      high: price,
+      low: price,
+      close: price
+    };
+
+    candles.push(currentCandle);
+
+    candleSeries.setData(candles);
+
+  }else if(minute === currentMinute){
+
+    currentCandle.high =
+      Math.max(currentCandle.high, price);
+
+    currentCandle.low =
+      Math.min(currentCandle.low, price);
+
+    currentCandle.close = price;
+
+    candleSeries.update(currentCandle);
+
+  }else{
+
+    currentMinute = minute;
+
+    currentCandle = {
+      time: minute,
+      open: price,
+      high: price,
+      low: price,
+      close: price
+    };
+
+    candles.push(currentCandle);
+
+    if(candles.length > MAX_CANDLES){
+      candles.shift();
+    }
+
+    candleSeries.update(currentCandle);
+  }
+
+  return;
 }
     if (data.error) {
       statusEl.innerText = "Error 🔴";
