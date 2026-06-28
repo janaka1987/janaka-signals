@@ -505,26 +505,10 @@ function buildStructureFromCandles(){
   setText("bos", bos);
   setText("choch", choch);
   setText("trend", trend);
-  drawStructureLabels();
-drawSupportResistance();
+  
 }
 
-function drawStructureLabels(){
 
-if(!candleSeries) return;
-if(candles.length < 10) return;
-
-const markers = [];
-
-if(lastHH !== null){
-markers.push({
-time: candles[candles.length-1].time,
-position: 'aboveBar',
-color: '#00aaff',
-shape: 'circle',
-text: 'HH'
-});
-}
 
 if(lastHL !== null){
 markers.push({
@@ -562,22 +546,7 @@ candleSeries.setMarkers(markers);
 
 }
 
-function drawSupportResistance(){
 
-if(!chart) return;
-if(candles.length < 20) return;
-
-const recent = candles.slice(-20);
-
-const support =
-Math.min(...recent.map(c => c.low));
-
-const resistance =
-Math.max(...recent.map(c => c.high));
-
-if(supportLine){
-chart.removeSeries(supportLine);
-}
 
 if(resistanceLine){
 chart.removeSeries(resistanceLine);
