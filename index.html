@@ -562,6 +562,54 @@ candleSeries.setMarkers(markers);
 
 }
 
+function drawSupportResistance(){
+
+if(!chart) return;
+if(candles.length < 20) return;
+
+const recent = candles.slice(-20);
+
+const support =
+Math.min(...recent.map(c => c.low));
+
+const resistance =
+Math.max(...recent.map(c => c.high));
+
+if(supportLine){
+chart.removeSeries(supportLine);
+}
+
+if(resistanceLine){
+chart.removeSeries(resistanceLine);
+}
+
+supportLine = chart.addLineSeries({
+color:"#00ff88",
+lineWidth:2
+});
+
+resistanceLine = chart.addLineSeries({
+color:"#ff4444",
+lineWidth:2
+});
+
+const start =
+recent[0].time;
+
+const end =
+recent[recent.length-1].time;
+
+supportLine.setData([
+{time:start,value:support},
+{time:end,value:support}
+]);
+
+resistanceLine.setData([
+{time:start,value:resistance},
+{time:end,value:resistance}
+]);
+
+}
 
 marketSelect.addEventListener("change", () => {
   currentMarket = marketSelect.value;
