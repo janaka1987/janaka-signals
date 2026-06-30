@@ -407,8 +407,18 @@ const minute = Math.floor(tickTime / 60) * 60;
   };
 
   ws.onclose = () => {
-    statusEl.innerText = "Disconnected 🔴";
-  };
+
+  statusEl.innerText = "Disconnected 🔴";
+
+  setTimeout(() => {
+
+    statusEl.innerText = "Reconnecting...";
+
+    connect();
+
+  }, 3000);
+
+};
 }
 
 function upsertCandle(candle){
