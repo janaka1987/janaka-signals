@@ -518,35 +518,6 @@ function buildStructureFromCandles(){
   
 }
 
-
-supportLine = chart.addLineSeries({
-color:"#00ff88",
-lineWidth:2
-});
-
-resistanceLine = chart.addLineSeries({
-color:"#ff4444",
-lineWidth:2
-});
-
-const start =
-recent[0].time;
-
-const end =
-recent[recent.length-1].time;
-
-supportLine.setData([
-{time:start,value:support},
-{time:end,value:support}
-]);
-
-resistanceLine.setData([
-{time:start,value:resistance},
-{time:end,value:resistance}
-]);
-
-}
-
 marketSelect.addEventListener("change", () => {
   currentMarket = marketSelect.value;
   updateMarketName();
