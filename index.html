@@ -282,7 +282,22 @@ if(data.msg_type === "candles"){
   }));
 
   candleSeries.setData(candles);
+if(candles.length){
 
+  const last =
+    candles[candles.length - 1];
+
+  currentMinute = last.time;
+
+  currentCandle = {
+    time: last.time,
+    open: last.open,
+    high: last.high,
+    low: last.low,
+    close: last.close
+  };
+
+}
   return;
 }
 if(data.msg_type === "tick"){
