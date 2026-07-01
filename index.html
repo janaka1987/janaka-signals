@@ -499,8 +499,15 @@ function buildStructureFromCandles(){
   } else if (trend === "DOWNTREND 🔴" && cur.close > prev.high) {
     choch = "CHOCH UP 🟢";
   }
-
-  
+console.log(
+"HH =", lastHH,
+"HL =", lastHL,
+"LH =", lastLH,
+"LL =", lastLL,
+"BOS =", bos,
+"CHOCH =", choch
+);
+  }
 
 marketSelect.addEventListener("change", () => {
   currentMarket = marketSelect.value;
