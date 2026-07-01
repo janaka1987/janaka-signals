@@ -147,17 +147,14 @@ height:700
 );
 
 candleSeries =
-chart.addSeries(
-LightweightCharts.CandlestickSeries,
-{
+chart.addCandlestickSeries({
 upColor:"#00ff88",
 downColor:"#ff4444",
 borderUpColor:"#00ff88",
 borderDownColor:"#ff4444",
 wickUpColor:"#00ff88",
 wickDownColor:"#ff4444"
-}
-);
+});
 function connect(){
 
 statusText.innerText = "Connecting...";
