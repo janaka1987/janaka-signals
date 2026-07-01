@@ -501,16 +501,7 @@ function buildStructureFromCandles(){
     choch = "CHOCH UP 🟢";
   }
 
-  // Update UI
-  setText("hh", lastHH !== null ? lastHH.toFixed(2) : "-");
-  setText("hl", lastHL !== null ? lastHL.toFixed(2) : "-");
-  setText("lh", lastLH !== null ? lastLH.toFixed(2) : "-");
-  setText("ll", lastLL !== null ? lastLL.toFixed(2) : "-");
-  setText("bos", bos);
-  setText("choch", choch);
-  setText("trend", trend);
   
-}
 
 marketSelect.addEventListener("change", () => {
   currentMarket = marketSelect.value;
