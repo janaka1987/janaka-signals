@@ -230,7 +230,7 @@ function createChartIfNeeded(){
     wickUpColor: "#00ff88",
     wickDownColor: "#ff4d4d"
   });
-
+let markers = [];
   const ro = new ResizeObserver(entries => {
     for (const entry of entries) {
       const { width } = entry.contentRect;
