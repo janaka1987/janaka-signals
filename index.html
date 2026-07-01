@@ -158,7 +158,43 @@ wickUpColor:"#00ff88",
 wickDownColor:"#ff4444"
 }
 );
+function connect(){
 
+statusText.innerText = "Connecting...";
+
+ws = new WebSocket(
+"wss://ws.derivws.com/websockets/v3?app_id=1089"
+);
+
+ws.onopen = () => {
+
+statusText.innerText =
+"Connected 🟢";
+
+infoText.innerText =
+"Connected to Deriv";
+
+};
+
+ws.onerror = () => {
+
+statusText.innerText =
+"Error 🔴";
+
+};
+
+ws.onclose = () => {
+
+statusText.innerText =
+"Disconnected 🔴";
+
+setTimeout(connect,3000);
+
+};
+
+}
+
+connect();
 </script>
 
 </body>
