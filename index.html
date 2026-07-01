@@ -523,7 +523,61 @@ function buildStructureFromCandles(){
   setText("bos", bos);
   setText("choch", choch);
   setText("trend", trend);
-  
+  markers = [];
+
+if(lastHH !== null){
+
+  markers.push({
+    time: candles[candles.length-1].time,
+    position: "aboveBar",
+    color: "#00aaff",
+    shape: "circle",
+    text: "HH"
+  });
+
+}
+
+if(lastHL !== null){
+
+  markers.push({
+    time: candles[candles.length-2].time,
+    position: "belowBar",
+    color: "#00ff88",
+    shape: "circle",
+    text: "HL"
+  });
+
+}
+
+if(lastLH !== null){
+
+  markers.push({
+    time: candles[candles.length-3].time,
+    position: "aboveBar",
+    color: "#ffaa00",
+    shape: "circle",
+    text: "LH"
+  });
+
+}
+
+if(lastLL !== null){
+
+  markers.push({
+    time: candles[candles.length-4].time,
+    position: "belowBar",
+    color: "#ff4444",
+    shape: "circle",
+    text: "LL"
+  });
+
+}
+
+if(candleSeries.setMarkers){
+
+  candleSeries.setMarkers(markers);
+
+}
 }
 
 marketSelect.addEventListener("change", () => {
