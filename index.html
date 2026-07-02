@@ -148,7 +148,55 @@ height:700
 
 statusText.innerText = "Chart OK";
 infoText.innerText = "JavaScript Running";
+function connect(){
 
+statusText.innerText = "Connecting...";
+
+ws = new WebSocket(
+"wss://ws.derivws.com/websockets/v3?app_id=1089"
+);
+
+ws.onopen = () => {
+
+statusText.innerText = "Connected 🟢";
+
+infoText.innerText = "Connected to Deriv";
+
+ws.send(JSON.stringify({
+ticks:"R_100",
+subscribe:1
+}));
+
+};
+
+ws.onmessage = (msg) => {
+
+const data = JSON.parse(msg.data);
+
+if(data.tick){
+
+infoText.innerText =
+"Price : " + data.tick.quote;
+
+}
+
+};
+
+ws.onerror = () => {
+
+statusText.innerText = "Error 🔴";
+
+};
+
+ws.onclose = () => {
+
+statusText.innerText = "Disconnected 🔴";
+
+};
+
+}
+
+connect();
 </script>
 
 </body>
