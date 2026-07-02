@@ -185,7 +185,7 @@ end:"latest"
 ws.onmessage = (msg) => {
 
 const data = JSON.parse(msg.data);
-if(data.msg_type === "candles"){
+if(data.candles){
 
 const candles = data.candles.map(c => ({
 time: c.epoch,
