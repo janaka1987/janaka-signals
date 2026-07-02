@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -184,273 +183,267 @@ function marketToDisplayName(value){
   const opt = [...marketSelect.options].find(o => o.value === value);
   return opt ? opt.text : value;
 }
+
 function updateMarketName(){
-  marketNameEl.innerText = marketToDisplayName(currentMarket);
+  marketNameEl.innerText = marketToDisplayName(currentMarket);
 }
 
 function createChartIfNeeded(){
-  if (chart) return;
+  if (chart) return;
 
-  chart = LightweightCharts.createChart(chartContainer, {
-    layout: {
-      background: { color: "#0f172a" },
-      textColor: "#ffffff"
-    },
-    grid: {
-      vertLines: { color: "#1f2937" },
-      horzLines: { color: "#1f2937" }
-    },
-    rightPriceScale: {
-      borderColor: "#1f2937"
-    },
-    timeScale: {
-      borderColor: "#1f2937",
-      timeVisible: true,
-      secondsVisible: false
-    },
-    width: chartContainer.clientWidth,
-    height: 500
-  });
+  chart = LightweightCharts.createChart(chartContainer, {
+    layout: {
+      background: { color: "#0f172a" },
+      textColor: "#ffffff"
+    },
+    grid: {
+      vertLines: { color: "#1f2937" },
+      horzLines: { color: "#1f2937" }
+    },
+    rightPriceScale: {
+      borderColor: "#1f2937"
+    },
+    timeScale: {
+      borderColor: "#1f2937",
+      timeVisible: true,
+      secondsVisible: false
+    },
+    width: chartContainer.clientWidth,
+    height: 500
+  });
 
-  candleSeries =
-chart.addSeries(
-LightweightCharts.CandlestickSeries,
-{
-upColor:"#00ff88",
-downColor:"#ff4444",
-borderUpColor:"#00ff88",
-borderDownColor:"#ff4444",
-wickUpColor:"#00ff88",
-wickDownColor:"#ff4444"
-}
-);
-   
-   
-    
-   
+  candleSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
+    upColor: "#00ff88",
+    downColor: "#ff4d4d",
+    borderUpColor: "#00ff88",
+    borderDownColor: "#ff4d4d",
+    wickUpColor: "#00ff88",
+    wickDownColor: "#ff4d4d"
+  });
 
-  const ro = new ResizeObserver(entries => {
-    for (const entry of entries) {
-      const { width } = entry.contentRect;
-      chart.applyOptions({ width: Math.floor(width) });
-    }
-  });
-  ro.observe(chartContainer);
+  const ro = new ResizeObserver(entries => {
+    for (const entry of entries) {
+      const { width } = entry.contentRect;
+      chart.applyOptions({ width: Math.floor(width) });
+    }
+  });
+  ro.observe(chartContainer);
 }
 
 function connect(){
-  if (ws) {
-    try { ws.close(); } catch (e) {}
-    ws = null;
-  }
+  if (ws) {
+    try { ws.close(); } catch (e) {}
+    ws = null;
+  }
 
-  statusEl.innerText = "Connecting...";
-  infoTextEl.innerText = "Loading 1 minute candles...";
-  resetStructure();
-  candles = [];
-  if (candleSeries) candleSeries.setData([]);
+  statusEl.innerText = "Connecting...";
+  infoTextEl.innerText = "Loading 1 minute candles...";
+  resetStructure();
+  candles = [];
+  if (candleSeries) candleSeries.setData([]);
 
-  ws = new WebSocket(wss://ws.derivws.com/websockets/v3?app_id=${APP_ID});
+  ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
 
-  ws.onopen = () => {
-    statusEl.innerText = "Connected 🟢";
+  ws.onopen = () => {
+    statusEl.innerText = "Connected 🟢";
 
-    ws.send(JSON.stringify({
-      ticks_history: currentMarket,
-      end: "latest",
-      style: "candles",
-      granularity: TIMEFRAME,
-      count: MAX_CANDLES,
-      subscribe: 1
-    
-    }));
-  };
+    ws.send(JSON.stringify({
+      ticks_history: currentMarket,
+      end: "latest",
+      style: "candles",
+      granularity: TIMEFRAME,
+      count: MAX_CANDLES,
+      subscribe: 1
+    
+    }));
+  };
 
-  ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
 
-    if (data.error) {
-      statusEl.innerText = "Error 🔴";
-      infoTextEl.innerText = data.error.message || "API error";
-      return;
-    }
+    if (data.error) {
+      statusEl.innerText = "Error 🔴";
+      infoTextEl.innerText = data.error.message || "API error";
+      return;
+    }
 
-    if (data.msg_type === "candles" && Array.isArray(data.candles)) {
-      const formatted = data.candles
-        .map(c => ({
-          time: Number(c.epoch),
-          open: Number(c.open),
-          high: Number(c.high),
-          low: Number(c.low),
-          close: Number(c.close)
-        }))
-        .filter(c => Number.isFinite(c.time) && Number.isFinite(c.open) && Number.isFinite(c.high) && Number.isFinite(c.low) && Number.isFinite(c.close));
+    if (data.msg_type === "candles" && Array.isArray(data.candles)) {
+      const formatted = data.candles
+        .map(c => ({
+          time: Number(c.epoch),
+          open: Number(c.open),
+          high: Number(c.high),
+          low: Number(c.low),
+          close: Number(c.close)
+        }))
+        .filter(c => Number.isFinite(c.time) && Number.isFinite(c.open) && Number.isFinite(c.high) && Number.isFinite(c.low) && Number.isFinite(c.close));
 
-      candles = formatted;
-      candleSeries.setData(candles);
-      chart.timeScale().fitContent();
+      candles = formatted;
+      candleSeries.setData(candles);
+      chart.timeScale().fitContent();
 
-      infoTextEl.innerText = Loaded ${candles.length} candles;
-      buildStructureFromCandles();
-      return;
-    }
+      infoTextEl.innerText = `Loaded ${candles.length} candles`;
+      buildStructureFromCandles();
+      return;
+    }
 
-    if (data.msg_type === "history" && data.history && Array.isArray(data.history.prices) && Array.isArray(data.history.times)) {
-      // Fallback if the API returns history arrays.
-      const prices = data.history.prices;
-      const times = data.history.times;
+    if (data.msg_type === "history" && data.history && Array.isArray(data.history.prices) && Array.isArray(data.history.times)) {
+      // Fallback if the API returns history arrays.
+      const prices = data.history.prices;
+      const times = data.history.times;
 
-      const fallback = [];
-      for (let i = 0; i < Math.min(prices.length, times.length); i++) {
-        const p = Number(prices[i]);
-        const t = Number(times[i]);
-        if (Number.isFinite(p) && Number.isFinite(t)) {
-          fallback.push({
-            time: t,
-            open: p,
-            high: p,
-            low: p,
-            close: p
-          });
-        }
-      }
+      const fallback = [];
+      for (let i = 0; i < Math.min(prices.length, times.length); i++) {
+        const p = Number(prices[i]);
+        const t = Number(times[i]);
+        if (Number.isFinite(p) && Number.isFinite(t)) {
+          fallback.push({
+            time: t,
+            open: p,
+            high: p,
+            low: p,
+            close: p
+          });
+        }
+      }
 
-      if (fallback.length) {
-        candles = fallback;
-        candleSeries.setData(candles);
-        chart.timeScale().fitContent();
-        infoTextEl.innerText = Loaded ${candles.length} candles;
-        buildStructureFromCandles();
-      }
-      return;
-    }
+      if (fallback.length) {
+        candles = fallback;
+        candleSeries.setData(candles);
+        chart.timeScale().fitContent();
+        infoTextEl.innerText = `Loaded ${candles.length} candles`;
+        buildStructureFromCandles();
+      }
+      return;
+    }
 
-    // Live candle update fallback
-    if (data.msg_type === "candles" && data.candles && !Array.isArray(data.candles)) {
-      const c = data.candles;
-      const candle = {
-        time: Number(c.epoch),
-        open: Number(c.open),
-        high: Number(c.high),
-        low: Number(c.low),
-        close: Number(c.close)
-      };
+    // Live candle update fallback
+    if (data.msg_type === "candles" && data.candles && !Array.isArray(data.candles)) {
+      const c = data.candles;
+      const candle = {
+        time: Number(c.epoch),
+        open: Number(c.open),
+        high: Number(c.high),
+        low: Number(c.low),
+        close: Number(c.close)
+      };
 
-      if (Number.isFinite(candle.time) && Number.isFinite(candle.open) && Number.isFinite(candle.high) && Number.isFinite(candle.low) && Number.isFinite(candle.close)) {
-        upsertCandle(candle);
-      }
-    }
-  };
-ws.onerror = () => {
-    statusEl.innerText = "Error 🔴";
-    infoTextEl.innerText = "WebSocket error";
-  };
+      if (Number.isFinite(candle.time) && Number.isFinite(candle.open) && Number.isFinite(candle.high) && Number.isFinite(candle.low) && Number.isFinite(candle.close)) {
+        upsertCandle(candle);
+      }
+    }
+  };
 
-  ws.onclose = () => {
-    statusEl.innerText = "Disconnected 🔴";
-  };
+  ws.onerror = () => {
+    statusEl.innerText = "Error 🔴";
+    infoTextEl.innerText = "WebSocket error";
+  };
+
+  ws.onclose = () => {
+    statusEl.innerText = "Disconnected 🔴";
+  };
 }
 
 function upsertCandle(candle){
-  if (!candles.length) {
-    candles.push(candle);
-    candleSeries.setData(candles);
-    return;
-  }
+  if (!candles.length) {
+    candles.push(candle);
+    candleSeries.setData(candles);
+    return;
+  }
 
-  const last = candles[candles.length - 1];
+  const last = candles[candles.length - 1];
 
-  if (last.time === candle.time) {
-    candles[candles.length - 1] = candle;
-    candleSeries.update(candle);
-  } else if (candle.time > last.time) {
-    candles.push(candle);
-    if (candles.length > MAX_CANDLES) candles.shift();
-    candleSeries.update(candle);
-  } else {
-    const idx = candles.findIndex(x => x.time === candle.time);
-    if (idx >= 0) {
-      candles[idx] = candle;
-      candleSeries.setData(candles);
-    }
-  }
+  if (last.time === candle.time) {
+    candles[candles.length - 1] = candle;
+    candleSeries.update(candle);
+  } else if (candle.time > last.time) {
+    candles.push(candle);
+    if (candles.length > MAX_CANDLES) candles.shift();
+    candleSeries.update(candle);
+  } else {
+    const idx = candles.findIndex(x => x.time === candle.time);
+    if (idx >= 0) {
+      candles[idx] = candle;
+      candleSeries.setData(candles);
+    }
+  }
 
-  buildStructureFromCandles();
+  buildStructureFromCandles();
 }
 
 function buildStructureFromCandles(){
-  if (!candles || candles.length < 5) return;
+  if (!candles || candles.length < 5) return;
 
-  const highs = candles.map(c => c.high);
-  const lows = candles.map(c => c.low);
+  const highs = candles.map(c => c.high);
+  const lows = candles.map(c => c.low);
 
-  const currentHigh = Math.max(...highs);
-  const currentLow = Math.min(...lows);
+  const currentHigh = Math.max(...highs);
+  const currentLow = Math.min(...lows);
 
-  // Basic swing detection from recent candles
-  const recent = candles.slice(-20);
-  const swingHigh = Math.max(...recent.map(c => c.high));
-  const swingLow = Math.min(...recent.map(c => c.low));
+  // Basic swing detection from recent candles
+  const recent = candles.slice(-20);
+  const swingHigh = Math.max(...recent.map(c => c.high));
+  const swingLow = Math.min(...recent.map(c => c.low));
 
-  // HH / HL / LH / LL simple tracking
-  const prev = candles[candles.length - 2];
-  const cur = candles[candles.length - 1];
+  // HH / HL / LH / LL simple tracking
+  const prev = candles[candles.length - 2];
+  const cur = candles[candles.length - 1];
 
-  if (cur.high >= currentHigh) {
-    if (lastHH === null || cur.high > lastHH) lastHH = cur.high;
-  }
+  if (cur.high >= currentHigh) {
+    if (lastHH === null || cur.high > lastHH) lastHH = cur.high;
+  }
 
-  if (cur.low <= currentLow) {
-    if (lastLL === null || cur.low < lastLL) lastLL = cur.low;
-  }
+  if (cur.low <= currentLow) {
+    if (lastLL === null || cur.low < lastLL) lastLL = cur.low;
+  }
 
-  if (prev && cur.low > prev.low && cur.high >= prev.high) {
-    if (lastHL === null || cur.low > lastHL) lastHL = cur.low;
-  }
+  if (prev && cur.low > prev.low && cur.high >= prev.high) {
+    if (lastHL === null || cur.low > lastHL) lastHL = cur.low;
+  }
 
-  if (prev && cur.high < prev.high && cur.low <= prev.low) {
-    if (lastLH === null || cur.high < lastLH) lastLH = cur.high;
-  }
+  if (prev && cur.high < prev.high && cur.low <= prev.low) {
+    if (lastLH === null || cur.high < lastLH) lastLH = cur.high;
+  }
 
-  // Trend estimate
-  if (lastHH !== null && lastHL !== null && lastHH > lastHL) {
-    trend = "UPTREND 🟢";
-  } else if (lastLL !== null && lastLH !== null && lastLL < lastLH) {
-    trend = "DOWNTREND 🔴";
-  } else {
-    trend = "RANGE 🟡";
-  }
+  // Trend estimate
+  if (lastHH !== null && lastHL !== null && lastHH > lastHL) {
+    trend = "UPTREND 🟢";
+  } else if (lastLL !== null && lastLH !== null && lastLL < lastLH) {
+    trend = "DOWNTREND 🔴";
+  } else {
+    trend = "RANGE 🟡";
+  }
 
-  // BOS / CHOCH simple detection
-  bos = "NONE";
-  choch = "NONE";
+  // BOS / CHOCH simple detection
+  bos = "NONE";
+  choch = "NONE";
 
-  if (cur.close > swingHigh && cur.close >= prev.high) {
-    bos = "BOS UP 🔥";
-  } else if (cur.close < swingLow && cur.close <= prev.low) {
-    bos = "BOS DOWN 🔥";
-  }
+  if (cur.close > swingHigh && cur.close >= prev.high) {
+    bos = "BOS UP 🔥";
+  } else if (cur.close < swingLow && cur.close <= prev.low) {
+    bos = "BOS DOWN 🔥";
+  }
 
-  if (trend === "UPTREND 🟢" && cur.close < prev.low) {
-    choch = "CHOCH DOWN 🔴";
-  } else if (trend === "DOWNTREND 🔴" && cur.close > prev.high) {
-    choch = "CHOCH UP 🟢";
-  }
+  if (trend === "UPTREND 🟢" && cur.close < prev.low) {
+    choch = "CHOCH DOWN 🔴";
+  } else if (trend === "DOWNTREND 🔴" && cur.close > prev.high) {
+    choch = "CHOCH UP 🟢";
+  }
 
-  // Update UI
-  setText("hh", lastHH !== null ? lastHH.toFixed(2) : "-");
-  setText("hl", lastHL !== null ? lastHL.toFixed(2) : "-");
-  setText("lh", lastLH !== null ? lastLH.toFixed(2) : "-");
-  setText("ll", lastLL !== null ? lastLL.toFixed(2) : "-");
-  setText("bos", bos);
-  setText("choch", choch);
-  setText("trend", trend);
+  // Update UI
+  setText("hh", lastHH !== null ? lastHH.toFixed(2) : "-");
+  setText("hl", lastHL !== null ? lastHL.toFixed(2) : "-");
+  setText("lh", lastLH !== null ? lastLH.toFixed(2) : "-");
+  setText("ll", lastLL !== null ? lastLL.toFixed(2) : "-");
+  setText("bos", bos);
+  setText("choch", choch);
+  setText("trend", trend);
 }
 
 marketSelect.addEventListener("change", () => {
-  currentMarket = marketSelect.value;
-  updateMarketName();
-  connect();
+  currentMarket = marketSelect.value;
+  updateMarketName();
+  connect();
 });
 
 updateMarketName();
