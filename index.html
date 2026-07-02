@@ -1,1 +1,186 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JANAKA SMC DASHBOARD V3</title>
+
+<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+
+<style>
+body{
+  background:#0b1220;
+  color:white;
+  font-family:Arial,sans-serif;
+  margin:0;
+  padding:15px;
+}
+
+h1{
+  text-align:center;
+  color:#00ff88;
+  margin-top:0;
+}
+
+.card{
+  background:#111c2e;
+  border:1px solid #1f3b5b;
+  border-radius:12px;
+  padding:15px;
+  margin-bottom:12px;
+}
+
+select{
+  width:100%;
+  padding:10px;
+  font-size:16px;
+  border-radius:8px;
+  background:#0f172a;
+  color:white;
+  border:none;
+}
+
+#chart{
+  height:500px;
+  width:100%;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+
+.box{
+  background:#0f172a;
+  padding:12px;
+  border-radius:10px;
+}
+
+.value{
+  font-size:18px;
+  font-weight:bold;
+  margin-top:5px;
+}
+
+.small{
+  color:#94a3b8;
+  font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>JANAKA SMC DASHBOARD V3</h1>
+
+<div class="card">
+  <h3>Select Market</h3>
+  <select id="market">
+    <option value="R_10">Volatility 10</option>
+    <option value="R_25">Volatility 25</option>
+    <option value="R_50">Volatility 50</option>
+    <option value="R_75">Volatility 75</option>
+    <option value="R_100" selected>Volatility 100</option>
+
+    <option value="JD10">Jump 10</option>
+    <option value="JD25">Jump 25</option>
+    <option value="JD50">Jump 50</option>
+    <option value="JD75">Jump 75</option>
+    <option value="JD100">Jump 100</option>
+
+    <option value="RDBEAR">Bear Market</option>
+    <option value="RDBULL">Bull Market</option>
+
+    <option value="frxEURUSD">EUR/USD</option>
+    <option value="frxGBPUSD">GBP/USD</option>
+    <option value="frxUSDJPY">USD/JPY</option>
+    <option value="frxAUDUSD">AUD/USD</option>
+  </select>
+</div>
+
+<div class="card">
+  <h3>Market Info</h3>
+  <p>Selected Market: <span id="marketName">Volatility 100</span></p>
+  <p>Status: <span id="status">Connecting...</span></p>
+  <p class="small" id="infoText">Loading 1 minute candles...</p>
+</div>
+
+<div class="card">
+  <h3>📈 Live Candlestick Chart</h3>
+  <div id="chart"></div>
+</div>
+
+<div class="card">
+  <h3>📊 Structure</h3>
+  <div class="grid">
+    <div class="box">HH<div class="value" id="hh">-</div></div>
+    <div class="box">HL<div class="value" id="hl">-</div></div>
+    <div class="box">LH<div class="value" id="lh">-</div></div>
+    <div class="box">LL<div class="value" id="ll">-</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>⚡ Market Structure</h3>
+  <p>BOS: <span id="bos">NONE</span></p>
+  <p>CHOCH: <span id="choch">NONE</span></p>
+  <p>Trend: <span id="trend">WAIT</span></p>
+</div>
+
+<script>
+const APP_ID = "1089";
+const TIMEFRAME = 60; // 1 minute candles
+const MAX_CANDLES = 150;
+
+const marketSelect = document.getElementById("market");
+const marketNameEl = document.getElementById("marketName");
+const statusEl = document.getElementById("status");
+const infoTextEl = document.getElementById("infoText");
+const chartContainer = document.getElementById("chart");
+
+let ws = null;
+let chart = null;
+let candleSeries = null;
+
+let candles = [];
+let currentMarket = marketSelect.value;
+
+let lastSwingHigh = null;
+let lastSwingLow = null;
+let lastHH = null;
+let lastHL = null;
+let lastLH = null;
+let lastLL = null;
+let trend = "WAIT";
+let bos = "NONE";
+let choch = "NONE";
+
+function setText(id, text){
+  document.getElementById(id).innerText = text;
+}
+
+function resetStructure(){
+  lastSwingHigh = null;
+  lastSwingLow = null;
+  lastHH = null;
+  lastHL = null;
+  lastLH = null;
+  lastLL = null;
+  trend = "WAIT";
+  bos = "NONE";
+  choch = "NONE";
+  setText("hh", "-");
+  setText("hl", "-");
+  setText("lh", "-");
+  setText("ll", "-");
+  setText("bos", "NONE");
+  setText("choch", "NONE");
+  setText("trend", "WAIT");
+}
+
+function marketToDisplayName(value){
+  const opt = [...marketSelect.options].find(o => o.value === value);
+  return opt ? opt.text : value;
+}
