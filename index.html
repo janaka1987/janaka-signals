@@ -203,7 +203,14 @@ candleSeries.setData(candles);
 
 return;
 }
+if(data.tick){
 
+const p = Number(data.tick.quote);
+
+infoText.innerText =
+"Price : " + p;
+
+}
 
 };
 
