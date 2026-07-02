@@ -212,14 +212,22 @@ function createChartIfNeeded(){
     height: 500
   });
 
-  candleSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
-    upColor: "#00ff88",
-    downColor: "#ff4d4d",
-    borderUpColor: "#00ff88",
-    borderDownColor: "#ff4d4d",
-    wickUpColor: "#00ff88",
-    wickDownColor: "#ff4d4d"
-  });
+  candleSeries =
+chart.addSeries(
+LightweightCharts.CandlestickSeries,
+{
+upColor:"#00ff88",
+downColor:"#ff4444",
+borderUpColor:"#00ff88",
+borderDownColor:"#ff4444",
+wickUpColor:"#00ff88",
+wickDownColor:"#ff4444"
+}
+);
+   
+   
+    
+   
 
   const ro = new ResizeObserver(entries => {
     for (const entry of entries) {
