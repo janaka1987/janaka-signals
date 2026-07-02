@@ -185,7 +185,17 @@ ws.onmessage = (msg) => {
 const data = JSON.parse(msg.data);
 
 if(data.tick){
+const p = Number(data.tick.quote);
 
+candleSeries.setData([
+{
+time: Math.floor(Date.now()/1000),
+open: p,
+high: p,
+low: p,
+close: p
+}
+]);
 infoText.innerText =
 "Price : " + data.tick.quote;
 
