@@ -185,6 +185,8 @@ end:"latest"
 ws.onmessage = (msg) => {
 
 const data = JSON.parse(msg.data);
+console.log(data);
+infoText.innerText = JSON.stringify(data).substring(0,80);
 if(data.candles){
 
 const candles = data.candles.map(c => ({
