@@ -185,8 +185,11 @@ ws.onmessage = (msg) => {
 const data = JSON.parse(msg.data);
 
 if(data.tick){
+
 const p = Number(data.tick.quote);
 
+infoText.innerText =
+"Price : " + p;
 
 candleSeries.setData([
 {
@@ -197,6 +200,9 @@ low: p - 0.08,
 close: p
 }
 ]);
+
+}
+
 };
 
 ws.onerror = () => {
