@@ -203,24 +203,7 @@ candleSeries.setData(candles);
 
 return;
 }
-if(data.tick){
 
-const p = Number(data.tick.quote);
-
-infoText.innerText =
-"Price : " + p;
-
-candleSeries.setData([
-{
-time: Math.floor(Date.now()/1000),
-open: p - 0.05,
-high: p + 0.08,
-low: p - 0.08,
-close: p
-}
-]);
-
-}
 
 };
 
