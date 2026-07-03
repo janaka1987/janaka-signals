@@ -263,7 +263,24 @@ ws.send(JSON.stringify({
 }));
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
+if (data.msg_type === "tick") {
 
+    const price = Number(data.tick.quote);
+
+    if (candles.length > 0) {
+
+        let last = candles[candles.length - 1];
+
+        last.close = price;
+
+        if (price > last.high) last.high = price;
+        if (price < last.low) last.low = price;
+
+        candleSeries.update(last);
+    }
+
+    return;
+}
     if (data.error) {
       statusEl.innerText = "Error 🔴";
       infoTextEl.innerText = data.error.message || "API error";
