@@ -261,6 +261,7 @@ ws.send(JSON.stringify({
     ticks: currentMarket,
     subscribe: 1
 }));
+};
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
 if (data.msg_type === "tick") {
