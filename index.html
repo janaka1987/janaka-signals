@@ -482,8 +482,66 @@ function detectSwingPoints() {
     console.log("Swing Highs:", swingHighs.length);
     console.log("Swing Lows:", swingLows.length);
 }
-function buildStructureFromCandles() {
 
+function drawStructureMarkers() {
+
+    let structureMarkers = [];
+
+    if (lastHH) {
+        const c = candles.find(x => x.high === lastHH);
+        if (c) {
+            structureMarkers.push({
+                time: c.time,
+                position: "aboveBar",
+                color: "#00ff00",
+                shape: "circle",
+                text: "HH"
+            });
+        }
+    }
+
+    if (lastHL) {
+        const c = candles.find(x => x.low === lastHL);
+        if (c) {
+            structureMarkers.push({
+                time: c.time,
+                position: "belowBar",
+                color: "#00ff00",
+                shape: "circle",
+                text: "HL"
+            });
+        }
+    }
+
+    if (lastLH) {
+        const c = candles.find(x => x.high === lastLH);
+        if (c) {
+            structureMarkers.push({
+                time: c.time,
+                position: "aboveBar",
+                color: "#ff4444",
+                shape: "circle",
+                text: "LH"
+            });
+        }
+    }
+
+    if (lastLL) {
+        const c = candles.find(x => x.low === lastLL);
+        if (c) {
+            structureMarkers.push({
+                time: c.time,
+                position: "belowBar",
+                color: "#ff4444",
+                shape: "circle",
+                text: "LL"
+            });
+        }
+    }
+
+    candleSeries.setMarkers(structureMarkers);
+}
+function buildStructureFromCandles() {
     if (candles.length < 10) return;
 
     let highs = [];
