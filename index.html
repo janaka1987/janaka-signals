@@ -483,22 +483,7 @@ function detectSwingPoints() {
     console.log("Swing Lows:", swingLows.length);
 }
 
-function drawStructureMarkers() {
 
-    let structureMarkers = [];
-
-    if (lastHH) {
-        const c = candles.find(x => x.high === lastHH);
-        if (c) {
-            structureMarkers.push({
-                time: c.time,
-                position: "aboveBar",
-                color: "#00ff00",
-                shape: "circle",
-                text: "HH"
-            });
-        }
-    }
 
     if (lastHL) {
         const c = candles.find(x => x.low === lastHL);
