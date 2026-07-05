@@ -267,10 +267,15 @@ ws.send(JSON.stringify({
 if (data.msg_type === "tick") {
 
     const price = Number(data.tick.quote);
+    const epoch = Number(data.tick.epoch);
 
-    if (candles.length > 0) {
+    const candleTime = Math.floor(epoch / 60) * 60;
 
-        let last = candles[candles.length - 1];
+    if (candles.length === 0) return;
+
+    let last = candles[candles.length - 1];
+
+    if (last.time === candleTime) {
 
         last.close = price;
 
@@ -278,6 +283,26 @@ if (data.msg_type === "tick") {
         if (price < last.low) last.low = price;
 
         candleSeries.update(last);
+
+    } else {
+
+        const newCandle = {
+            time: candleTime,
+            open: last.close,
+            high: price,
+            low: price,
+            close: price
+        };
+
+        candles.push(newCandle);
+
+        if (candles.length > MAX_CANDLES) {
+            candles.shift();
+        }
+
+        candleSeries.update(newCandle);
+
+        buildStructureFromCandles();
     }
 
     return;
