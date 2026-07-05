@@ -490,42 +490,7 @@ function detectSwingPoints() {
 }
 
 for (const s of swingLows) {
-    markers.push({
-        time: s.time,
-        position: "belowBar",
-        color: "#00ff88",
-        shape: "arrowUp",
-        text: "SL"
-    });
-}
 
-if (candleSeries.setMarkers) {
-    candleSeries.setMarkers(markers);
-}
-}
-
-        if (isHigh) {
-            swingHighs.push({
-                index: i,
-                time: candles[i].time,
-                price: candles[i].high
-            });
-        }
-
-        if (isLow) {
-            swingLows.push({
-                index: i,
-                time: candles[i].time,
-                price: candles[i].low
-            });
-        }
-    }
-
-    console.log(
-        "Swing Highs:", swingHighs.length,
-        "Swing Lows:", swingLows.length
-    );
-}
 function buildStructureFromCandles(){
 
     detectSwingPoints();
