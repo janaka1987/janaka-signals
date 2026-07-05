@@ -467,7 +467,10 @@ function detectSwingPoints() {
     );
 }
 function buildStructureFromCandles(){
-  if (!candles || candles.length < 5) return;
+
+    detectSwingPoints();
+
+    if (!candles || candles.length < 5) return;
 
   const highs = candles.map(c => c.high);
   const lows = candles.map(c => c.low);
