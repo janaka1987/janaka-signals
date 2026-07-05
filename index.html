@@ -425,9 +425,8 @@ function detectSwingPoints() {
 
     swingHighs = [];
     swingLows = [];
-    markers = [];
 
-    if (candles.length < (PIVOT * 2 + 1)) return;
+    if (candles.length < 5) return;
 
     for (let i = PIVOT; i < candles.length - PIVOT; i++) {
 
@@ -438,28 +437,43 @@ function detectSwingPoints() {
 
             if (j === i) continue;
 
-            if (candles[j].high >= candles[i].high) {
+            if (candles[j].high >= candles[i].high)
                 isHigh = false;
-            }
 
-            if (candles[j].low <= candles[i].low) {
+            if (candles[j].low <= candles[i].low)
                 isLow = false;
-            }
-        }
+        markers = [];
+
+for (const s of swingHighs) {
+    markers.push({
+        time: s.time,
+        position: "aboveBar",
+        color: "#ff0000",
+        shape: "arrowDown",
+        text: "SH"
+    });
+}
+
+for (const s of swingLows) {
+    markers.push({
+        time: s.time,
+        position: "belowBar",
+        color: "#00ff88",
+        shape: "arrowUp",
+        text: "SL"
+    });
+}
+
+if (candleSeries.setMarkers) {
+    candleSeries.setMarkers(markers);
+}
+}
 
         if (isHigh) {
             swingHighs.push({
                 index: i,
                 time: candles[i].time,
                 price: candles[i].high
-            });
-
-            markers.push({
-                time: candles[i].time,
-                position: "aboveBar",
-                color: "#ff4444",
-                shape: "arrowDown",
-                text: "SH"
             });
         }
 
@@ -469,28 +483,14 @@ function detectSwingPoints() {
                 time: candles[i].time,
                 price: candles[i].low
             });
-
-            markers.push({
-                time: candles[i].time,
-                position: "belowBar",
-                color: "#00ff88",
-                shape: "arrowUp",
-                text: "SL"
-            });
         }
     }
 
-    // Apply markers if supported
-    if (typeof candleSeries.setMarkers === "function") {
-        candleSeries.setMarkers(markers);
-    }
-
-    console.log("Swing Highs:", swingHighs.length);
-    console.log("Swing Lows:", swingLows.length);
+    console.log(
+        "Swing Highs:", swingHighs.length,
+        "Swing Lows:", swingLows.length
+    );
 }
-
-for (const s of swingLows) {
-
 function buildStructureFromCandles(){
 
     detectSwingPoints();
