@@ -225,7 +225,19 @@ function createChartIfNeeded(){
     wickUpColor: "#00ff88",
     wickDownColor: "#ff4d4d"
   });
+const structureDiv = document.createElement("div");
 
+structureDiv.id = "structureLabels";
+
+structureDiv.style.position = "absolute";
+structureDiv.style.left = "0";
+structureDiv.style.top = "0";
+structureDiv.style.width = "100%";
+structureDiv.style.height = "100%";
+structureDiv.style.pointerEvents = "none";
+
+chartContainer.style.position = "relative";
+chartContainer.appendChild(structureDiv);
   const ro = new ResizeObserver(entries => {
     for (const entry of entries) {
       const { width } = entry.contentRect;
