@@ -593,7 +593,36 @@ function buildStructureFromCandles() {
     setText("hl", lastHL ? lastHL.toFixed(2) : "-");
     setText("lh", lastLH ? lastLH.toFixed(2) : "-");
     setText("ll", lastLL ? lastLL.toFixed(2) : "-");
+const box = document.getElementById("structureLabels");
 
+box.innerHTML = "";
+
+function addLabel(text, candle, color){
+
+    if(!candle) return;
+
+    const y = candle.close;
+
+    const div = document.createElement("div");
+
+    div.innerHTML = text;
+
+    div.style.position = "absolute";
+    div.style.color = color;
+    div.style.fontWeight = "bold";
+    div.style.fontSize = "14px";
+    div.style.left = "80%";
+
+    div.style.top =
+      Math.random()*350 + "px";
+
+    box.appendChild(div);
+}
+
+addLabel("HH", candles.find(x=>x.high===lastHH),"#00ff00");
+addLabel("HL", candles.find(x=>x.low===lastHL),"#00ff00");
+addLabel("LH", candles.find(x=>x.high===lastLH),"#ff4444");
+addLabel("LL", candles.find(x=>x.low===lastLL),"#ff4444");
 }
 
 marketSelect.addEventListener("change", () => {
