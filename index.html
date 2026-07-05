@@ -538,7 +538,7 @@ function buildStructureFromCandles() {
     setText("hl", lastHL ? lastHL.toFixed(2) : "-");
     setText("lh", lastLH ? lastLH.toFixed(2) : "-");
     setText("ll", lastLL ? lastLL.toFixed(2) : "-");
-
+drawStructureMarkers();
 }
 
 marketSelect.addEventListener("change", () => {
