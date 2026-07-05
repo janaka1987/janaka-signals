@@ -421,38 +421,7 @@ function upsertCandle(candle){
 
   buildStructureFromCandles();
 }
-function detectSwingPoints() {
 
-    swingHighs = [];
-    swingLows = [];
-
-    if (candles.length < 5) return;
-
-    for (let i = PIVOT; i < candles.length - PIVOT; i++) {
-
-        let isHigh = true;
-        let isLow = true;
-
-        for (let j = i - PIVOT; j <= i + PIVOT; j++) {
-
-            if (j === i) continue;
-
-            if (candles[j].high >= candles[i].high)
-                isHigh = false;
-
-            if (candles[j].low <= candles[i].low)
-                isLow = false;
-        markers = [];
-
-for (const s of swingHighs) {
-    markers.push({
-        time: s.time,
-        position: "aboveBar",
-        color: "#ff0000",
-        shape: "arrowDown",
-        text: "SH"
-    });
-}
 
 for (const s of swingLows) {
     markers.push({
