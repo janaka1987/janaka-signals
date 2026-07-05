@@ -421,7 +421,73 @@ function upsertCandle(candle){
 
   buildStructureFromCandles();
 }
+function detectSwingPoints() {
 
+    swingHighs = [];
+    swingLows = [];
+    markers = [];
+
+    if (candles.length < (PIVOT * 2 + 1)) return;
+
+    for (let i = PIVOT; i < candles.length - PIVOT; i++) {
+
+        let isHigh = true;
+        let isLow = true;
+
+        for (let j = i - PIVOT; j <= i + PIVOT; j++) {
+
+            if (j === i) continue;
+
+            if (candles[j].high >= candles[i].high) {
+                isHigh = false;
+            }
+
+            if (candles[j].low <= candles[i].low) {
+                isLow = false;
+            }
+        }
+
+        if (isHigh) {
+            swingHighs.push({
+                index: i,
+                time: candles[i].time,
+                price: candles[i].high
+            });
+
+            markers.push({
+                time: candles[i].time,
+                position: "aboveBar",
+                color: "#ff4444",
+                shape: "arrowDown",
+                text: "SH"
+            });
+        }
+
+        if (isLow) {
+            swingLows.push({
+                index: i,
+                time: candles[i].time,
+                price: candles[i].low
+            });
+
+            markers.push({
+                time: candles[i].time,
+                position: "belowBar",
+                color: "#00ff88",
+                shape: "arrowUp",
+                text: "SL"
+            });
+        }
+    }
+
+    // Apply markers if supported
+    if (typeof candleSeries.setMarkers === "function") {
+        candleSeries.setMarkers(markers);
+    }
+
+    console.log("Swing Highs:", swingHighs.length);
+    console.log("Swing Lows:", swingLows.length);
+}
 
 for (const s of swingLows) {
     markers.push({
