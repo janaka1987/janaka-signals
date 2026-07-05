@@ -482,7 +482,64 @@ function detectSwingPoints() {
     console.log("Swing Highs:", swingHighs.length);
     console.log("Swing Lows:", swingLows.length);
 }
+function buildStructureFromCandles() {
 
+    if (candles.length < 10) return;
+
+    let highs = [];
+    let lows = [];
+
+    // Detect Pivot Highs / Lows
+    for (let i = PIVOT; i < candles.length - PIVOT; i++) {
+
+        let high = true;
+        let low = true;
+
+        for (let j = i - PIVOT; j <= i + PIVOT; j++) {
+
+            if (j == i) continue;
+
+            if (candles[j].high >= candles[i].high)
+                high = false;
+
+            if (candles[j].low <= candles[i].low)
+                low = false;
+        }
+
+        if (high) highs.push(candles[i]);
+        if (low) lows.push(candles[i]);
+    }
+
+    if (highs.length >= 2) {
+
+        let a = highs[highs.length - 2];
+        let b = highs[highs.length - 1];
+
+        if (b.high > a.high) {
+            lastHH = b.high;
+        } else {
+            lastLH = b.high;
+        }
+    }
+
+    if (lows.length >= 2) {
+
+        let a = lows[lows.length - 2];
+        let b = lows[lows.length - 1];
+
+        if (b.low > a.low) {
+            lastHL = b.low;
+        } else {
+            lastLL = b.low;
+        }
+    }
+
+    setText("hh", lastHH ? lastHH.toFixed(2) : "-");
+    setText("hl", lastHL ? lastHL.toFixed(2) : "-");
+    setText("lh", lastLH ? lastLH.toFixed(2) : "-");
+    setText("ll", lastLL ? lastLL.toFixed(2) : "-");
+
+}
 
 marketSelect.addEventListener("change", () => {
   currentMarket = marketSelect.value;
