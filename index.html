@@ -212,24 +212,7 @@ function setText(id, text){
   document.getElementById(id).innerText = text;
 }
 
-function resetStructure(){
-  lastSwingHigh = null;
-  lastSwingLow = null;
-  lastHH = null;
-  lastHL = null;
-  lastLH = null;
-  lastLL = null;
-  trend = "WAIT";
-  bos = "NONE";
-  choch = "NONE";
-  setText("hh", "-");
-  setText("hl", "-");
-  setText("lh", "-");
-  setText("ll", "-");
-  setText("bos", "NONE");
-  setText("choch", "NONE");
-  setText("trend", "WAIT");
-}
+
 
 function marketToDisplayName(value){
   const opt = [...marketSelect.options].find(o => o.value === value);
