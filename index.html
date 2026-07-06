@@ -449,31 +449,7 @@ function detectSwingPoints() {
 
             if (candles[j].low <= candles[i].low)
                 isLow = false;
-        markers = [];
-
-for (const s of swingHighs) {
-    markers.push({
-        time: s.time,
-        position: "aboveBar",
-        color: "#ff0000",
-        shape: "arrowDown",
-        text: "SH"
-    });
-}
-
-for (const s of swingLows) {
-    markers.push({
-        time: s.time,
-        position: "belowBar",
-        color: "#00ff88",
-        shape: "arrowUp",
-        text: "SL"
-    });
-}
-
-if (candleSeries.setMarkers) {
-    candleSeries.setMarkers(markers);
-}
+        
 }
 
         if (isHigh) {
