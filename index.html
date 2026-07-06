@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+d<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -95,3 +95,57 @@ const COUNT = 200;
 let ws;
 
 let candles = [];
+function connect(){
+
+    ws = new WebSocket(
+        "wss://ws.derivws.com/websockets/v3?app_id=" + APP_ID
+    );
+
+    ws.onopen = function(){
+
+        ws.send(JSON.stringify({
+
+            ticks_history: SYMBOL,
+            style: "candles",
+            granularity: GRANULARITY,
+            count: COUNT,
+            end: "latest",
+            subscribe: 1
+
+        }));
+
+    };
+
+    ws.onmessage = function(event){
+
+        const data = JSON.parse(event.data);
+
+        if(data.error){
+            console.log(data.error);
+            return;
+        }
+
+        if(data.msg_type === "candles"){
+
+            candles = data.candles.map(c=>({
+
+                time:Number(c.epoch),
+                open:Number(c.open),
+                high:Number(c.high),
+                low:Number(c.low),
+                close:Number(c.close)
+
+            }));
+
+            candleSeries.setData(candles);
+
+            chart.timeScale().fitContent();
+        }
+
+    };
+
+    ws.onerror = function(e){
+        console.log(e);
+    };
+
+}
