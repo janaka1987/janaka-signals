@@ -1,639 +1,83 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JANAKA SMC DASHBOARD V3</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
 <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
 <style>
+
 body{
-  background:#0b1220;
-  color:white;
-  font-family:Arial,sans-serif;
-  margin:0;
-  padding:15px;
-}
-
-h1{
-  text-align:center;
-  color:#00ff88;
-  margin-top:0;
-}
-
-.card{
-  background:#111c2e;
-  border:1px solid #1f3b5b;
-  border-radius:12px;
-  padding:15px;
-  margin-bottom:12px;
-}
-
-select{
-  width:100%;
-  padding:10px;
-  font-size:16px;
-  border-radius:8px;
-  background:#0f172a;
-  color:white;
-  border:none;
+    margin:0;
+    background:#0b1220;
 }
 
 #chart{
-  height:500px;
-  width:100%;
+    width:100vw;
+    height:100vh;
 }
 
-.grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:10px;
-}
-
-.box{
-  background:#0f172a;
-  padding:12px;
-  border-radius:10px;
-}
-
-.value{
-  font-size:18px;
-  font-weight:bold;
-  margin-top:5px;
-}
-
-.small{
-  color:#94a3b8;
-  font-size:13px;
-}
 </style>
+
 </head>
 
 <body>
 
-<h1>JANAKA SMC DASHBOARD V3</h1>
-
-<div class="card">
-  <h3>Select Market</h3>
-  <select id="market">
-    <option value="R_10">Volatility 10</option>
-    <option value="R_25">Volatility 25</option>
-    <option value="R_50">Volatility 50</option>
-    <option value="R_75">Volatility 75</option>
-    <option value="R_100" selected>Volatility 100</option>
-
-    <option value="JD10">Jump 10</option>
-    <option value="JD25">Jump 25</option>
-    <option value="JD50">Jump 50</option>
-    <option value="JD75">Jump 75</option>
-    <option value="JD100">Jump 100</option>
-
-    <option value="RDBEAR">Bear Market</option>
-    <option value="RDBULL">Bull Market</option>
-
-    <option value="frxEURUSD">EUR/USD</option>
-    <option value="frxGBPUSD">GBP/USD</option>
-    <option value="frxUSDJPY">USD/JPY</option>
-    <option value="frxAUDUSD">AUD/USD</option>
-  </select>
-</div>
-
-<div class="card">
-  <h3>Market Info</h3>
-  <p>Selected Market: <span id="marketName">Volatility 100</span></p>
-  <p>Status: <span id="status">Connecting...</span></p>
-  <p class="small" id="infoText">Loading 1 minute candles...</p>
-</div>
-
-<div class="card">
-  <h3>📈 Live Candlestick Chart</h3>
-  <div id="chart"></div>
-</div>
-
-<div class="card">
-  <h3>📊 Structure</h3>
-  <div class="grid">
-    <div class="box">HH<div class="value" id="hh">-</div></div>
-    <div class="box">HL<div class="value" id="hl">-</div></div>
-    <div class="box">LH<div class="value" id="lh">-</div></div>
-    <div class="box">LL<div class="value" id="ll">-</div></div>
-  </div>
-</div>
-
-<div class="card">
-  <h3>⚡ Market Structure</h3>
-  <p>BOS: <span id="bos">NONE</span></p>
-  <p>CHOCH: <span id="choch">NONE</span></p>
-  <p>Trend: <span id="trend">WAIT</span></p>
-</div>
+<div id="chart"></div>
 
 <script>
-const APP_ID = "1089";
-const TIMEFRAME = 60; // 1 minute candles
-const MAX_CANDLES = 150;
 
-const marketSelect = document.getElementById("market");
-const marketNameEl = document.getElementById("marketName");
-const statusEl = document.getElementById("status");
-const infoTextEl = document.getElementById("infoText");
-const chartContainer = document.getElementById("chart");
+const chart = LightweightCharts.createChart(
+document.getElementById("chart"),
+{
+    width:window.innerWidth,
+    height:window.innerHeight,
 
-let ws = null;
-let chart = null;
-let candleSeries = null;
-let markers = [];
-let candles = [];
-
-let swingHighs = [];
-let swingLows = [];
-
-const PIVOT = 2;
-let currentMarket = marketSelect.value;
-
-let lastSwingHigh = null;
-let lastSwingLow = null;
-let lastHH = null;
-let lastHL = null;
-let lastLH = null;
-let lastLL = null;
-let trend = "WAIT";
-let bos = "NONE";
-let choch = "NONE";
-
-function setText(id, text){
-  document.getElementById(id).innerText = text;
-}
-
-function resetStructure(){
-  lastSwingHigh = null;
-  lastSwingLow = null;
-  lastHH = null;
-  lastHL = null;
-  lastLH = null;
-  lastLL = null;
-  trend = "WAIT";
-  bos = "NONE";
-  choch = "NONE";
-  setText("hh", "-");
-  setText("hl", "-");
-  setText("lh", "-");
-  setText("ll", "-");
-  setText("bos", "NONE");
-  setText("choch", "NONE");
-  setText("trend", "WAIT");
-}
-
-function marketToDisplayName(value){
-  const opt = [...marketSelect.options].find(o => o.value === value);
-  return opt ? opt.text : value;
-}
-
-function updateMarketName(){
-  marketNameEl.innerText = marketToDisplayName(currentMarket);
-}
-
-function createChartIfNeeded(){
-  if (chart) return;
-
-  chart = LightweightCharts.createChart(chartContainer, {
-    layout: {
-      background: { color: "#0f172a" },
-      textColor: "#ffffff"
+    layout:{
+        background:{color:"#0b1220"},
+        textColor:"#ffffff"
     },
-    grid: {
-      vertLines: { color: "#1f2937" },
-      horzLines: { color: "#1f2937" }
+
+    grid:{
+        vertLines:{color:"#1f2937"},
+        horzLines:{color:"#1f2937"}
     },
-    rightPriceScale: {
-      borderColor: "#1f2937"
+
+    rightPriceScale:{
+        borderColor:"#374151"
     },
-    timeScale: {
-      borderColor: "#1f2937",
-      timeVisible: true,
-      secondsVisible: false
-    },
-    width: chartContainer.clientWidth,
-    height: 500
-  });
 
-  candleSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
-    upColor: "#00ff88",
-    downColor: "#ff4d4d",
-    borderUpColor: "#00ff88",
-    borderDownColor: "#ff4d4d",
-    wickUpColor: "#00ff88",
-    wickDownColor: "#ff4d4d"
-  });
-const structureDiv = document.createElement("div");
-
-structureDiv.id = "structureLabels";
-
-structureDiv.style.position = "absolute";
-structureDiv.style.left = "0";
-structureDiv.style.top = "0";
-structureDiv.style.width = "100%";
-structureDiv.style.height = "100%";
-structureDiv.style.pointerEvents = "none";
-
-chartContainer.style.position = "relative";
-chartContainer.appendChild(structureDiv);
-  const ro = new ResizeObserver(entries => {
-    for (const entry of entries) {
-      const { width } = entry.contentRect;
-      chart.applyOptions({ width: Math.floor(width) });
-    }
-  });
-  ro.observe(chartContainer);
-}
-
-function connect(){
-  if (ws) {
-    try { ws.close(); } catch (e) {}
-    ws = null;
-  }
-
-  statusEl.innerText = "Connecting...";
-  infoTextEl.innerText = "Loading 1 minute candles...";
-  resetStructure();
-  candles = [];
-  if (candleSeries) candleSeries.setData([]);
-
-  ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
-
-  ws.onopen = () => {
-    statusEl.innerText = "Connected 🟢";
-
-    ws.send(JSON.stringify({
-      ticks_history: currentMarket,
-      end: "latest",
-      style: "candles",
-      granularity: TIMEFRAME,
-      count: MAX_CANDLES,
-      subscribe: 1
-    
-    }));
-  
-ws.send(JSON.stringify({
-    ticks: currentMarket,
-    subscribe: 1
-}));
-};
-  ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-if (data.msg_type === "tick") {
-
-    const price = Number(data.tick.quote);
-    const epoch = Number(data.tick.epoch);
-
-    const candleTime = Math.floor(epoch / 60) * 60;
-
-    if (candles.length === 0) return;
-
-    let last = candles[candles.length - 1];
-
-    if (last.time === candleTime) {
-
-        last.close = price;
-
-        if (price > last.high) last.high = price;
-        if (price < last.low) last.low = price;
-
-        candleSeries.update(last);
-
-    } else {
-
-        const newCandle = {
-            time: candleTime,
-            open: last.close,
-            high: price,
-            low: price,
-            close: price
-        };
-
-        candles.push(newCandle);
-
-        if (candles.length > MAX_CANDLES) {
-            candles.shift();
-        }
-
-        candleSeries.update(newCandle);
-
-        buildStructureFromCandles();
+    timeScale:{
+        borderColor:"#374151",
+        timeVisible:true
     }
 
-    return;
-}
-    if (data.error) {
-      statusEl.innerText = "Error 🔴";
-      infoTextEl.innerText = data.error.message || "API error";
-      return;
-    }
-
-    if (data.msg_type === "candles" && Array.isArray(data.candles)) {
-      const formatted = data.candles
-        .map(c => ({
-          time: Number(c.epoch),
-          open: Number(c.open),
-          high: Number(c.high),
-          low: Number(c.low),
-          close: Number(c.close)
-        }))
-        .filter(c => Number.isFinite(c.time) && Number.isFinite(c.open) && Number.isFinite(c.high) && Number.isFinite(c.low) && Number.isFinite(c.close));
-
-      candles = formatted;
-      candleSeries.setData(candles);
-      chart.timeScale().fitContent();
-
-      infoTextEl.innerText = `Loaded ${candles.length} candles`;
-      buildStructureFromCandles();
-      return;
-    }
-
-    if (data.msg_type === "history" && data.history && Array.isArray(data.history.prices) && Array.isArray(data.history.times)) {
-      // Fallback if the API returns history arrays.
-      const prices = data.history.prices;
-      const times = data.history.times;
-
-      const fallback = [];
-      for (let i = 0; i < Math.min(prices.length, times.length); i++) {
-        const p = Number(prices[i]);
-        const t = Number(times[i]);
-        if (Number.isFinite(p) && Number.isFinite(t)) {
-          fallback.push({
-            time: t,
-            open: p,
-            high: p,
-            low: p,
-            close: p
-          });
-        }
-      }
-
-      if (fallback.length) {
-        candles = fallback;
-        candleSeries.setData(candles);
-        chart.timeScale().fitContent();
-        infoTextEl.innerText = `Loaded ${candles.length} candles`;
-        buildStructureFromCandles();
-      }
-      return;
-    }
-
-    // Live candle update fallback
-    if (data.msg_type === "candles" && data.candles && !Array.isArray(data.candles)) {
-      const c = data.candles;
-      const candle = {
-        time: Number(c.epoch),
-        open: Number(c.open),
-        high: Number(c.high),
-        low: Number(c.low),
-        close: Number(c.close)
-      };
-
-      if (Number.isFinite(candle.time) && Number.isFinite(candle.open) && Number.isFinite(candle.high) && Number.isFinite(candle.low) && Number.isFinite(candle.close)) {
-        upsertCandle(candle);
-      }
-    }
-  };
-
-  ws.onerror = () => {
-    statusEl.innerText = "Error 🔴";
-    infoTextEl.innerText = "WebSocket error";
-  };
-
-  ws.onclose = () => {
-    statusEl.innerText = "Disconnected 🔴";
-  };
-}
-
-function upsertCandle(candle){
-  if (!candles.length) {
-    candles.push(candle);
-    candleSeries.setData(candles);
-    return;
-  }
-
-  const last = candles[candles.length - 1];
-
-  if (last.time === candle.time) {
-    candles[candles.length - 1] = candle;
-    candleSeries.update(candle);
-  } else if (candle.time > last.time) {
-    candles.push(candle);
-    if (candles.length > MAX_CANDLES) candles.shift();
-    candleSeries.update(candle);
-  } else {
-    const idx = candles.findIndex(x => x.time === candle.time);
-    if (idx >= 0) {
-      candles[idx] = candle;
-      candleSeries.setData(candles);
-    }
-  }
-
-  buildStructureFromCandles();
-}
-function detectSwingPoints() {
-
-    swingHighs = [];
-    swingLows = [];
-    markers = [];
-
-    if (candles.length < (PIVOT * 2 + 1)) return;
-
-    for (let i = PIVOT; i < candles.length - PIVOT; i++) {
-
-        let isHigh = true;
-        let isLow = true;
-
-        for (let j = i - PIVOT; j <= i + PIVOT; j++) {
-
-            if (j === i) continue;
-
-            if (candles[j].high >= candles[i].high) isHigh = false;
-            if (candles[j].low <= candles[i].low) isLow = false;
-        }
-
-        if (isHigh) {
-            swingHighs.push({
-                index: i,
-                time: candles[i].time,
-                price: candles[i].high
-            });
-
-            markers.push({
-                time: candles[i].time,
-                position: "aboveBar",
-                color: "#ff4444",
-                shape: "arrowDown",
-                text: "SH"
-            });
-        }
-
-        if (isLow) {
-            swingLows.push({
-                index: i,
-                time: candles[i].time,
-                price: candles[i].low
-            });
-
-            markers.push({
-                time: candles[i].time,
-                position: "belowBar",
-                color: "#00ff88",
-                shape: "arrowUp",
-                text: "SL"
-            });
-        }
-    }
-
-    if (typeof candleSeries.setMarkers === "function") {
-        candleSeries.setMarkers(markers);
-    }
-
-    console.log("Swing Highs:", swingHighs.length);
-    console.log("Swing Lows:", swingLows.length);
-}
-
-
-
-    if (lastHL) {
-        const c = candles.find(x => x.low === lastHL);
-        if (c) {
-            structureMarkers.push({
-                time: c.time,
-                position: "belowBar",
-                color: "#00ff00",
-                shape: "circle",
-                text: "HL"
-            });
-        }
-    }
-
-    if (lastLH) {
-        const c = candles.find(x => x.high === lastLH);
-        if (c) {
-            structureMarkers.push({
-                time: c.time,
-                position: "aboveBar",
-                color: "#ff4444",
-                shape: "circle",
-                text: "LH"
-            });
-        }
-    }
-
-    if (lastLL) {
-        const c = candles.find(x => x.low === lastLL);
-        if (c) {
-            structureMarkers.push({
-                time: c.time,
-                position: "belowBar",
-                color: "#ff4444",
-                shape: "circle",
-                text: "LL"
-            });
-        }
-    }
-
-    candleSeries.setMarkers(structureMarkers);
-}
-function buildStructureFromCandles() {
-    if (candles.length < 10) return;
-
-    let highs = [];
-    let lows = [];
-
-    // Detect Pivot Highs / Lows
-    for (let i = PIVOT; i < candles.length - PIVOT; i++) {
-
-        let high = true;
-        let low = true;
-
-        for (let j = i - PIVOT; j <= i + PIVOT; j++) {
-
-            if (j == i) continue;
-
-            if (candles[j].high >= candles[i].high)
-                high = false;
-
-            if (candles[j].low <= candles[i].low)
-                low = false;
-        }
-
-        if (high) highs.push(candles[i]);
-        if (low) lows.push(candles[i]);
-    }
-
-    if (highs.length >= 2) {
-
-        let a = highs[highs.length - 2];
-        let b = highs[highs.length - 1];
-
-        if (b.high > a.high) {
-            lastHH = b.high;
-        } else {
-            lastLH = b.high;
-        }
-    }
-
-    if (lows.length >= 2) {
-
-        let a = lows[lows.length - 2];
-        let b = lows[lows.length - 1];
-
-        if (b.low > a.low) {
-            lastHL = b.low;
-        } else {
-            lastLL = b.low;
-        }
-    }
-
-    setText("hh", lastHH ? lastHH.toFixed(2) : "-");
-    setText("hl", lastHL ? lastHL.toFixed(2) : "-");
-    setText("lh", lastLH ? lastLH.toFixed(2) : "-");
-    setText("ll", lastLL ? lastLL.toFixed(2) : "-");
-const box = document.getElementById("structureLabels");
-
-box.innerHTML = "";
-
-function addLabel(text, candle, color){
-
-    if(!candle) return;
-
-    const y = candle.close;
-
-    const div = document.createElement("div");
-
-    div.innerHTML = text;
-
-    div.style.position = "absolute";
-    div.style.color = color;
-    div.style.fontWeight = "bold";
-    div.style.fontSize = "14px";
-    div.style.left = "80%";
-
-    div.style.top =
-      Math.random()*350 + "px";
-
-    box.appendChild(div);
-}
-
-addLabel("HH", candles.find(x=>x.high===lastHH),"#00ff00");
-addLabel("HL", candles.find(x=>x.low===lastHL),"#00ff00");
-addLabel("LH", candles.find(x=>x.high===lastLH),"#ff4444");
-addLabel("LL", candles.find(x=>x.low===lastLL),"#ff4444");
-}
-
-marketSelect.addEventListener("change", () => {
-  currentMarket = marketSelect.value;
-  updateMarketName();
-  connect();
 });
 
-updateMarketName();
-createChartIfNeeded();
-connect();
+const candleSeries = chart.addCandlestickSeries({
+
+    upColor:"#00ff66",
+    downColor:"#ff4444",
+
+    borderUpColor:"#00ff66",
+    borderDownColor:"#ff4444",
+
+    wickUpColor:"#00ff66",
+    wickDownColor:"#ff4444"
+
+});
+
+window.addEventListener("resize",()=>{
+
+    chart.applyOptions({
+        width:window.innerWidth,
+        height:window.innerHeight
+    });
+
+});
+
 </script>
 
 </body>
