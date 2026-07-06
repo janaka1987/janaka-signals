@@ -544,6 +544,37 @@ function buildStructureFromCandles(){
   setText("bos", bos);
   setText("choch", choch);
   setText("trend", trend);
+markers = [];
+
+if (lastHH !== null) {
+    const c = candles.find(x => x.high === lastHH);
+    if (c) {
+        markers.push({
+            time: c.time,
+            position: "aboveBar",
+            color: "#00ff00",
+            shape: "circle",
+            text: "HH"
+        });
+    }
+}
+
+if (lastHL !== null) {
+    const c = candles.find(x => x.low === lastHL);
+    if (c) {
+        markers.push({
+            time: c.time,
+            position: "belowBar",
+            color: "#00ff00",
+            shape: "circle",
+            text: "HL"
+        });
+    }
+}
+
+if (candleSeries.setMarkers) {
+    candleSeries.setMarkers(markers);
+}
 }
 
 marketSelect.addEventListener("change", () => {
