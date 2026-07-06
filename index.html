@@ -212,7 +212,61 @@ function setText(id, text){
   document.getElementById(id).innerText = text;
 }
 
+function resetStructure() {
 
+    candles = [];
+    markers = [];
+
+    swingHighs = [];
+    swingLows = [];
+
+    lastSwingHigh = null;
+    lastSwingLow = null;
+
+    HH = null;
+    HL = null;
+    LH = null;
+    LL = null;
+
+    previousHH = null;
+    previousHL = null;
+    previousLH = null;
+    previousLL = null;
+
+    trend = "RANGE";
+
+    BOS = "NONE";
+    CHOCH = "NONE";
+
+    lastBreakDirection = null;
+    lastStructureType = null;
+
+    weakHigh = null;
+    weakLow = null;
+
+    strongHigh = null;
+    strongLow = null;
+
+    bosLines = [];
+    chochLines = [];
+    structureLabels = [];
+
+    setText("hh", "-");
+    setText("hl", "-");
+    setText("lh", "-");
+    setText("ll", "-");
+
+    setText("bos", "NONE");
+    setText("choch", "NONE");
+    setText("trend", "WAIT");
+
+    if (candleSeries) {
+        candleSeries.setData([]);
+        if (candleSeries.setMarkers) {
+            candleSeries.setMarkers([]);
+        }
+    }
+}
 
 function marketToDisplayName(value){
   const opt = [...marketSelect.options].find(o => o.value === value);
