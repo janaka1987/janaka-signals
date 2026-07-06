@@ -149,3 +149,17 @@ function connect(){
     };
 
 }
+connect();
+
+window.addEventListener("beforeunload", () => {
+
+    if(ws){
+        ws.close();
+    }
+
+});
+
+</script>
+
+</body>
+</html>
