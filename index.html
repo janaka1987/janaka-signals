@@ -28,7 +28,56 @@ body{
 <div id="chart"></div>
 
 <script>
+const APP_ID = 1089;
 
+let ws;
+
+function connect() {
+
+    ws = new WebSocket(
+        "wss://ws.derivws.com/websockets/v3?app_id=" + APP_ID
+    );
+
+    ws.onopen = () => {
+
+        ws.send(JSON.stringify({
+
+            ticks_history: "R_100",
+            style: "candles",
+            granularity: 60,
+            count: 200,
+            end: "latest",
+            subscribe: 1
+
+        }));
+
+    };
+
+    ws.onmessage = (msg) => {
+
+        const data = JSON.parse(msg.data);
+
+        if (data.msg_type === "candles") {
+
+            const bars = data.candles.map(c => ({
+
+                time: c.epoch,
+                open: Number(c.open),
+                high: Number(c.high),
+                low: Number(c.low),
+                close: Number(c.close)
+
+            }));
+
+            candleSeries.setData(bars);
+
+        }
+
+    };
+
+}
+
+connect();
 const chart = LightweightCharts.createChart(
 document.getElementById("chart"),
 {
