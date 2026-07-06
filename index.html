@@ -142,24 +142,71 @@ const chartContainer = document.getElementById("chart");
 let ws = null;
 let chart = null;
 let candleSeries = null;
-let markers = [];
+//--------------------------------------------------
+// DATA
+//--------------------------------------------------
+
 let candles = [];
+let markers = [];
+
+const PIVOT = 2;
+const MAX_SWINGS = 200;
+
+let currentMarket = marketSelect.value;
+
+//--------------------------------------------------
+// SWINGS
+//--------------------------------------------------
 
 let swingHighs = [];
 let swingLows = [];
 
-const PIVOT = 2;
-let currentMarket = marketSelect.value;
-
 let lastSwingHigh = null;
 let lastSwingLow = null;
-let lastHH = null;
-let lastHL = null;
-let lastLH = null;
-let lastLL = null;
-let trend = "WAIT";
-let bos = "NONE";
-let choch = "NONE";
+
+//--------------------------------------------------
+// MARKET STRUCTURE
+//--------------------------------------------------
+
+let HH = null;
+let HL = null;
+let LH = null;
+let LL = null;
+
+let previousHH = null;
+let previousHL = null;
+let previousLH = null;
+let previousLL = null;
+
+let trend = "RANGE";
+
+let BOS = "NONE";
+let CHOCH = "NONE";
+
+//--------------------------------------------------
+// STRUCTURE STATE
+//--------------------------------------------------
+
+let lastBreakDirection = null;
+let lastStructureType = null;
+
+//--------------------------------------------------
+// LIQUIDITY
+//--------------------------------------------------
+
+let weakHigh = null;
+let weakLow = null;
+
+let strongHigh = null;
+let strongLow = null;
+
+//--------------------------------------------------
+// ARRAYS
+//--------------------------------------------------
+
+let bosLines = [];
+let chochLines = [];
+let structureLabels = [];
 
 function setText(id, text){
   document.getElementById(id).innerText = text;
