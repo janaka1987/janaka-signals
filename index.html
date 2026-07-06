@@ -142,7 +142,6 @@ const chartContainer = document.getElementById("chart");
 let ws = null;
 let chart = null;
 let candleSeries = null;
-let labelSeries = null;
 let markers = [];
 let candles = [];
 
@@ -226,13 +225,7 @@ function createChartIfNeeded(){
     wickUpColor: "#00ff88",
     wickDownColor: "#ff4d4d"
   });
-labelSeries = chart.addLineSeries({
-    color: "transparent",
-    lineWidth: 0,
-    lastValueVisible: false,
-    priceLineVisible: false,
-    crosshairMarkerVisible: false
-});
+
   const ro = new ResizeObserver(entries => {
     for (const entry of entries) {
       const { width } = entry.contentRect;
@@ -449,7 +442,31 @@ function detectSwingPoints() {
 
             if (candles[j].low <= candles[i].low)
                 isLow = false;
-        
+        markers = [];
+
+for (const s of swingHighs) {
+    markers.push({
+        time: s.time,
+        position: "aboveBar",
+        color: "#ff0000",
+        shape: "arrowDown",
+        text: "SH"
+    });
+}
+
+for (const s of swingLows) {
+    markers.push({
+        time: s.time,
+        position: "belowBar",
+        color: "#00ff88",
+        shape: "arrowUp",
+        text: "SL"
+    });
+}
+
+if (candleSeries.setMarkers) {
+    candleSeries.setMarkers(markers);
+}
 }
 
         if (isHigh) {
@@ -544,37 +561,6 @@ function buildStructureFromCandles(){
   setText("bos", bos);
   setText("choch", choch);
   setText("trend", trend);
-markers = [];
-
-if (lastHH !== null) {
-    const c = candles.find(x => x.high === lastHH);
-    if (c) {
-        markers.push({
-            time: c.time,
-            position: "aboveBar",
-            color: "#00ff00",
-            shape: "circle",
-            text: "HH"
-        });
-    }
-}
-
-if (lastHL !== null) {
-    const c = candles.find(x => x.low === lastHL);
-    if (c) {
-        markers.push({
-            time: c.time,
-            position: "belowBar",
-            color: "#00ff00",
-            shape: "circle",
-            text: "HL"
-        });
-    }
-}
-
-if (candleSeries.setMarkers) {
-    candleSeries.setMarkers(markers);
-}
 }
 
 marketSelect.addEventListener("change", () => {
@@ -585,7 +571,7 @@ marketSelect.addEventListener("change", () => {
 
 updateMarketName();
 createChartIfNeeded();
-// connect();
+connect();
 </script>
 
 </body>
