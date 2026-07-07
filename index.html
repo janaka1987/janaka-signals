@@ -749,15 +749,23 @@ if (HH && HL) {
     ) {
 
         BOS = "BOS UP";
-        brokenSwing = HH.time;
+brokenSwing = HH.time;
 
-        markers.push({
-            time: lastCandle.time,
-            position: "aboveBar",
-            color: "#ffff00",
-            shape: "arrowUp",
-            text: "BOS"
-        });
+lastBOS = {
+    time: lastCandle.time,
+    direction: "UP"
+};
+
+markers.push({
+    time: lastCandle.time,
+    position: "aboveBar",
+    color: "#ffff00",
+    shape: "arrowUp",
+    text: "BOS"
+});
+
+        
+            
     }
 }
 
