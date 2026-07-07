@@ -634,35 +634,80 @@ filterStructureSwings();
     LH = null;
     LL = null;
 
-    // Higher High / Lower High
-for (let i = 1; i < swingHighs.length; i++) {
+    //============================
+// STRUCTURE CLASSIFICATION
+//============================
 
-    const prev = swingHighs[i - 1];
-    const curr = swingHighs[i];
+HH = null;
+HL = null;
+LH = null;
+LL = null;
 
-    if (curr.price > prev.price) {
-        curr.type = "HH";
-        HH = curr;
-    } else {
-        curr.type = "LH";
-        LH = curr;
+let lastHigh = null;
+let lastLow = null;
+
+for (const sh of swingHighs) {
+
+    if (!lastHigh) {
+
+        sh.type = "HH";
+        lastHigh = sh;
+        HH = sh;
+        continue;
+
     }
+
+    if (sh.price > lastHigh.price) {
+
+        sh.type = "HH";
+        HH = sh;
+
+    } else {
+
+        sh.type = "LH";
+        LH = sh;
+
+    }
+
+    lastHigh = sh;
 }
 
-// Higher Low / Lower Low
-for (let i = 1; i < swingLows.length; i++) {
+for (const sl of swingLows) {
 
-    const prev = swingLows[i - 1];
-    const curr = swingLows[i];
+    if (!lastLow) {
 
-    if (curr.price > prev.price) {
-        curr.type = "HL";
-        HL = curr;
-    } else {
-        curr.type = "LL";
-        LL = curr;
+        sl.type = "HL";
+        lastLow = sl;
+        HL = sl;
+        continue;
+
     }
+
+    if (sl.price > lastLow.price) {
+
+        sl.type = "HL";
+        HL = sl;
+
+    } else {
+
+        sl.type = "LL";
+        LL = sl;
+
+    }
+
+    lastLow = sl;
 }
+    
+
+ 
+    
+    
+
+
+
+    
+
+        
         
             
 
