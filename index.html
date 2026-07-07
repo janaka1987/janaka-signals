@@ -578,7 +578,83 @@ function detectSwingPoints() {
     candleSeries.setMarkers(markers);
 }
 
-    
+    function buildStructureFromCandles() {
+
+    if (candles.length < (PIVOT * 2 + 1))
+        return;
+
+    detectSwingPoints();
+
+    HH = null;
+    HL = null;
+    LH = null;
+    LL = null;
+
+    // Higher High / Lower High
+    for (let i = 1; i < swingHighs.length; i++) {
+
+        const prev = swingHighs[i - 1];
+        const curr = swingHighs[i];
+
+        if (curr.price > prev.price) {
+            HH = curr;
+        } else {
+            LH = curr;
+        }
+    }
+
+    // Higher Low / Lower Low
+    for (let i = 1; i < swingLows.length; i++) {
+
+        const prev = swingLows[i - 1];
+        const curr = swingLows[i];
+
+        if (curr.price > prev.price) {
+            HL = curr;
+        } else {
+            LL = curr;
+        }
+    }
+
+    //------------------------------------------------
+    // Dashboard
+    //------------------------------------------------
+
+    setText("hh", HH ? HH.price.toFixed(2) : "--");
+    setText("hl", HL ? HL.price.toFixed(2) : "--");
+    setText("lh", LH ? LH.price.toFixed(2) : "--");
+    setText("ll", LL ? LL.price.toFixed(2) : "--");
+
+    //------------------------------------------------
+    // Trend
+    //------------------------------------------------
+
+    BOS = "NONE";
+    CHOCH = "NONE";
+    trend = "RANGE";
+
+    if (HH && HL) {
+        trend = "UPTREND";
+        BOS = "BOS UP";
+    }
+
+    if (LH && LL) {
+        trend = "DOWNTREND";
+        BOS = "BOS DOWN";
+    }
+
+    if (HH && LL) {
+        CHOCH = "CHOCH DOWN";
+    }
+
+    if (LH && HL) {
+        CHOCH = "CHOCH UP";
+    }
+
+    setText("bos", BOS);
+    setText("choch", CHOCH);
+    setText("trend", trend);
+}
         
 
             
