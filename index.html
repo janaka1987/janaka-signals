@@ -728,31 +728,81 @@ for (const sl of swingLows) {
     // Trend
     //------------------------------------------------
 
-    BOS = "NONE";
-    CHOCH = "NONE";
-    trend = "RANGE";
+    //------------------------------------------------
+// BOS / CHOCH
+//------------------------------------------------
 
-    if (HH && HL) {
-        trend = "UPTREND";
+BOS = "NONE";
+CHOCH = "NONE";
+trend = "RANGE";
+
+const lastCandle = candles[candles.length - 1];
+
+if (HH && HL) {
+
+    trend = "UPTREND";
+
+    if (lastCandle.close > HH.price) {
+
         BOS = "BOS UP";
+
+        if (!lastBOS || lastBOS.time !== lastCandle.time) {
+
+            markers.push({
+                time: lastCandle.time,
+                position: "aboveBar",
+                color: "#00ff88",
+                shape: "arrowUp",
+                text: "BOS"
+            });
+
+            lastBOS = lastCandle;
+        }
+
     }
 
-    if (LH && LL) {
-        trend = "DOWNTREND";
+}
+
+if (LH && LL) {
+
+    trend = "DOWNTREND";
+
+    if (lastCandle.close < LL.price) {
+
         BOS = "BOS DOWN";
+
+        if (!lastBOS || lastBOS.time !== lastCandle.time) {
+
+            markers.push({
+                time: lastCandle.time,
+                position: "belowBar",
+                color: "#ff4444",
+                shape: "arrowDown",
+                text: "BOS"
+            });
+
+            lastBOS = lastCandle;
+        }
+
     }
 
-    if (HH && LL) {
-        CHOCH = "CHOCH DOWN";
-    }
+}
 
-    if (LH && HL) {
-        CHOCH = "CHOCH UP";
-    }
+candleSeries.setMarkers(markers);
 
-    setText("bos", BOS);
-    setText("choch", CHOCH);
-    setText("trend", trend);
+setText("bos", BOS);
+setText("choch", CHOCH);
+setText("trend", trend);
+
+    
+
+    
+
+  
+
+ 
+
+    
 
     drawStructureMarkers();
     
