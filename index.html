@@ -874,17 +874,29 @@ function drawStructureMarkers() {
     });
 
     // BOS
-    if (lastBOS) {
+if (lastBOS) {
 
-        allMarkers.push({
+    allMarkers.push({
 
-            time: lastBOS.time,
-            position: BOS === "BOS UP" ? "aboveBar" : "belowBar",
-            color: "#FFD700",
-            shape: BOS === "BOS UP" ? "arrowUp" : "arrowDown",
-            text: "BOS"
+        time: lastBOS.time,
+        position: lastBOS.direction === "UP"
+            ? "aboveBar"
+            : "belowBar",
 
-        });
+        color: "#FFD700",
+
+        shape: lastBOS.direction === "UP"
+            ? "arrowUp"
+            : "arrowDown",
+
+        text: "BOS"
+
+    });
+
+}
+
+    
+            
 
     }
 
