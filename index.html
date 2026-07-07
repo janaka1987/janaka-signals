@@ -738,7 +738,7 @@ trend = "RANGE";
 
 const lastCandle = candles[candles.length - 1];
 
-if (HH && HL) {
+if (HH && lastCandle.close > HH.price) {
 
     trend = "UPTREND";
 
