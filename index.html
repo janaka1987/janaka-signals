@@ -657,7 +657,33 @@ for (let i = 1; i < swingLows.length; i++) {
     
 }
         
+function drawStructureMarkers() {
 
+    markers = [];
+
+    swingHighs.forEach(s => {
+        markers.push({
+            time: s.time,
+            position: "aboveBar",
+            color: s.type === "HH" ? "#00bfff" : "#ff9900",
+            shape: "arrowDown",
+            text: s.type || ""
+        });
+    });
+
+    swingLows.forEach(s => {
+        markers.push({
+            time: s.time,
+            position: "belowBar",
+            color: s.type === "HL" ? "#00ff66" : "#ff3333",
+            shape: "arrowUp",
+            text: s.type || ""
+        });
+    });
+
+    candleSeries.setMarkers(markers);
+
+}
 
 
 
