@@ -580,30 +580,42 @@ function detectSwingPoints() {
     LL = null;
 
     // Higher High / Lower High
-    for (let i = 1; i < swingHighs.length; i++) {
+for (let i = 1; i < swingHighs.length; i++) {
 
-        const prev = swingHighs[i - 1];
-        const curr = swingHighs[i];
+    const prev = swingHighs[i - 1];
+    const curr = swingHighs[i];
 
-        if (curr.price > prev.price) {
-            HH = curr;
-        } else {
-            LH = curr;
-        }
+    if (curr.price > prev.price) {
+        curr.type = "HH";
+        HH = curr;
+    } else {
+        curr.type = "LH";
+        LH = curr;
     }
+}
 
-    // Higher Low / Lower Low
-    for (let i = 1; i < swingLows.length; i++) {
+// Higher Low / Lower Low
+for (let i = 1; i < swingLows.length; i++) {
 
-        const prev = swingLows[i - 1];
-        const curr = swingLows[i];
+    const prev = swingLows[i - 1];
+    const curr = swingLows[i];
 
-        if (curr.price > prev.price) {
-            HL = curr;
-        } else {
-            LL = curr;
-        }
+    if (curr.price > prev.price) {
+        curr.type = "HL";
+        HL = curr;
+    } else {
+        curr.type = "LL";
+        LL = curr;
     }
+}
+        
+            
+
+    
+        
+
+        
+        
 
     //------------------------------------------------
     // Dashboard
