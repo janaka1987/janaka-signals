@@ -810,31 +810,81 @@ setText("trend", trend);
         
 function drawStructureMarkers() {
 
-    
+    let allMarkers = [];
 
+    // HH / LH
     swingHighs.forEach(s => {
-        markers.push({
+
+        allMarkers.push({
             time: s.time,
             position: "aboveBar",
             color: s.type === "HH" ? "#00bfff" : "#ff9900",
             shape: "arrowDown",
             text: s.type || ""
         });
+
     });
 
+    // HL / LL
     swingLows.forEach(s => {
-        markers.push({
+
+        allMarkers.push({
             time: s.time,
             position: "belowBar",
             color: s.type === "HL" ? "#00ff66" : "#ff3333",
             shape: "arrowUp",
             text: s.type || ""
         });
+
     });
 
-    candleSeries.setMarkers(markers);
+    // BOS
+    if (lastBOS) {
+
+        allMarkers.push({
+
+            time: lastBOS.time,
+            position: BOS === "BOS UP" ? "aboveBar" : "belowBar",
+            color: "#FFD700",
+            shape: BOS === "BOS UP" ? "arrowUp" : "arrowDown",
+            text: "BOS"
+
+        });
+
+    }
+
+    // CHOCH
+    if (lastCHOCH) {
+
+        allMarkers.push({
+
+            time: lastCHOCH.time,
+            position: CHOCH === "CHOCH UP" ? "belowBar" : "aboveBar",
+            color: "#00FFFF",
+            shape: CHOCH === "CHOCH UP" ? "arrowUp" : "arrowDown",
+            text: "CHOCH"
+
+        });
+
+    }
+
+    candleSeries.setMarkers(allMarkers);
 
 }
+
+    
+
+    
+    
+            
+
+    
+    
+            
+
+    
+
+
 
 
 
