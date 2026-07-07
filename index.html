@@ -729,70 +729,87 @@ for (const sl of swingLows) {
     //------------------------------------------------
 
     //------------------------------------------------
-// BOS / CHOCH
+// BOS
 //------------------------------------------------
 
 BOS = "NONE";
-CHOCH = "NONE";
 trend = "RANGE";
 
 const lastCandle = candles[candles.length - 1];
 
-if (HH && lastCandle.close > HH.price) {
+// Up Trend
+if (HH && HL) {
 
     trend = "UPTREND";
 
-    if (lastCandle.close > HH.price) {
+    if (
+        lastCandle.close > HH.price &&
+        brokenSwing !== HH.time
+    ) {
 
         BOS = "BOS UP";
+        brokenSwing = HH.time;
 
-        if (!lastBOS || lastBOS.time !== lastCandle.time) {
-
-            markers.push({
-                time: lastCandle.time,
-                position: "aboveBar",
-                color: "#00ff88",
-                shape: "arrowUp",
-                text: "BOS"
-            });
-
-            lastBOS = lastCandle;
-        console.log("BOS UP", lastBOS);
-}
+        markers.push({
+            time: lastCandle.time,
+            position: "aboveBar",
+            color: "#ffff00",
+            shape: "arrowUp",
+            text: "BOS"
+        });
     }
-
 }
 
-if (LL && lastCandle.close < LL.price) {
+// Down Trend
+if (LH && LL) {
 
     trend = "DOWNTREND";
 
-    if (lastCandle.close < LL.price) {
+    if (
+        lastCandle.close < LL.price &&
+        brokenSwing !== LL.time
+    ) {
 
         BOS = "BOS DOWN";
+        brokenSwing = LL.time;
 
-        if (!lastBOS || lastBOS.time !== lastCandle.time) {
-
-            markers.push({
-                time: lastCandle.time,
-                position: "belowBar",
-                color: "#ff4444",
-                shape: "arrowDown",
-                text: "BOS"
-            });
-
-            lastBOS = lastCandle;
-        console.log("BOS DOWN", lastBOS);
-}
+        markers.push({
+            time: lastCandle.time,
+            position: "belowBar",
+            color: "#ffff00",
+            shape: "arrowDown",
+            text: "BOS"
+        });
     }
-
 }
 
-
+candleSeries.setMarkers(markers);
 
 setText("bos", BOS);
 setText("choch", CHOCH);
 setText("trend", trend);
+
+
+
+
+    
+
+
+            
+
+
+
+
+
+        
+
+        
+
+
+
+
+
+
 
     
 
