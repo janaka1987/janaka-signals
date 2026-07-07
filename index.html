@@ -779,16 +779,24 @@ if (LH && LL) {
         brokenSwing !== LL.time
     ) {
 
-        BOS = "BOS DOWN";
-        brokenSwing = LL.time;
+    BOS = "BOS DOWN";
+brokenSwing = LL.time;
 
-        markers.push({
-            time: lastCandle.time,
-            position: "belowBar",
-            color: "#ffff00",
-            shape: "arrowDown",
-            text: "BOS"
-        });
+lastBOS = {
+    time: lastCandle.time,
+    direction: "DOWN"
+};
+
+markers.push({
+    time: lastCandle.time,
+    position: "belowBar",
+    color: "#ffff00",
+    shape: "arrowDown",
+    text: "BOS"
+});
+
+        
+            
     }
 }
 
