@@ -652,53 +652,19 @@ for (let i = 1; i < swingLows.length; i++) {
     setText("bos", BOS);
     setText("choch", CHOCH);
     setText("trend", trend);
-// ---------------- MARKERS ----------------
 
-markers = [];
+    drawStructureMarkers();
+    
 
-if (HH) {
-    markers.push({
-        time: HH.time,
-        position: "aboveBar",
-        color: "#00bfff",
-        shape: "arrowDown",
-        text: "HH"
-    });
-}
-
-if (LH) {
-    markers.push({
-        time: LH.time,
-        position: "aboveBar",
-        color: "#ff9900",
-        shape: "arrowDown",
-        text: "LH"
-    });
-}
-
-if (HL) {
-    markers.push({
-        time: HL.time,
-        position: "belowBar",
-        color: "#00ff66",
-        shape: "arrowUp",
-        text: "HL"
-    });
-}
-
-if (LL) {
-    markers.push({
-        time: LL.time,
-        position: "belowBar",
-        color: "#ff3333",
-        shape: "arrowUp",
-        text: "LL"
-    });
-}
-
-candleSeries.setMarkers(markers);
         
-}
+
+
+
+
+
+
+        
+
             
         
 
