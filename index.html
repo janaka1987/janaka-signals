@@ -711,15 +711,27 @@ for (const sl of swingLows) {
 
     if (sl.price > lastLow.price) {
 
-        sl.type = "HL";
-        HL = sl;
+    sl.type = "HL";
+    HL = sl;
 
-    } else {
+    structureHistory.push({
+        type: "HL",
+        time: sl.time,
+        price: sl.price
+    });
 
-        sl.type = "LL";
-        LL = sl;
+} else {
 
-    }
+    sl.type = "LL";
+    LL = sl;
+
+    structureHistory.push({
+        type: "LL",
+        time: sl.time,
+        price: sl.price
+    });
+
+}
 
     lastLow = sl;
 }
