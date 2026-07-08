@@ -789,7 +789,7 @@ if (
 
 // Uptrend -> CHOCH DOWN
 if (
-    trend === "UPTREND" &&
+    previousTrend === "UPTREND" &&
     HL &&
     lastCandle.close < HL.price
 ) {
@@ -805,7 +805,7 @@ if (
 
 // Downtrend -> CHOCH UP
 if (
-    trend === "DOWNTREND" &&
+    previousTrend === "DOWNTREND" &&
     LH &&
     lastCandle.close > LH.price
 ) {
