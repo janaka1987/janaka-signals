@@ -744,11 +744,11 @@ for (const sl of swingLows) {
 // BOS
 //------------------------------------------------
 
-
+const previousTrend = trend;
 trend = "RANGE";
 
 const lastCandle = candles[candles.length - 1];
-const previousTrend = trend;
+
 // BOS UP
 if (
     HH &&
