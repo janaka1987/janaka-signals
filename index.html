@@ -783,7 +783,41 @@ if (
     };
 }
 
+//------------------------------------------------
+// CHOCH
+//------------------------------------------------
 
+// Uptrend -> CHOCH DOWN
+if (
+    trend === "UPTREND" &&
+    HL &&
+    lastCandle.close < HL.price
+) {
+
+    CHOCH = "CHOCH DOWN";
+
+    lastCHOCH = {
+        time: lastCandle.time,
+        direction: "DOWN"
+    };
+
+}
+
+// Downtrend -> CHOCH UP
+if (
+    trend === "DOWNTREND" &&
+    LH &&
+    lastCandle.close > LH.price
+) {
+
+    CHOCH = "CHOCH UP";
+
+    lastCHOCH = {
+        time: lastCandle.time,
+        direction: "UP"
+    };
+
+}
     
 
     
