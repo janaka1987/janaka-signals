@@ -664,12 +664,19 @@ for (const sh of swingHighs) {
 
     if (!lastHigh) {
 
-        sh.type = "HH";
-        lastHigh = sh;
-        HH = sh;
-        continue;
+    sh.type = "HH";
+    lastHigh = sh;
+    HH = sh;
 
-    }
+    structureHistory.push({
+        type: "HH",
+        time: sh.time,
+        price: sh.price
+    });
+
+    continue;
+
+}
 
     if (sh.price > lastHigh.price) {
 
