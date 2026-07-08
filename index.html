@@ -845,7 +845,10 @@ else if (BOS === "BOS DOWN") {
     trend = "DOWNTREND";
 }
 setText("bos", BOS);
-setText("choch", CHOCH);
+setText(
+    "choch",
+    lastCHOCH ? CHOCH : "NONE"
+);
 setText("trend", trend);
 
 
