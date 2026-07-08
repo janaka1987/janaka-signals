@@ -802,7 +802,12 @@ markers.push({
 }
 
 drawStructureMarkers();
-
+if (BOS === "BOS UP") {
+    trend = "UPTREND";
+}
+else if (BOS === "BOS DOWN") {
+    trend = "DOWNTREND";
+}
 setText("bos", BOS);
 setText("choch", CHOCH);
 setText("trend", trend);
