@@ -673,15 +673,27 @@ for (const sh of swingHighs) {
 
     if (sh.price > lastHigh.price) {
 
-        sh.type = "HH";
-        HH = sh;
+    sh.type = "HH";
+    HH = sh;
 
-    } else {
+    structureHistory.push({
+        type: "HH",
+        time: sh.time,
+        price: sh.price
+    });
 
-        sh.type = "LH";
-        LH = sh;
+} else {
 
-    }
+    sh.type = "LH";
+    LH = sh;
+
+    structureHistory.push({
+        type: "LH",
+        time: sh.time,
+        price: sh.price
+    });
+
+}
 
     lastHigh = sh;
 }
