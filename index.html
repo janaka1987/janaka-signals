@@ -755,7 +755,93 @@ function buildStructureFromCandles() {
         lastLow = sl;
     }
     
+    //------------------------------------------------
+    // Detect BOS
+    //------------------------------------------------
 
+    trend = "RANGE";
+
+    if (HH && lastCandle.close > HH.price) {
+
+        BOS = "BOS UP";
+        trend = "UPTREND";
+
+        structureHistory.push({
+            type: "BOS",
+            direction: "UP",
+            time: lastCandle.time,
+            price: lastCandle.close
+        });
+
+        lastBOS = {
+            direction: "UP",
+            time: lastCandle.time
+        };
+    }
+
+    else if (LL && lastCandle.close < LL.price) {
+
+        BOS = "BOS DOWN";
+        trend = "DOWNTREND";
+
+        structureHistory.push({
+            type: "BOS",
+            direction: "DOWN",
+            time: lastCandle.time,
+            price: lastCandle.close
+        });
+
+        lastBOS = {
+            direction: "DOWN",
+            time: lastCandle.time
+        };
+    }
+
+    //------------------------------------------------
+    // Detect CHOCH
+    //------------------------------------------------
+
+    if (
+        trend === "UPTREND" &&
+        HL &&
+        lastCandle.close < HL.price
+    ) {
+
+        CHOCH = "CHOCH DOWN";
+
+        structureHistory.push({
+            type: "CHOCH",
+            direction: "DOWN",
+            time: lastCandle.time,
+            price: lastCandle.close
+        });
+
+        lastCHOCH = {
+            direction: "DOWN",
+            time: lastCandle.time
+        };
+    }
+
+    else if (
+        trend === "DOWNTREND" &&
+        LH &&
+        lastCandle.close > LH.price
+    ) {
+
+        CHOCH = "CHOCH UP";
+
+        structureHistory.push({
+            type: "CHOCH",
+            direction: "UP",
+            time: lastCandle.time,
+            price: lastCandle.close
+        });
+
+        lastCHOCH = {
+            direction: "UP",
+            time: lastCandle.time
+        };
+    }
         
 
             
