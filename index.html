@@ -859,7 +859,12 @@ if (
         time: lastCandle.time,
         direction: "DOWN"
     };
-
+structureHistory.push({
+    type: "CHOCH",
+    direction: "DOWN",
+    time: lastCandle.time,
+    price: HL.price
+});
 }
 
 // CHOCH UP
