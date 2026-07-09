@@ -636,125 +636,15 @@ function filterStructureSwings() {
     swingLows = filteredLows;
 
 }
-    function buildStructureFromCandles() {
+    
 
-    if (candles.length < (PIVOT * 2 + 1))
-        return;
 
-    if (candles.length < (PIVOT * 2 + 1))
-    return;
 
-detectSwingPoints();
-filterStructureSwings();
+    
 
-structureHistory = [];
 
-HH = null;
-HL = null;
-LH = null;
-LL = null;
 
-    //============================
-// STRUCTURE CLASSIFICATION
-//============================
-
-HH = null;
-HL = null;
-LH = null;
-LL = null;
-
-let lastHigh = null;
-let lastLow = null;
-
-for (const sh of swingHighs) {
-
-    if (!lastHigh) {
-
-    sh.type = "HH";
-    lastHigh = sh;
-    HH = sh;
-
-    structureHistory.push({
-        type: "HH",
-        time: sh.time,
-        price: sh.price
-    });
-
-    continue;
-
-}
-
-    if (sh.price > lastHigh.price) {
-
-    sh.type = "HH";
-    HH = sh;
-
-    structureHistory.push({
-        type: "HH",
-        time: sh.time,
-        price: sh.price
-    });
-
-} else {
-
-    sh.type = "LH";
-    LH = sh;
-
-    structureHistory.push({
-        type: "LH",
-        time: sh.time,
-        price: sh.price
-    });
-
-}
-
-    lastHigh = sh;
-}
-
-for (const sl of swingLows) {
-
-    if (!lastLow) {
-
-    sl.type = "HL";
-    lastLow = sl;
-    HL = sl;
-
-    structureHistory.push({
-        type: "HL",
-        time: sl.time,
-        price: sl.price
-    });
-
-    continue;
-
-}
-
-    if (sl.price > lastLow.price) {
-
-    sl.type = "HL";
-    HL = sl;
-
-    structureHistory.push({
-        type: "HL",
-        time: sl.time,
-        price: sl.price
-    });
-
-} else {
-
-    sl.type = "LL";
-    LL = sl;
-
-    structureHistory.push({
-        type: "LL",
-        time: sl.time,
-        price: sl.price
-    });
-
-}
-
-    lastLow = sl;
-}
+    
     
 
  
@@ -775,118 +665,9 @@ for (const sl of swingLows) {
         
         
 
-    //------------------------------------------------
-    // Dashboard
-    //------------------------------------------------
 
     
-
-    //------------------------------------------------
-    // Trend
-    //------------------------------------------------
-
-    //------------------------------------------------
-// BOS
-//------------------------------------------------
-
-const previousTrend = trend;
-trend = "RANGE";
-
-const lastCandle = candles[candles.length - 1];
-
-// BOS UP
-if (
-    HH &&
-    lastCandle.close > HH.price &&
-    brokenSwing !== HH.time
-) {
-
-    BOS = "BOS UP";
     
-    brokenSwing = HH.time;
-
-    lastBOS = {
-    time: lastCandle.time,
-    direction: "UP"
-};
-
-structureHistory.push({
-    type: "BOS",
-    direction: "UP",
-    time: lastCandle.time,
-    price: HH.price
-});
-}
-
-// BOS DOWN
-if (
-    LL &&
-    lastCandle.close < LL.price &&
-    brokenSwing !== LL.time
-) {
-
-    BOS = "BOS DOWN";
-    
-    brokenSwing = LL.time;
-
-    lastBOS = {
-    time: lastCandle.time,
-    direction: "DOWN"
-};
-
-structureHistory.push({
-    type: "BOS",
-    direction: "DOWN",
-    time: lastCandle.time,
-    price: LL.price
-});
-}
-
-//------------------------------------------------
-// CHOCH
-//------------------------------------------------
-
-// CHOCH DOWN
-if (
-    previousTrend === "UPTREND" &&
-    HL &&
-    lastCandle.close < HL.price
-) {
-
-    CHOCH = "CHOCH DOWN";
-
-    lastCHOCH = {
-        time: lastCandle.time,
-        direction: "DOWN"
-    };
-structureHistory.push({
-    type: "CHOCH",
-    direction: "DOWN",
-    time: lastCandle.time,
-    price: HL.price
-});
-}
-
-// CHOCH UP
-if (
-    previousTrend === "DOWNTREND" &&
-    LH &&
-    lastCandle.close > LH.price
-) {
-
-    CHOCH = "CHOCH UP";
-
-    lastCHOCH = {
-        time: lastCandle.time,
-        direction: "UP"
-    };
-structureHistory.push({
-    type: "CHOCH",
-    direction: "UP",
-    time: lastCandle.time,
-    price: LH.price
-});
-}
     
 
     
@@ -906,12 +687,7 @@ structureHistory.push({
 
 
 
-drawStructureMarkers();
-if (BOS === "BOS UP") {
-    trend = "UPTREND";
-}
-else if (BOS === "BOS DOWN") {
-    trend = "DOWNTREND";
+
 
         
 function drawStructureMarkers() {
