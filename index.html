@@ -861,10 +861,14 @@ function buildStructureFromCandles() {
 
         // CHOCH UP
         if (
-            currentTrend === "DOWNTREND" &&
-            LH &&
-            c.close > LH.price
-        ) {
+    currentTrend === "DOWNTREND" &&
+    LH &&
+    c.close > LH.price &&
+    BOS !== "BOS UP"
+) {
+          
+            
+    
 
             CHOCH = "CHOCH UP";
 
