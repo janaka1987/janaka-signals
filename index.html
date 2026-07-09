@@ -830,9 +830,16 @@ if (
     brokenSwing = LL.time;
 
     lastBOS = {
-        time: lastCandle.time,
-        direction: "DOWN"
-    };
+    time: lastCandle.time,
+    direction: "DOWN"
+};
+
+structureHistory.push({
+    type: "BOS",
+    direction: "DOWN",
+    time: lastCandle.time,
+    price: LL.price
+});
 }
 
 //------------------------------------------------
