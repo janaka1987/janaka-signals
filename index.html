@@ -885,7 +885,19 @@ function buildStructureFromCandles() {
     }
 
     trend = currentTrend;
+if (trend === "UPTREND") {
 
+    BOS = "BOS UP";
+
+} else if (trend === "DOWNTREND") {
+
+    BOS = "BOS DOWN";
+
+} else {
+
+    BOS = "NONE";
+
+}
                 //------------------------------------------------
     // Update Dashboard
     //------------------------------------------------
