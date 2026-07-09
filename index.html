@@ -638,223 +638,33 @@ function filterStructureSwings() {
 }
     
 
-function buildStructureFromCandles() {
 
-    if (candles.length < (PIVOT * 2 + 1))
-        return;
 
-    detectSwingPoints();
-    filterStructureSwings();
+    
 
-    structureHistory = [];
+    
 
-    HH = null;
-    HL = null;
-    LH = null;
-    LL = null;
+        
 
-    let lastHigh = null;
-    let lastLow = null;
+            
 
-    //------------------------------------------------
-    // HH / LH
-    //------------------------------------------------
+            
 
-    for (const sh of swingHighs) {
+        
 
-        if (!lastHigh) {
+    
+        
 
-            sh.type = "HH";
-            HH = sh;
-            lastHigh = sh;
+    
 
-            structureHistory.push({
-                type: "HH",
-                time: sh.time,
-                price: sh.price
-            });
+    
 
-            continue;
-        }
+        
+        
 
-        if (sh.price > lastHigh.price) {
+        
 
-            sh.type = "HH";
-            HH = sh;
-
-        } else {
-
-            sh.type = "LH";
-            LH = sh;
-
-        }
-
-        structureHistory.push({
-            type: sh.type,
-            time: sh.time,
-            price: sh.price
-        });
-
-        lastHigh = sh;
-    }
-
-    //------------------------------------------------
-    // HL / LL
-    //------------------------------------------------
-
-    for (const sl of swingLows) {
-
-        if (!lastLow) {
-
-            sl.type = "HL";
-            HL = sl;
-            lastLow = sl;
-
-            structureHistory.push({
-                type: "HL",
-                time: sl.time,
-                price: sl.price
-            });
-
-            continue;
-        }
-
-        if (sl.price > lastLow.price) {
-
-            sl.type = "HL";
-            HL = sl;
-
-        } else {
-
-            sl.type = "LL";
-            LL = sl;
-
-        }
-
-        structureHistory.push({
-            type: sl.type,
-            time: sl.time,
-            price: sl.price
-        });
-
-        lastLow = sl;
-    }
-
-        //------------------------------------------------
-    // BOS / CHOCH
-    //------------------------------------------------
-
-    const lastCandle = candles[candles.length - 1];
-
-    // කලින් trend එක මතක තියාගන්න
-    const previousTrend = trend;
-
-    BOS = "NONE";
-    CHOCH = "NONE";
-
-    // BOS UP
-    if (
-        HH &&
-        lastCandle.close > HH.price &&
-        brokenSwing !== HH.time
-    ) {
-
-        BOS = "BOS UP";
-        trend = "UPTREND";
-        brokenSwing = HH.time;
-
-        lastBOS = {
-            time: lastCandle.time,
-            direction: "UP"
-        };
-
-        structureHistory.push({
-            type: "BOS",
-            time: lastCandle.time,
-            direction: "UP"
-        });
-    }
-
-    // BOS DOWN
-    if (
-        LL &&
-        lastCandle.close < LL.price &&
-        brokenSwing !== LL.time
-    ) {
-
-        BOS = "BOS DOWN";
-        trend = "DOWNTREND";
-        brokenSwing = LL.time;
-
-        lastBOS = {
-            time: lastCandle.time,
-            direction: "DOWN"
-        };
-
-        structureHistory.push({
-            type: "BOS",
-            time: lastCandle.time,
-            direction: "DOWN"
-        });
-    }
-
-    // CHOCH DOWN
-    if (
-        previousTrend === "UPTREND" &&
-        HL &&
-        lastCandle.close < HL.price
-    ) {
-
-        CHOCH = "CHOCH DOWN";
-
-        lastCHOCH = {
-            time: lastCandle.time,
-            direction: "DOWN"
-        };
-
-        trend = "DOWNTREND";
-
-        structureHistory.push({
-            type: "CHOCH",
-            time: lastCandle.time,
-            direction: "DOWN"
-        });
-    }
-
-    // CHOCH UP
-    if (
-        previousTrend === "DOWNTREND" &&
-        LH &&
-        lastCandle.close > LH.price
-    ) {
-
-        CHOCH = "CHOCH UP";
-
-        lastCHOCH = {
-            time: lastCandle.time,
-            direction: "UP"
-        };
-
-        trend = "UPTREND";
-
-        structureHistory.push({
-            type: "CHOCH",
-            time: lastCandle.time,
-            direction: "UP"
-        });
-    }
-
-    //------------------------------------------------
-    // Dashboard + Chart
-    //------------------------------------------------
-
-    drawStructureMarkers();
-
-    setText("bos", BOS);
-    setText("choch", CHOCH);
-    setText("trend", trend);
-
-}
+    
 
     
     
