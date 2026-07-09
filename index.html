@@ -751,7 +751,93 @@ function buildStructureFromCandles() {
         lastLow = sl;
     }
     
-    
+        //------------------------------------------------
+    // Build BOS / CHOCH History
+    //------------------------------------------------
+
+    for (const c of candles) {
+
+        // BOS UP
+        if (
+            HH &&
+            c.close > HH.price &&
+            lastBrokenHigh !== HH.time
+        ) {
+
+            currentTrend = "UPTREND";
+            BOS = "BOS UP";
+
+            structureHistory.push({
+                type: "BOS",
+                direction: "UP",
+                time: c.time,
+                price: c.close
+            });
+
+            lastBrokenHigh = HH.time;
+        }
+
+        // BOS DOWN
+        if (
+            LL &&
+            c.close < LL.price &&
+            lastBrokenLow !== LL.time
+        ) {
+
+            currentTrend = "DOWNTREND";
+            BOS = "BOS DOWN";
+
+            structureHistory.push({
+                type: "BOS",
+                direction: "DOWN",
+                time: c.time,
+                price: c.close
+            });
+
+            lastBrokenLow = LL.time;
+        }
+
+        // CHOCH DOWN
+        if (
+            currentTrend === "UPTREND" &&
+            HL &&
+            c.close < HL.price
+        ) {
+
+            CHOCH = "CHOCH DOWN";
+
+            structureHistory.push({
+                type: "CHOCH",
+                direction: "DOWN",
+                time: c.time,
+                price: c.close
+            });
+
+            currentTrend = "DOWNTREND";
+        }
+
+        // CHOCH UP
+        if (
+            currentTrend === "DOWNTREND" &&
+            LH &&
+            c.close > LH.price
+        ) {
+
+            CHOCH = "CHOCH UP";
+
+            structureHistory.push({
+                type: "CHOCH",
+                direction: "UP",
+                time: c.time,
+                price: c.close
+            });
+
+            currentTrend = "UPTREND";
+        }
+
+    }
+
+    trend = currentTrend;
 
             
             
