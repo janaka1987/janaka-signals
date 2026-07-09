@@ -584,7 +584,86 @@ function detectSwingPoints() {
     
 }
 
+function filterStructureSwings() {
 
+    //------------------------------------------------
+    // FILTER HIGHS
+    //------------------------------------------------
+
+    let filteredHighs = [];
+
+    for (const s of swingHighs) {
+
+        if (filteredHighs.length === 0) {
+
+            filteredHighs.push(s);
+            continue;
+
+        }
+
+        let last = filteredHighs[filteredHighs.length - 1];
+
+        // Very close swings
+        if (s.index - last.index <= PIVOT * 4) {
+
+            // Keep only the stronger High
+            if (s.price > last.price) {
+
+                filteredHighs[filteredHighs.length - 1] = s;
+
+            }
+
+        } else {
+
+            filteredHighs.push(s);
+
+        }
+
+    }
+
+    //------------------------------------------------
+    // FILTER LOWS
+    //------------------------------------------------
+
+    let filteredLows = [];
+
+    for (const s of swingLows) {
+
+        if (filteredLows.length === 0) {
+
+            filteredLows.push(s);
+            continue;
+
+        }
+
+        let last = filteredLows[filteredLows.length - 1];
+
+        // Very close swings
+        if (s.index - last.index <= PIVOT * 4) {
+
+            // Keep only the stronger Low
+            if (s.price < last.price) {
+
+                filteredLows[filteredLows.length - 1] = s;
+
+            }
+
+        } else {
+
+            filteredLows.push(s);
+
+        }
+
+    }
+
+    //------------------------------------------------
+    // LIMIT HISTORY
+    //------------------------------------------------
+
+    swingHighs = filteredHighs.slice(-MAX_SWINGS);
+    swingLows = filteredLows.slice(-MAX_SWINGS);
+
+}
             
 
         
