@@ -740,7 +740,109 @@ function buildStructureFromCandles() {
         lastLow = sl;
     }
 
-    
+        //------------------------------------------------
+    // BOS / CHOCH
+    //------------------------------------------------
+
+    const lastCandle = candles[candles.length - 1];
+
+    // කලින් trend එක මතක තියාගන්න
+    const previousTrend = trend;
+
+    BOS = "NONE";
+    CHOCH = "NONE";
+
+    // BOS UP
+    if (
+        HH &&
+        lastCandle.close > HH.price &&
+        brokenSwing !== HH.time
+    ) {
+
+        BOS = "BOS UP";
+        trend = "UPTREND";
+        brokenSwing = HH.time;
+
+        lastBOS = {
+            time: lastCandle.time,
+            direction: "UP"
+        };
+
+        structureHistory.push({
+            type: "BOS",
+            time: lastCandle.time,
+            direction: "UP"
+        });
+    }
+
+    // BOS DOWN
+    if (
+        LL &&
+        lastCandle.close < LL.price &&
+        brokenSwing !== LL.time
+    ) {
+
+        BOS = "BOS DOWN";
+        trend = "DOWNTREND";
+        brokenSwing = LL.time;
+
+        lastBOS = {
+            time: lastCandle.time,
+            direction: "DOWN"
+        };
+
+        structureHistory.push({
+            type: "BOS",
+            time: lastCandle.time,
+            direction: "DOWN"
+        });
+    }
+
+    // CHOCH DOWN
+    if (
+        previousTrend === "UPTREND" &&
+        HL &&
+        lastCandle.close < HL.price
+    ) {
+
+        CHOCH = "CHOCH DOWN";
+
+        lastCHOCH = {
+            time: lastCandle.time,
+            direction: "DOWN"
+        };
+
+        trend = "DOWNTREND";
+
+        structureHistory.push({
+            type: "CHOCH",
+            time: lastCandle.time,
+            direction: "DOWN"
+        });
+    }
+
+    // CHOCH UP
+    if (
+        previousTrend === "DOWNTREND" &&
+        LH &&
+        lastCandle.close > LH.price
+    ) {
+
+        CHOCH = "CHOCH UP";
+
+        lastCHOCH = {
+            time: lastCandle.time,
+            direction: "UP"
+        };
+
+        trend = "UPTREND";
+
+        structureHistory.push({
+            type: "CHOCH",
+            time: lastCandle.time,
+            direction: "UP"
+        });
+    }
 
 
 
