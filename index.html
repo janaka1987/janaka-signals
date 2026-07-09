@@ -638,7 +638,32 @@ function filterStructureSwings() {
 }
     
 
+function buildStructureFromCandles() {
 
+    if (candles.length < (PIVOT * 2 + 1))
+        return;
+
+    detectSwingPoints();
+    filterStructureSwings();
+
+    // Reset current state
+    HH = null;
+    HL = null;
+    LH = null;
+    LL = null;
+
+    BOS = "NONE";
+    CHOCH = "NONE";
+    trend = "RANGE";
+
+    structureHistory = [];
+
+    let lastHigh = null;
+    let lastLow = null;
+
+    let currentTrend = "RANGE";
+    let lastBrokenHigh = null;
+    let lastBrokenLow = null;
 
 
     
