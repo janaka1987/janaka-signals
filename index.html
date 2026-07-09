@@ -816,10 +816,12 @@ function buildStructureFromCandles() {
 
         // BOS DOWN
         if (
-            LL &&
-            c.close < LL.price &&
-            lastBrokenLow !== LL.time
-        ) {
+    LL &&
+    c.close < LL.price &&
+    lastBrokenLow !== LL.time &&
+    currentTrend !== "DOWNTREND"
+) {
+            
 
             currentTrend = "DOWNTREND";
             BOS = "BOS DOWN";
