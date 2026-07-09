@@ -792,10 +792,14 @@ function buildStructureFromCandles() {
 
         // BOS UP
         if (
-            HH &&
-            c.close > HH.price &&
-            lastBrokenHigh !== HH.time
-        ) {
+    HH &&
+    c.close > HH.price &&
+    lastBrokenHigh !== HH.time &&
+    currentTrend !== "UPTREND"
+) {
+            
+            
+          
 
             currentTrend = "UPTREND";
             BOS = "BOS UP";
