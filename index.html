@@ -641,12 +641,18 @@ function filterStructureSwings() {
     if (candles.length < (PIVOT * 2 + 1))
         return;
 
-    detectSwingPoints();
+    if (candles.length < (PIVOT * 2 + 1))
+    return;
+
+detectSwingPoints();
 filterStructureSwings();
-    HH = null;
-    HL = null;
-    LH = null;
-    LL = null;
+
+structureHistory = [];
+
+HH = null;
+HL = null;
+LH = null;
+LL = null;
 
     //============================
 // STRUCTURE CLASSIFICATION
