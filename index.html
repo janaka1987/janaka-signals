@@ -839,7 +839,21 @@ function buildStructureFromCandles() {
 
     trend = currentTrend;
 
-            
+                //------------------------------------------------
+    // Update Dashboard
+    //------------------------------------------------
+
+    setText("bos", BOS);
+    setText("choch", CHOCH);
+    setText("trend", trend);
+
+    //------------------------------------------------
+    // Draw All Markers
+    //------------------------------------------------
+
+    drawStructureMarkers();
+
+}
             
 
         
