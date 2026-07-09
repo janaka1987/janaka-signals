@@ -671,7 +671,89 @@ function buildStructureFromCandles() {
     lastBOS = null;
     lastCHOCH = null;
     
+    //------------------------------------------------
+    // HH / LH
+    //------------------------------------------------
 
+    for (const sh of swingHighs) {
+
+        if (!lastHigh) {
+
+            sh.type = "HH";
+            HH = sh;
+            lastHigh = sh;
+
+            structureHistory.push({
+                type: "HH",
+                time: sh.time,
+                price: sh.price
+            });
+
+            continue;
+        }
+
+        if (sh.price > lastHigh.price) {
+
+            sh.type = "HH";
+            HH = sh;
+
+        } else {
+
+            sh.type = "LH";
+            LH = sh;
+
+        }
+
+        structureHistory.push({
+            type: sh.type,
+            time: sh.time,
+            price: sh.price
+        });
+
+        lastHigh = sh;
+    }
+
+    //------------------------------------------------
+    // HL / LL
+    //------------------------------------------------
+
+    for (const sl of swingLows) {
+
+        if (!lastLow) {
+
+            sl.type = "HL";
+            HL = sl;
+            lastLow = sl;
+
+            structureHistory.push({
+                type: "HL",
+                time: sl.time,
+                price: sl.price
+            });
+
+            continue;
+        }
+
+        if (sl.price > lastLow.price) {
+
+            sl.type = "HL";
+            HL = sl;
+
+        } else {
+
+            sl.type = "LL";
+            LL = sl;
+
+        }
+
+        structureHistory.push({
+            type: sl.type,
+            time: sl.time,
+            price: sl.price
+        });
+
+        lastLow = sl;
+    }
     
 
         
