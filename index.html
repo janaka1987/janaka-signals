@@ -785,7 +785,109 @@ function buildStructureFromCandles() {
     }
     
             
-            
+          //------------------------------------------------
+// Build BOS / CHOCH History
+//------------------------------------------------
+
+let activeHigh = null;
+let activeLow = null;
+
+for (const c of candles) {
+
+    // -------- BOS UP --------
+    if (
+        HH &&
+        activeHigh !== HH.time &&
+        c.close > HH.price
+    ) {
+
+        currentTrend = "UPTREND";
+        BOS = "BOS UP";
+
+        structureHistory.push({
+            type: "BOS",
+            direction: "UP",
+            time: c.time,
+            price: c.close
+        });
+
+        activeHigh = HH.time;
+        activeLow = null;
+    }
+
+    // -------- BOS DOWN --------
+    if (
+        LL &&
+        activeLow !== LL.time &&
+        c.close < LL.price
+    ) {
+
+        currentTrend = "DOWNTREND";
+        BOS = "BOS DOWN";
+
+        structureHistory.push({
+            type: "BOS",
+            direction: "DOWN",
+            time: c.time,
+            price: c.close
+        });
+
+        activeLow = LL.time;
+        activeHigh = null;
+    }
+
+    // -------- CHOCH DOWN --------
+    if (
+        currentTrend === "UPTREND" &&
+        HL &&
+        c.close < HL.price
+    ) {
+
+        CHOCH = "CHOCH DOWN";
+
+        structureHistory.push({
+            type: "CHOCH",
+            direction: "DOWN",
+            time: c.time,
+            price: c.close
+        });
+
+        currentTrend = "DOWNTREND";
+
+        activeLow = null;
+    }
+
+    // -------- CHOCH UP --------
+    if (
+        currentTrend === "DOWNTREND" &&
+        LH &&
+        c.close > LH.price
+    ) {
+
+        CHOCH = "CHOCH UP";
+
+        structureHistory.push({
+            type: "CHOCH",
+            direction: "UP",
+            time: c.time,
+            price: c.close
+        });
+
+        currentTrend = "UPTREND";
+
+        activeHigh = null;
+    }
+}
+
+trend = currentTrend;
+
+if (trend === "UPTREND") {
+    BOS = "BOS UP";
+} else if (trend === "DOWNTREND") {
+    BOS = "BOS DOWN";
+} else {
+    BOS = "NONE";
+}  
           
 
             
@@ -814,22 +916,6 @@ function buildStructureFromCandles() {
 
             
 
-    }
-
-    trend = currentTrend;
-if (trend === "UPTREND") {
-
-    BOS = "BOS UP";
-
-} else if (trend === "DOWNTREND") {
-
-    BOS = "BOS DOWN";
-
-} else {
-
-    BOS = "NONE";
-
-}
                 //------------------------------------------------
     // Update Dashboard
     //------------------------------------------------
