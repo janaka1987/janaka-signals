@@ -821,10 +821,11 @@ activeLow = null;
 
     // -------- BOS DOWN --------
     if (
-        LL &&
-        activeLow !== LL.time &&
-        c.close < LL.price
-    ) {
+    LL &&
+    activeLow !== LL.time &&
+    c.close < LL.price &&
+    lastBosDownTime !== c.time
+)
 
         currentTrend = "DOWNTREND";
         BOS = "BOS DOWN";
