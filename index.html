@@ -802,7 +802,8 @@ for (const c of candles) {
     activeHigh !== HH.time &&
     c.close > HH.price &&
     lastBosUpTime !== c.time
-)
+
+) {
 
         currentTrend = "UPTREND";
         BOS = "BOS UP";
@@ -825,7 +826,8 @@ activeLow = null;
     activeLow !== LL.time &&
     c.close < LL.price &&
     lastBosDownTime !== c.time
-)
+
+) {
 
         currentTrend = "DOWNTREND";
         BOS = "BOS DOWN";
