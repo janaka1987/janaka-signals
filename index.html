@@ -1222,7 +1222,59 @@ if (trend === "DOWNTREND" && CHOCH !== "CHOCH DOWN") {
 }
 
     
+function drawSupportResistance() {
 
+    if (!candleSeries)
+        return;
+
+    // Remove old lines
+    if (supportLine) {
+        candleSeries.removePriceLine(supportLine);
+        supportLine = null;
+    }
+
+    if (resistanceLine) {
+        candleSeries.removePriceLine(resistanceLine);
+        resistanceLine = null;
+    }
+
+    // -------------------------
+    // Support
+    // -------------------------
+    if (currentSupport !== null) {
+
+        supportLine = candleSeries.createPriceLine({
+
+            price: currentSupport,
+            color: "#00ff88",
+            lineWidth: 2,
+            lineStyle: 2,
+            axisLabelVisible: true,
+            title: "SUPPORT"
+
+        });
+
+    }
+
+    // -------------------------
+    // Resistance
+    // -------------------------
+    if (currentResistance !== null) {
+
+        resistanceLine = candleSeries.createPriceLine({
+
+            price: currentResistance,
+            color: "#ff4444",
+            lineWidth: 2,
+            lineStyle: 2,
+            axisLabelVisible: true,
+            title: "RESISTANCE"
+
+        });
+
+    }
+
+}
         
 
     
