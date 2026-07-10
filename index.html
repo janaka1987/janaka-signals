@@ -909,7 +909,37 @@ for (const c of candles) {
 
 trend = currentTrend;
           
-        
+        //------------------------------------------------
+// Final Structure State
+//------------------------------------------------
+
+if (trend === "UPTREND") {
+
+    BOS = "BOS UP";
+
+} else if (trend === "DOWNTREND") {
+
+    BOS = "BOS DOWN";
+
+} else {
+
+    BOS = "NONE";
+
+}
+
+if (trend === "UPTREND") {
+
+    if (CHOCH !== "CHOCH UP")
+        CHOCH = "NONE";
+
+}
+
+else if (trend === "DOWNTREND") {
+
+    if (CHOCH !== "CHOCH DOWN")
+        CHOCH = "NONE";
+
+}
 
         
 
