@@ -966,17 +966,37 @@ for (let i = structureHistory.length - 1; i >= 0; i--) {
 currentSupport = null;
 currentResistance = null;
 
-if (trend === "UPTREND" && HL) {
+// Latest HL = Support
+if (trend === "UPTREND") {
 
-    currentSupport = HL.price;
+    for (let i = swingLows.length - 1; i >= 0; i--) {
+
+        if (swingLows[i].type === "HL") {
+
+            currentSupport = swingLows[i].price;
+            break;
+
+        }
+
+    }
 
 }
 
-if (trend === "DOWNTREND" && LH) {
+// Latest LH = Resistance
+if (trend === "DOWNTREND") {
 
-    currentResistance = LH.price;
+    for (let i = swingHighs.length - 1; i >= 0; i--) {
 
-}      
+        if (swingHighs[i].type === "LH") {
+
+            currentResistance = swingHighs[i].price;
+            break;
+
+        }
+
+    }
+
+}
 
     
 
