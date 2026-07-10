@@ -1338,7 +1338,47 @@ function drawTrendLine() {
         priceLineVisible: false
 
     });
+// -------------------------
+// UPTREND
+// -------------------------
+if (trend === "UPTREND") {
 
+    const hls = swingLows.filter(s => s.type === "HL");
+
+    if (hls.length >= 2) {
+
+        const p1 = hls[hls.length - 2];
+        const p2 = hls[hls.length - 1];
+
+        trendLineSeries.setData([
+            { time: p1.time, value: p1.price },
+            { time: p2.time, value: p2.price }
+        ]);
+
+    }
+
+}
+
+// -------------------------
+// DOWNTREND
+// -------------------------
+if (trend === "DOWNTREND") {
+
+    const lhs = swingHighs.filter(s => s.type === "LH");
+
+    if (lhs.length >= 2) {
+
+        const p1 = lhs[lhs.length - 2];
+        const p2 = lhs[lhs.length - 1];
+
+        trendLineSeries.setData([
+            { time: p1.time, value: p1.price },
+            { time: p2.time, value: p2.price }
+        ]);
+
+    }
+
+}
 }
     
             
