@@ -803,7 +803,119 @@ let lastBosLevel = null;
 let lastChochDirection = null;
 let lastChochLevel = null;
     
+for (const c of candles) {
 
+    // ==========================
+    // BOS UP
+    // ==========================
+    if (
+        activeHH &&
+        c.close > activeHH.price &&
+        (
+            lastBosDirection !== "UP" ||
+            lastBosLevel !== activeHH.time
+        )
+    ) {
+
+        currentTrend = "UPTREND";
+
+        structureHistory.push({
+            type: "BOS",
+            direction: "UP",
+            time: c.time,
+            price: c.close
+        });
+
+        lastBosDirection = "UP";
+        lastBosLevel = activeHH.time;
+
+        // reset opposite state
+        lastChochDirection = null;
+        lastChochLevel = null;
+    }
+
+    // ==========================
+    // BOS DOWN
+    // ==========================
+    if (
+        activeLL &&
+        c.close < activeLL.price &&
+        (
+            lastBosDirection !== "DOWN" ||
+            lastBosLevel !== activeLL.time
+        )
+    ) {
+
+        currentTrend = "DOWNTREND";
+
+        structureHistory.push({
+            type: "BOS",
+            direction: "DOWN",
+            time: c.time,
+            price: c.close
+        });
+
+        lastBosDirection = "DOWN";
+        lastBosLevel = activeLL.time;
+
+        // reset opposite state
+        lastChochDirection = null;
+        lastChochLevel = null;
+    }
+
+    // ==========================
+    // CHOCH DOWN
+    // ==========================
+    if (
+        currentTrend === "UPTREND" &&
+        activeHL &&
+        c.close < activeHL.price &&
+        (
+            lastChochDirection !== "DOWN" ||
+            lastChochLevel !== activeHL.time
+        )
+    ) {
+
+        structureHistory.push({
+            type: "CHOCH",
+            direction: "DOWN",
+            time: c.time,
+            price: c.close
+        });
+
+        currentTrend = "DOWNTREND";
+
+        lastChochDirection = "DOWN";
+        lastChochLevel = activeHL.time;
+    }
+
+    // ==========================
+    // CHOCH UP
+    // ==========================
+    if (
+        currentTrend === "DOWNTREND" &&
+        activeLH &&
+        c.close > activeLH.price &&
+        (
+            lastChochDirection !== "UP" ||
+            lastChochLevel !== activeLH.time
+        )
+    ) {
+
+        structureHistory.push({
+            type: "CHOCH",
+            direction: "UP",
+            time: c.time,
+            price: c.close
+        });
+
+        currentTrend = "UPTREND";
+
+        lastChochDirection = "UP";
+        lastChochLevel = activeLH.time;
+    }
+
+}
         
 
     
