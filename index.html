@@ -836,7 +836,55 @@ function buildStructureFromCandles() {
             lastBrokenLow = LL.time;
         }
 
-        
+        // CHOCH DOWN
+if (
+
+    currentTrend === "UPTREND" &&
+    HL &&
+    c.close < HL.price &&
+    CHOCH !== "CHOCH DOWN"
+
+) {
+
+    CHOCH = "CHOCH DOWN";
+
+    structureHistory.push({
+
+        type: "CHOCH",
+        direction: "DOWN",
+        time: c.time,
+        price: c.close
+
+    });
+
+    currentTrend = "DOWNTREND";
+
+}
+
+// CHOCH UP
+if (
+
+    currentTrend === "DOWNTREND" &&
+    LH &&
+    c.close > LH.price &&
+    CHOCH !== "CHOCH UP"
+
+) {
+
+    CHOCH = "CHOCH UP";
+
+    structureHistory.push({
+
+        type: "CHOCH",
+        direction: "UP",
+        time: c.time,
+        price: c.close
+
+    });
+
+    currentTrend = "UPTREND";
+
+}
           
           
       
