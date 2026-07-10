@@ -1314,7 +1314,32 @@ function drawSupportResistance() {
 
 }
         
+//------------------------------------------------
+// Trend Line
+//------------------------------------------------
 
+function drawTrendLine() {
+
+    if (!chart)
+        return;
+
+    // Remove old trend line
+    if (trendLineSeries) {
+        chart.removeSeries(trendLineSeries);
+        trendLineSeries = null;
+    }
+
+    trendLineSeries = chart.addLineSeries({
+
+        color: "#00aaff",
+        lineWidth: 2,
+        crosshairMarkerVisible: false,
+        lastValueVisible: false,
+        priceLineVisible: false
+
+    });
+
+}
     
             
 
