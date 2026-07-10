@@ -1353,10 +1353,21 @@ if (trend === "UPTREND") {
         const p1 = hls[hls.length - 2];
         const p2 = hls[hls.length - 1];
 
-        trendLineSeries.setData([
-            { time: p1.time, value: p1.price },
-            { time: p2.time, value: p2.price }
-        ]);
+      const slope =
+    (p2.price - p1.price) /
+    (p2.time - p1.time);
+
+const futureTime =
+    candles[candles.length - 1].time;
+
+const futurePrice =
+    p2.price +
+    slope * (futureTime - p2.time);
+
+trendLineSeries.setData([
+    { time: p1.time, value: p1.price },
+    { time: futureTime, value: futurePrice }
+]);
 
     }
 
