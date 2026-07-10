@@ -798,10 +798,11 @@ for (const c of candles) {
 
     // -------- BOS UP --------
     if (
-        HH &&
-        activeHigh !== HH.time &&
-        c.close > HH.price
-    ) {
+    HH &&
+    activeHigh !== HH.time &&
+    c.close > HH.price &&
+    lastBosUpTime !== c.time
+)
 
         currentTrend = "UPTREND";
         BOS = "BOS UP";
