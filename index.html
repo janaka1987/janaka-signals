@@ -784,7 +784,130 @@ function buildStructureFromCandles() {
         lastLow = sl;
     }
     
-            
+            //------------------------------------------------
+// Build BOS / CHOCH History
+//------------------------------------------------
+
+let activeHigh = null;
+let activeLow = null;
+
+let lastCHOCHDirection = null;
+
+for (const c of candles) {
+
+    //------------------------------------------------
+    // BOS UP
+    //------------------------------------------------
+
+    if (
+        HH &&
+        activeHigh !== HH.time &&
+        c.close > HH.price
+    ) {
+
+        structureHistory.push({
+
+            type: "BOS",
+            direction: "UP",
+            time: c.time,
+            price: c.close
+
+        });
+
+        currentTrend = "UPTREND";
+        BOS = "BOS UP";
+
+        activeHigh = HH.time;
+        activeLow = null;
+    }
+
+    //------------------------------------------------
+    // BOS DOWN
+    //------------------------------------------------
+
+    if (
+        LL &&
+        activeLow !== LL.time &&
+        c.close < LL.price
+    ) {
+
+        structureHistory.push({
+
+            type: "BOS",
+            direction: "DOWN",
+            time: c.time,
+            price: c.close
+
+        });
+
+        currentTrend = "DOWNTREND";
+        BOS = "BOS DOWN";
+
+        activeLow = LL.time;
+        activeHigh = null;
+    }
+
+    //------------------------------------------------
+    // CHOCH DOWN
+    //------------------------------------------------
+
+    if (
+        currentTrend === "UPTREND" &&
+        HL &&
+        c.close < HL.price &&
+        lastCHOCHDirection !== "DOWN"
+    ) {
+
+        structureHistory.push({
+
+            type: "CHOCH",
+            direction: "DOWN",
+            time: c.time,
+            price: c.close
+
+        });
+
+        CHOCH = "CHOCH DOWN";
+
+        currentTrend = "DOWNTREND";
+
+        lastCHOCHDirection = "DOWN";
+
+        activeLow = null;
+    }
+
+    //------------------------------------------------
+    // CHOCH UP
+    //------------------------------------------------
+
+    if (
+        currentTrend === "DOWNTREND" &&
+        LH &&
+        c.close > LH.price &&
+        lastCHOCHDirection !== "UP"
+    ) {
+
+        structureHistory.push({
+
+            type: "CHOCH",
+            direction: "UP",
+            time: c.time,
+            price: c.close
+
+        });
+
+        CHOCH = "CHOCH UP";
+
+        currentTrend = "UPTREND";
+
+        lastCHOCHDirection = "UP";
+
+        activeHigh = null;
+    }
+
+}
+
+trend = currentTrend;
           
         
 
