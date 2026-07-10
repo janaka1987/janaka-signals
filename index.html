@@ -835,7 +835,24 @@ else if (trend === "DOWNTREND") {
 
 }
 
-        
+       //------------------------------------------------
+// Build BOS / CHOCH History
+//------------------------------------------------
+
+let currentTrend = "RANGE";
+
+// Active Structure Levels
+let activeHH = HH;
+let activeHL = HL;
+let activeLH = LH;
+let activeLL = LL;
+
+// Prevent duplicate signals
+let lastBosDirection = null;
+let lastBosLevel = null;
+
+let lastChochDirection = null;
+let lastChochLevel = null; 
 
         
 
