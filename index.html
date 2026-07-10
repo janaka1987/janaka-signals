@@ -959,7 +959,24 @@ for (let i = structureHistory.length - 1; i >= 0; i--) {
     }
 }
     
-            
+      //------------------------------------------------
+// Support / Resistance
+//------------------------------------------------
+
+currentSupport = null;
+currentResistance = null;
+
+if (trend === "UPTREND" && HL) {
+
+    currentSupport = HL.price;
+
+}
+
+if (trend === "DOWNTREND" && LH) {
+
+    currentResistance = LH.price;
+
+}      
 
     
 
