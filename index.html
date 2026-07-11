@@ -605,7 +605,95 @@ function detectSwingPoints() {
     
 }
 
+function filterStructureSwings() {
 
+    // ------------------------------------
+    // Merge all swings in time order
+    // ------------------------------------
+
+    let all = [];
+
+    swingHighs.forEach(s => {
+
+        all.push({
+            ...s,
+            swing: "HIGH"
+        });
+
+    });
+
+    swingLows.forEach(s => {
+
+        all.push({
+            ...s,
+            swing: "LOW"
+        });
+
+    });
+
+    all.sort((a, b) => a.index - b.index);
+
+    // ------------------------------------
+    // Remove weak consecutive swings
+    // ------------------------------------
+
+    let filtered = [];
+
+    for (const s of all) {
+
+        if (filtered.length === 0) {
+
+            filtered.push(s);
+            continue;
+
+        }
+
+        let last = filtered[filtered.length - 1];
+
+        // Same swing type
+        if (last.swing === s.swing) {
+
+            if (s.swing === "HIGH") {
+
+                // keep higher High
+                if (s.price > last.price) {
+
+                    filtered[filtered.length - 1] = s;
+
+                }
+
+            } else {
+
+                // keep lower Low
+                if (s.price < last.price) {
+
+                    filtered[filtered.length - 1] = s;
+
+                }
+
+            }
+
+        } else {
+
+            filtered.push(s);
+
+        }
+
+    }
+
+    // ------------------------------------
+    // Split again
+    // ------------------------------------
+
+    swingHighs = filtered
+        .filter(x => x.swing === "HIGH")
+        .slice(-MAX_SWINGS);
+
+    swingLows = filtered
+        .filter(x => x.swing === "LOW")
+        .slice(-MAX_SWINGS);
+
+}
     
 
 
