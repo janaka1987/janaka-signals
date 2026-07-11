@@ -1167,6 +1167,8 @@ drawTrendLine();
 
     let allMarkers = [];
 
+const visibleHistory = structureHistory.slice(-20);
+
     structureHistory.forEach(s => {
 
         // HH / HL / LH / LL
