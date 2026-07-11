@@ -1358,7 +1358,7 @@ if (trend === "UPTREND") {
     (p2.time - p1.time);
 
 const futureTime =
-    p2.time + (TIMEFRAME * 200);
+    p2.time + (TIMEFRAME * 10);
 
 const futurePrice =
     p2.price +
@@ -1382,7 +1382,7 @@ if (trend === "DOWNTREND") {
 
     if (lhs.length >= 2) {
 
-        const p1 = lhs[0];
+        const p1 = lhs[lhs.length - 2];
 const p2 = lhs[lhs.length - 1];
 
         const slope =
@@ -1390,7 +1390,7 @@ const p2 = lhs[lhs.length - 1];
     (p2.time - p1.time);
 
 const futureTime =
-    p2.time + (TIMEFRAME * 200);
+    p2.time + (TIMEFRAME * 10);
 
 const futurePrice =
     p2.price +
