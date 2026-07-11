@@ -123,7 +123,7 @@ select{
 <script>
 const APP_ID = "1089";
 const TIMEFRAME = 60; // 1 minute candles
-const MAX_CANDLES = 1000;
+const MAX_CANDLES = 300;
 
 const marketSelect = document.getElementById("market");
 const marketNameEl = document.getElementById("marketName");
@@ -435,7 +435,18 @@ if (data.msg_type === "tick") {
 
       infoTextEl.innerText = `Loaded ${candles.length} candles`;
       buildStructureFromCandles();
-      return;
+      chart.timeScale().fitContent();
+
+chart.timeScale().setVisibleLogicalRange({
+
+    from: candles.length - 80,
+    to: candles.length + 5
+
+});
+
+chart.timeScale().scrollToRealTime();
+
+return;
     }
 
     if (data.msg_type === "history" && data.history && Array.isArray(data.history.prices) && Array.isArray(data.history.times)) {
