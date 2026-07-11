@@ -1350,8 +1350,8 @@ if (trend === "UPTREND") {
 
     if (swingLows.length >= 2) {
 
-        const p1 = hls[hls.length - 2];
-        const p2 = hls[hls.length - 1];
+        const p1 = swingLows[swingLows.length - 2];
+const p2 = swingLows[swingLows.length - 1];
 
       const slope =
     (p2.price - p1.price) /
