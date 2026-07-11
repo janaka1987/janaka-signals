@@ -1378,9 +1378,7 @@ trendLineSeries.setData([
 // -------------------------
 if (trend === "DOWNTREND") {
 
-    const lhs = swingHighs
-    .filter(s => s.type === "LH")
-    .slice(-5);
+    const lhs = swingHighs;
 
     if (lhs.length >= 2) {
 
