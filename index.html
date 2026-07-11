@@ -1168,7 +1168,17 @@ drawTrendLine();
     let allMarkers = [];
 
 const visibleHistory = structureHistory.slice(-20);
+const recentStructure = visibleHistory.filter(s =>
+    s.type === "HH" ||
+    s.type === "HL" ||
+    s.type === "LH" ||
+    s.type === "LL"
+).slice(-6);
 
+const recentSignals = visibleHistory.filter(s =>
+    s.type === "BOS" ||
+    s.type === "CHOCH"
+);
     visibleHistory.forEach(s => {
 
         // HH / HL / LH / LL
