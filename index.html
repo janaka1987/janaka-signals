@@ -1384,8 +1384,8 @@ if (trend === "DOWNTREND") {
 
     if (lhs.length >= 2) {
 
-        const p1 = lhs[lhs.length - 2];
-        const p2 = lhs[lhs.length - 1];
+        const p1 = lhs[0];
+const p2 = lhs[lhs.length - 1];
 
         const slope =
     (p2.price - p1.price) /
