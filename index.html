@@ -1177,7 +1177,48 @@ drawTrendLine();
         function drawStructureMarkers() {
 
     let allMarkers = [];
+let markerMap = {};
 
+function addMarker(marker) {
+
+    const key = marker.time;
+
+    if (!markerMap[key]) {
+
+        markerMap[key] = marker;
+
+    } else {
+
+        const priority = {
+
+            "BOS": 4,
+            "CHOCH": 3,
+            "HH": 2,
+            "HL": 2,
+            "LH": 2,
+            "LL": 2
+
+        };
+
+        const old =
+            markerMap[key].text
+                .replace("↑","")
+                .replace("↓","");
+
+        const now =
+            marker.text
+                .replace("↑","")
+                .replace("↓","");
+
+        if (priority[now] > priority[old]) {
+
+            markerMap[key] = marker;
+
+        }
+
+    }
+
+}
 const visibleHistory = structureHistory.slice(-20);
 const recentStructure = visibleHistory.filter(s =>
     s.type === "HH" ||
