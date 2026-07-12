@@ -831,10 +831,27 @@ if (!Array.isArray(structureHistory)) {
 
 
 // Active Structure Levels
-let activeHH = HH;
-let activeHL = HL;
-let activeLH = LH;
-let activeLL = LL;
+let activeHH = null;
+let activeHL = null;
+let activeLH = null;
+let activeLL = null;
+
+for (let i = structureHistory.length - 1; i >= 0; i--) {
+
+    const s = structureHistory[i];
+
+    if (!activeHH && s.type === "HH") activeHH = s;
+
+    if (!activeHL && s.type === "HL") activeHL = s;
+
+    if (!activeLH && s.type === "LH") activeLH = s;
+
+    if (!activeLL && s.type === "LL") activeLL = s;
+
+    if (activeHH && activeHL && activeLH && activeLL)
+        break;
+
+}
 
 // Prevent duplicate signals
 let lastBosDirection = null;
