@@ -1167,7 +1167,19 @@ trendLineSeries.setData([
     
 
 
+marketSelect.addEventListener("change", () => {
+  currentMarket = marketSelect.value;
+  updateMarketName();
+  connect();
+});
 
+updateMarketName();
+createChartIfNeeded();
+connect();
+</script>
+
+</body>
+</html>
 
 
     
@@ -1358,16 +1370,4 @@ trendLineSeries.setData([
     
 
 
-marketSelect.addEventListener("change", () => {
-  currentMarket = marketSelect.value;
-  updateMarketName();
-  connect();
-});
 
-updateMarketName();
-createChartIfNeeded();
-connect();
-</script>
-
-</body>
-</html>
