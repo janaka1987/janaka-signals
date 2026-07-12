@@ -947,12 +947,19 @@ for (const c of candles) {
         )
     ) {
 
-        structureHistory.push({
-            type: "CHOCH",
-            direction: "UP",
-            time: c.time,
-            price: c.close
-        });
+        if (
+    structureHistory.length === 0 ||
+    structureHistory[structureHistory.length - 1].type !== "CHOCH"
+) {
+
+    structureHistory.push({
+        type: "CHOCH",
+        direction: "UP",
+        time: c.time,
+        price: c.close
+    });
+
+}
 
         currentTrend = "UPTREND";
 
