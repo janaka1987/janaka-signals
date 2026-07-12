@@ -795,113 +795,21 @@ function buildStructureFromCandles() {
     detectSwingPoints();
     filterStructureSwings();
 buildStructure();
-    // Reset current state
-    HH = null;
-    HL = null;
-    LH = null;
-    LL = null;
+    
+    
 
-    BOS = "NONE";
-    CHOCH = "NONE";
-    trend = "RANGE";
+    
 
-    // Keep previous structure history
-if (!Array.isArray(structureHistory)) {
-    structureHistory = [];
-}
+        
 
-    let lastHigh = null;
-    let lastLow = null;
+        
 
-    let currentTrend = "RANGE";
-    let lastBrokenHigh = null;
-    let lastBrokenLow = null;
+            
 
-    //------------------------------------------------
-    // Build HH / LH History
-    //------------------------------------------------
+    
 
-    for (const sh of swingHighs) {
 
-        if (lastHigh === null) {
-
-            sh.type = "HH";
-
-            HH = sh;
-            lastHigh = sh;
-
-            structureHistory.push({
-                type: "HH",
-                time: sh.time,
-                price: sh.price
-            });
-
-            continue;
-        }
-
-        if (sh.price > lastHigh.price) {
-
-            sh.type = "HH";
-            HH = sh;
-
-        } else {
-
-            sh.type = "LH";
-            LH = sh;
-
-        }
-
-        structureHistory.push({
-            type: sh.type,
-            time: sh.time,
-            price: sh.price
-        });
-
-        lastHigh = sh;
-    }
-
-    //------------------------------------------------
-    // Build HL / LL History
-    //------------------------------------------------
-
-    for (const sl of swingLows) {
-
-        if (lastLow === null) {
-
-            sl.type = "HL";
-
-            HL = sl;
-            lastLow = sl;
-
-            structureHistory.push({
-                type: "HL",
-                time: sl.time,
-                price: sl.price
-            });
-
-            continue;
-        }
-
-        if (sl.price > lastLow.price) {
-
-            sl.type = "HL";
-            HL = sl;
-
-        } else {
-
-            sl.type = "LL";
-            LL = sl;
-
-        }
-
-        structureHistory.push({
-            type: sl.type,
-            time: sl.time,
-            price: sl.price
-        });
-
-        lastLow = sl;
-    }
+        
     
 //------------------------------------------------
 // Build BOS / CHOCH History
