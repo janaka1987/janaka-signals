@@ -1033,19 +1033,64 @@ for (let i = structureHistory.length - 1; i >= 0; i--) {
 currentSupport = null;
 currentResistance = null;
 
-// -------------------------
-// Latest HL = Support
-// -------------------------
-for (let i = swingLows.length - 1; i >= 0; i--) {
+if (trend === "UPTREND") {
 
-    if (swingLows[i].type === "HL") {
+    // Support = Latest HL
+    for (let i = swingLows.length - 1; i >= 0; i--) {
 
-        currentSupport = swingLows[i].price;
-        break;
+        if (swingLows[i].type === "HL") {
+
+            currentSupport = swingLows[i].price;
+            break;
+
+        }
+
+    }
+
+    // Resistance = Latest HH
+    for (let i = swingHighs.length - 1; i >= 0; i--) {
+
+        if (swingHighs[i].type === "HH") {
+
+            currentResistance = swingHighs[i].price;
+            break;
+
+        }
 
     }
 
 }
+
+else if (trend === "DOWNTREND") {
+
+    // Support = Latest LL
+    for (let i = swingLows.length - 1; i >= 0; i--) {
+
+        if (swingLows[i].type === "LL") {
+
+            currentSupport = swingLows[i].price;
+            break;
+
+        }
+
+    }
+
+    // Resistance = Latest LH
+    for (let i = swingHighs.length - 1; i >= 0; i--) {
+
+        if (swingHighs[i].type === "LH") {
+
+            currentResistance = swingHighs[i].price;
+            break;
+
+        }
+
+    }
+
+}
+
+
+    
 
 // -------------------------
 // Latest LH = Resistance
@@ -1055,11 +1100,7 @@ for (let i = swingHighs.length - 1; i >= 0; i--) {
     if (swingHighs[i].type === "LH") {
 
         currentResistance = swingHighs[i].price;
-        break;
 
-    }
-
-}
 
     // ------------------------------------
 // Remove duplicate structure events
