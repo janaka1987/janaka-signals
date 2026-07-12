@@ -1068,7 +1068,106 @@ function drawSupportResistance() {
     }
 
 }
-        
+        function buildSignals() {
+
+    let currentTrend = "RANGE";
+
+    BOS = "NONE";
+    CHOCH = "NONE";
+
+    let activeHH = HH;
+    let activeHL = HL;
+    let activeLH = LH;
+    let activeLL = LL;
+
+    if (activeHH && activeHL) {
+        currentTrend = "UPTREND";
+    }
+
+    if (activeLH && activeLL) {
+        currentTrend = "DOWNTREND";
+    }
+
+    const last = candles[candles.length - 1];
+
+    if (!last) {
+
+        trend = currentTrend;
+        return;
+
+    }
+
+    // -----------------------
+    // BOS UP
+    // -----------------------
+    if (
+        currentTrend === "UPTREND" &&
+        activeHH &&
+        last.close > activeHH.price
+    ) {
+
+        BOS = "BOS UP";
+
+        structureHistory.push({
+            type: "BOS",
+            direction: "UP",
+            time: last.time,
+            price: last.close
+        });
+
+    }
+
+    // -----------------------
+    // BOS DOWN
+    // -----------------------
+    if (
+        currentTrend === "DOWNTREND" &&
+        activeLL &&
+        last.close < activeLL.price
+    ) {
+
+        BOS = "BOS DOWN";
+
+        structureHistory.push({
+            type: "BOS",
+            direction: "DOWN",
+            time: last.time,
+            price: last.close
+        });
+
+    }
+
+    // -----------------------
+    // CHOCH DOWN
+    // -----------------------
+    if (
+        currentTrend === "UPTREND" &&
+        activeHL &&
+        last.close < activeHL.price
+    ) {
+
+        CHOCH = "CHOCH DOWN";
+        currentTrend = "DOWNTREND";
+
+    }
+
+    // -----------------------
+    // CHOCH UP
+    // -----------------------
+    if (
+        currentTrend === "DOWNTREND" &&
+        activeLH &&
+        last.close > activeLH.price
+    ) {
+
+        CHOCH = "CHOCH UP";
+        currentTrend = "UPTREND";
+
+    }
+
+    trend = currentTrend;
+
+}
 //------------------------------------------------
 // Trend Line
 //------------------------------------------------
