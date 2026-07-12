@@ -726,7 +726,10 @@ function buildStructureFromCandles() {
     CHOCH = "NONE";
     trend = "RANGE";
 
+    // Keep previous structure history
+if (!Array.isArray(structureHistory)) {
     structureHistory = [];
+}
 
     let lastHigh = null;
     let lastLow = null;
