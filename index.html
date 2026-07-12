@@ -1068,106 +1068,117 @@ function drawSupportResistance() {
     }
 
 }
-        function buildSignals() {
+        
+function buildSignals() {
 
     let currentTrend = "RANGE";
-
-    BOS = "NONE";
-    CHOCH = "NONE";
 
     let activeHH = HH;
     let activeHL = HL;
     let activeLH = LH;
     let activeLL = LL;
 
-    if (activeHH && activeHL) {
-        currentTrend = "UPTREND";
-    }
+    BOS = "NONE";
+    CHOCH = "NONE";
 
-    if (activeLH && activeLL) {
-        currentTrend = "DOWNTREND";
-    }
+    for (const c of candles) {
 
-    const last = candles[candles.length - 1];
+        // -------------------
+        // BOS UP
+        // -------------------
+        if (
+            activeHH &&
+            c.close > activeHH.price
+        ) {
 
-    if (!last) {
+            currentTrend = "UPTREND";
+            BOS = "BOS UP";
 
-        trend = currentTrend;
-        return;
+        }
 
-    }
+        // -------------------
+        // BOS DOWN
+        // -------------------
+        if (
+            activeLL &&
+            c.close < activeLL.price
+        ) {
 
-    // -----------------------
-    // BOS UP
-    // -----------------------
-    if (
-        currentTrend === "UPTREND" &&
-        activeHH &&
-        last.close > activeHH.price
-    ) {
+            currentTrend = "DOWNTREND";
+            BOS = "BOS DOWN";
 
-        BOS = "BOS UP";
+        }
 
-        structureHistory.push({
-            type: "BOS",
-            direction: "UP",
-            time: last.time,
-            price: last.close
-        });
+        // -------------------
+        // CHOCH DOWN
+        // -------------------
+        if (
+            currentTrend === "UPTREND" &&
+            activeHL &&
+            c.close < activeHL.price
+        ) {
 
-    }
+            currentTrend = "DOWNTREND";
+            CHOCH = "CHOCH DOWN";
 
-    // -----------------------
-    // BOS DOWN
-    // -----------------------
-    if (
-        currentTrend === "DOWNTREND" &&
-        activeLL &&
-        last.close < activeLL.price
-    ) {
+        }
 
-        BOS = "BOS DOWN";
+        // -------------------
+        // CHOCH UP
+        // -------------------
+        if (
+            currentTrend === "DOWNTREND" &&
+            activeLH &&
+            c.close > activeLH.price
+        ) {
 
-        structureHistory.push({
-            type: "BOS",
-            direction: "DOWN",
-            time: last.time,
-            price: last.close
-        });
+            currentTrend = "UPTREND";
+            CHOCH = "CHOCH UP";
 
-    }
-
-    // -----------------------
-    // CHOCH DOWN
-    // -----------------------
-    if (
-        currentTrend === "UPTREND" &&
-        activeHL &&
-        last.close < activeHL.price
-    ) {
-
-        CHOCH = "CHOCH DOWN";
-        currentTrend = "DOWNTREND";
-
-    }
-
-    // -----------------------
-    // CHOCH UP
-    // -----------------------
-    if (
-        currentTrend === "DOWNTREND" &&
-        activeLH &&
-        last.close > activeLH.price
-    ) {
-
-        CHOCH = "CHOCH UP";
-        currentTrend = "UPTREND";
+        }
 
     }
 
     trend = currentTrend;
 
+    // Support / Resistance
+    currentSupport = null;
+    currentResistance = null;
+
+    if (trend === "UPTREND") {
+
+        if (HL)
+            currentSupport = HL.price;
+
+        if (HH)
+            currentResistance = HH.price;
+
+    }
+
+    if (trend === "DOWNTREND") {
+
+        if (LL)
+            currentSupport = LL.price;
+
+        if (LH)
+            currentResistance = LH.price;
+
+    }
+
+    setText("bos", BOS);
+    setText("choch", CHOCH);
+    setText("trend", trend);
+
 }
+  
+    
+
+    
+
+        
+
+        
+        
 //------------------------------------------------
 // Trend Line
 //------------------------------------------------
