@@ -824,215 +824,19 @@ buildStructure();
 
 
 
-    // ==========================
-    // BOS UP
-    // ==========================
-    if (
-        activeHH &&
-        c.close > activeHH.price &&
-        (
-            lastBosDirection !== "UP" ||
-            lastBosLevel !== activeHH.time
-        )
-    ) {
+    
 
-        currentTrend = "UPTREND";
-
-        structureHistory.push({
-            type: "BOS",
-            direction: "UP",
-            time: c.time,
-            price: c.close
-        });
-
-        lastBosDirection = "UP";
-        lastBosLevel = activeHH.time;
-
-        // reset opposite state
-        lastChochDirection = null;
-        lastChochLevel = null;
-    }
-
-    // ==========================
-    // BOS DOWN
-    // ==========================
-    if (
-        activeLL &&
-        c.close < activeLL.price &&
-        (
-            lastBosDirection !== "DOWN" ||
-            lastBosLevel !== activeLL.time
-        )
-    ) {
-
-        currentTrend = "DOWNTREND";
-
-        structureHistory.push({
-            type: "BOS",
-            direction: "DOWN",
-            time: c.time,
-            price: c.close
-        });
-
-        lastBosDirection = "DOWN";
-        lastBosLevel = activeLL.time;
-
-        // reset opposite state
-        lastChochDirection = null;
-        lastChochLevel = null;
-    }
-
-    // ==========================
-    // CHOCH DOWN
-    // ==========================
-    if (
-        currentTrend === "UPTREND" &&
-        activeHL &&
-        c.close < activeHL.price &&
-        (
-            lastChochDirection !== "DOWN" ||
-            lastChochLevel !== activeHL.time
-        )
-    ) {
-
-        if (
-    structureHistory.length === 0 ||
-    structureHistory[structureHistory.length - 1].type !== "CHOCH"
-) {
-
-    structureHistory.push({
-        type: "CHOCH",
-        direction: "DOWN",
-        time: c.time,
-        price: c.close
-    });
-
-}
-
-        currentTrend = "DOWNTREND";
-
-        lastChochDirection = "DOWN";
-        lastChochLevel = activeHL.time;
-    }
-
-    // ==========================
-    // CHOCH UP
-    // ==========================
-    if (
-        currentTrend === "DOWNTREND" &&
-        activeLH &&
-        c.close > activeLH.price &&
-        (
-            lastChochDirection !== "UP" ||
-            lastChochLevel !== activeLH.time
-        )
-    ) {
-
-        if (
-    structureHistory.length === 0 ||
-    structureHistory[structureHistory.length - 1].type !== "CHOCH"
-) {
-
-    structureHistory.push({
-        type: "CHOCH",
-        direction: "UP",
-        time: c.time,
-        price: c.close
-    });
-
-}
-
-        currentTrend = "UPTREND";
-
-        lastChochDirection = "UP";
-        lastChochLevel = activeLH.time;
-    }
-
-}
         
-//------------------------------------------------
-// Final Structure State
-//------------------------------------------------
 
-trend = currentTrend;
 
-if (trend === "UPTREND") {
+        
 
-    BOS = "BOS UP";
 
-} else if (trend === "DOWNTREND") {
 
-    BOS = "BOS DOWN";
 
-} else {
-
-    BOS = "NONE";
-
-}
-
-CHOCH = "NONE";
-
-// Find latest CHOCH from history
-for (let i = structureHistory.length - 1; i >= 0; i--) {
-
-    const s = structureHistory[i];
-
-    if (s.type === "CHOCH") {
-
-        CHOCH = s.direction === "UP"
-            ? "CHOCH UP"
-            : "CHOCH DOWN";
-
-        break;
-    }
-}
     
-      //------------------------------------------------
-// Support / Resistance
-//------------------------------------------------
+    
 
-currentSupport = null;
-currentResistance = null;
-
-if (trend === "UPTREND") {
-
-    // Latest HL
-    for (let i = swingLows.length - 1; i >= 0; i--) {
-        if (swingLows[i].type === "HL") {
-            currentSupport = swingLows[i].price;
-            break;
-        }
-    }
-
-    // Latest HH
-    for (let i = swingHighs.length - 1; i >= 0; i--) {
-        if (swingHighs[i].type === "HH") {
-            currentResistance = swingHighs[i].price;
-            break;
-        }
-    }
-
-}
-
-else if (trend === "DOWNTREND") {
-
-    // Latest LL
-    for (let i = swingLows.length - 1; i >= 0; i--) {
-        if (swingLows[i].type === "LL") {
-            currentSupport = swingLows[i].price;
-            break;
-        }
-    }
-
-    // Latest LH
-    for (let i = swingHighs.length - 1; i >= 0; i--) {
-        if (swingHighs[i].type === "LH") {
-            currentResistance = swingHighs[i].price;
-            break;
-        }
-    }
-
-}
 
 
     
@@ -1043,30 +847,8 @@ else if (trend === "DOWNTREND") {
 
 
 
-    // ------------------------------------
-// Remove duplicate structure events
-// ------------------------------------
 
-const uniqueHistory = [];
-const used = new Set();
-
-for (const s of structureHistory) {
-
-    const key =
-        s.type + "_" +
-        (s.direction || "") + "_" +
-        s.time;
-
-    if (!used.has(key)) {
-
-        used.add(key);
-        uniqueHistory.push(s);
-
-    }
-
-}
-
-structureHistory = uniqueHistory;
+    
 
         
 
