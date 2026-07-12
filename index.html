@@ -795,40 +795,14 @@ function buildStructureFromCandles() {
     detectSwingPoints();
 filterStructureSwings();
 
-buildStructure();
+
 
     
-    function buildSignals() {
+    
 
-    let currentTrend = "RANGE";
+  
 
-    let activeHH = null;
-    let activeHL = null;
-    let activeLH = null;
-    let activeLL = null;
-
-    for (let i = structureHistory.length - 1; i >= 0; i--) {
-
-        const s = structureHistory[i];
-
-        if (!activeHH && s.type === "HH") activeHH = s;
-        if (!activeHL && s.type === "HL") activeHL = s;
-        if (!activeLH && s.type === "LH") activeLH = s;
-        if (!activeLL && s.type === "LL") activeLL = s;
-
-        if (activeHH && activeHL && activeLH && activeLL)
-            break;
-    }
-
-    return {
-        activeHH,
-        activeHL,
-        activeLH,
-        activeLL,
-        currentTrend
-    };
-
-}
+    
         
 
         
