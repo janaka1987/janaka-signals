@@ -1507,7 +1507,12 @@ if (trend === "DOWNTREND") {
     const lhs = swingHighs.filter(s => s.type === "LH");
 
 if (lhs.length >= 2) {
+const validLH = swingHighs.filter(x => x.type === "LH");
 
+if (validLH.length < 2) return;
+
+const p1 = validLH[validLH.length - 2];
+const p2 = validLH[validLH.length - 1];
     const p1 = lhs[lhs.length - 2];
     const p2 = lhs[lhs.length - 1];
 
