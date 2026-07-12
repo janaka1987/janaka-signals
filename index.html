@@ -1035,59 +1035,46 @@ currentResistance = null;
 
 if (trend === "UPTREND") {
 
-    // Support = Latest HL
+    // Latest HL
     for (let i = swingLows.length - 1; i >= 0; i--) {
-
         if (swingLows[i].type === "HL") {
-
             currentSupport = swingLows[i].price;
             break;
-
         }
-
     }
 
-    // Resistance = Latest HH
+    // Latest HH
     for (let i = swingHighs.length - 1; i >= 0; i--) {
-
         if (swingHighs[i].type === "HH") {
-
             currentResistance = swingHighs[i].price;
             break;
-
         }
-
     }
 
 }
 
 else if (trend === "DOWNTREND") {
 
-    // Support = Latest LL
+    // Latest LL
     for (let i = swingLows.length - 1; i >= 0; i--) {
-
         if (swingLows[i].type === "LL") {
-
             currentSupport = swingLows[i].price;
             break;
-
         }
-
     }
 
-    // Resistance = Latest LH
+    // Latest LH
     for (let i = swingHighs.length - 1; i >= 0; i--) {
-
         if (swingHighs[i].type === "LH") {
-
             currentResistance = swingHighs[i].price;
             break;
-
         }
-
     }
 
 }
+
+
+    
 
 
     
