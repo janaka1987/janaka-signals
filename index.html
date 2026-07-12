@@ -793,8 +793,15 @@ function buildStructureFromCandles() {
         return;
 
     detectSwingPoints();
-    filterStructureSwings();
+filterStructureSwings();
+
 buildStructure();
+
+BOS = "NONE";
+CHOCH = "NONE";
+trend = "RANGE";
+
+let currentTrend = "RANGE";
     
     
 
@@ -844,10 +851,7 @@ for (let i = structureHistory.length - 1; i >= 0; i--) {
 let lastBosDirection = null;
 let lastBosLevel = null;
 
-let lastChochDirection = null;
-let lastChochLevel = null;
-    let chochTriggered = false;
-let bosTriggered = false;
+
 for (const c of candles) {
 
     // ==========================
