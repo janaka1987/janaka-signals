@@ -1470,7 +1470,12 @@ if (trend === "UPTREND") {
     const hls = swingLows.filter(s => s.type === "HL");
 
 if (hls.length >= 2) {
+const validHL = swingLows.filter(x => x.type === "HL");
 
+if (validHL.length < 2) return;
+
+const p1 = validHL[validHL.length - 2];
+const p2 = validHL[validHL.length - 1];
     const p1 = hls[hls.length - 2];
     const p2 = hls[hls.length - 1];
 
