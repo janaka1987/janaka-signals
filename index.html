@@ -696,7 +696,87 @@ function filterStructureSwings() {
 }
     
 
+function buildStructure() {
 
+    // Reset
+    HH = null;
+    HL = null;
+    LH = null;
+    LL = null;
+
+    structureHistory = [];
+
+    //-------------------------
+    // HIGHS
+    //-------------------------
+
+    let previousHigh = null;
+
+    for (const sh of swingHighs) {
+
+        if (previousHigh === null) {
+
+            sh.type = "HH";
+            HH = sh;
+
+        } else if (sh.price > previousHigh.price) {
+
+            sh.type = "HH";
+            HH = sh;
+
+        } else {
+
+            sh.type = "LH";
+            LH = sh;
+
+        }
+
+        previousHigh = sh;
+
+        structureHistory.push({
+            type: sh.type,
+            time: sh.time,
+            price: sh.price
+        });
+
+    }
+
+    //-------------------------
+    // LOWS
+    //-------------------------
+
+    let previousLow = null;
+
+    for (const sl of swingLows) {
+
+        if (previousLow === null) {
+
+            sl.type = "HL";
+            HL = sl;
+
+        } else if (sl.price > previousLow.price) {
+
+            sl.type = "HL";
+            HL = sl;
+
+        } else {
+
+            sl.type = "LL";
+            LL = sl;
+
+        }
+
+        previousLow = sl;
+
+        structureHistory.push({
+            type: sl.type,
+            time: sl.time,
+            price: sl.price
+        });
+
+    }
+
+}
     
 
     
