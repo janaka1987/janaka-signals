@@ -1039,7 +1039,12 @@ function buildSignals() {
 
             currentTrend = "UPTREND";
             BOS = "BOS UP";
-
+structureHistory.push({
+    type: "BOS",
+    direction: "UP",
+    time: c.time,
+    price: c.close
+});
         }
 
         // -------------------
