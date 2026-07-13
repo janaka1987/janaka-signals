@@ -1057,7 +1057,12 @@ structureHistory.push({
 
             currentTrend = "DOWNTREND";
             BOS = "BOS DOWN";
-
+structureHistory.push({
+    type: "BOS",
+    direction: "DOWN",
+    time: c.time,
+    price: c.close
+});
         }
 
         // -------------------
