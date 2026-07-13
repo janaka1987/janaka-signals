@@ -832,34 +832,8 @@ drawTrendLine();
 
 
 
-               //------------------------------------------------
-    // Update Dashboard
-    //------------------------------------------------
-if (trend === "UPTREND" && CHOCH !== "CHOCH UP") {
+               
 
-    CHOCH = "NONE";
-
-}
-
-if (trend === "DOWNTREND" && CHOCH !== "CHOCH DOWN") {
-
-    CHOCH = "NONE";
-
-}
-    setText("bos", BOS);
-    setText("choch", CHOCH);
-    setText("trend", trend);
-
-    //------------------------------------------------
-    // Draw All Markers
-    //------------------------------------------------
-
-    drawStructureMarkers();
-drawSupportResistance();
-drawTrendLine();
-
-
-}
 
 
     
