@@ -1040,12 +1040,18 @@ lastCHOCH = null;
 
             currentTrend = "UPTREND";
             BOS = "BOS UP";
-structureHistory.push({
-    type: "BOS",
-    direction: "UP",
-    time: c.time,
-    price: c.close
-});
+if (lastBOS !== c.time) {
+
+    lastBOS = c.time;
+
+    structureHistory.push({
+        type: "BOS",
+        direction: "UP",
+        time: c.time,
+        price: c.close
+    });
+
+}
         }
 
         // -------------------
