@@ -741,37 +741,34 @@ for (const sh of swingHighs) {
 }
 
     //-----------------------------
-    // LOWS
-    //-----------------------------
-    for (const sl of swingLows) {
+// LOWS
+//-----------------------------
+for (const sl of swingLows) {
 
-        if (lastLow == null) {
+    if (lastLow == null) {
 
-            sl.type = "HL";
-            HL = sl;
-            lastLow = sl;
+        sl.type = "HL";
+        HL = sl;
+        lastLow = sl;
 
-        } else if (sl.price > lastLow.price) {
+    } else if (sl.price > lastLow.price) {
 
-            sl.type = "HL";
-            HL = sl;
-            lastLow = sl;
+        sl.type = "HL";
+        HL = sl;
+        lastLow = sl;
 
-        else {
+    } else {
 
-    sl.type = "LL";
-    LL = sl;
-    lastLow = sl;
-
-}
-
-        structureHistory.push({
-            type: sl.type,
-            time: sl.time,
-            price: sl.price
-        });
+        sl.type = "LL";
+        LL = sl;
 
     }
+
+    structureHistory.push({
+        type: sl.type,
+        time: sl.time,
+        price: sl.price
+    });
 
 }
 
