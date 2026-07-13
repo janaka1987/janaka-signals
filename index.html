@@ -1066,8 +1066,8 @@ function buildSignals() {
         // -------------------
         if (
             currentTrend === "UPTREND" &&
-            activeHL &&
-            c.close < activeHL.price
+            HL &&
+            c.close < HL.price
         ) {
 
             currentTrend = "DOWNTREND";
@@ -1080,8 +1080,8 @@ function buildSignals() {
         // -------------------
         if (
             currentTrend === "DOWNTREND" &&
-            activeLH &&
-            c.close > activeLH.price
+            LH &&
+            c.close > LH.price
         ) {
 
             currentTrend = "UPTREND";
