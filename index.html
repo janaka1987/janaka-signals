@@ -709,37 +709,36 @@ function buildStructure() {
     let lastLow = null;
 
     //-----------------------------
-    // HIGHS
-    //-----------------------------
-    for (const sh of swingHighs) {
+// HIGHS
+//-----------------------------
+for (const sh of swingHighs) {
 
-        if (lastHigh == null) {
+    if (lastHigh == null) {
 
-            sh.type = "HH";
-            HH = sh;
-            lastHigh = sh;
+        sh.type = "HH";
+        HH = sh;
+        lastHigh = sh;
 
-        } else if (sh.price > lastHigh.price) {
+    } else if (sh.price > lastHigh.price) {
 
-            sh.type = "HH";
-            HH = sh;
-            lastHigh = sh;
+        sh.type = "HH";
+        HH = sh;
+        lastHigh = sh;
 
-        else {
+    } else {
 
-    sh.type = "LH";
-    LH = sh;
-    lastHigh = sh;
-
-}
-
-        structureHistory.push({
-            type: sh.type,
-            time: sh.time,
-            price: sh.price
-        });
+        sh.type = "LH";
+        LH = sh;
 
     }
+
+    structureHistory.push({
+        type: sh.type,
+        time: sh.time,
+        price: sh.price
+    });
+
+}
 
     //-----------------------------
     // LOWS
