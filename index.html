@@ -1089,12 +1089,18 @@ if (lastBOS !== c.time) {
 
             currentTrend = "DOWNTREND";
             CHOCH = "CHOCH DOWN";
-structureHistory.push({
-    type: "CHOCH",
-    direction: "DOWN",
-    time: c.time,
-    price: c.close
-});
+if (lastCHOCH !== c.time) {
+
+    lastCHOCH = c.time;
+
+    structureHistory.push({
+        type: "CHOCH",
+        direction: "DOWN",
+        time: c.time,
+        price: c.close
+    });
+
+}
         }
 
         // -------------------
