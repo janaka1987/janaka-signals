@@ -766,11 +766,19 @@ function filterStructureSwings() {
 
         }
 
-        structureHistory.push({
-            type: s.type,
-            time: s.time,
-            price: s.price
-        });
+        const last = structureHistory[structureHistory.length - 1];
+
+if (
+    !last ||
+    last.type !== s.type ||
+    last.time !== s.time
+) {
+    structureHistory.push({
+        type: s.type,
+        time: s.time,
+        price: s.price
+    });
+}
 
     }
 
