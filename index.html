@@ -768,16 +768,48 @@ function filterStructureSwings() {
 
         const last = structureHistory[structureHistory.length - 1];
 
-if (
-    !last ||
-    last.type !== s.type ||
-    last.time !== s.time
+let add = false;
+
+if (!last) {
+
+    add = true;
+
+} else if (
+
+    (last.type === "HH" || last.type === "LH") &&
+    (s.type === "HH" || s.type === "LH")
+
 ) {
+
+    if (last.type !== s.type) {
+        add = true;
+    }
+
+} else if (
+
+    (last.type === "HL" || last.type === "LL") &&
+    (s.type === "HL" || s.type === "LL")
+
+) {
+
+    if (last.type !== s.type) {
+        add = true;
+    }
+
+} else {
+
+    add = true;
+
+}
+
+if (add) {
+
     structureHistory.push({
         type: s.type,
         time: s.time,
         price: s.price
     });
+
 }
 
     }
