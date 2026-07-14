@@ -617,117 +617,16 @@ function detectSwingPoints() {
     
     
 
-    function buildStructure() {
+    
+            
+    
 
-    let structure = [];
+            
+            
 
-    // HIGH + LOW එකට එක list එකක්
-    swingHighs.forEach(s => {
-        structure.push({
-            ...s,
-            type: "HIGH"
-        });
-    });
+            
 
-    swingLows.forEach(s => {
-        structure.push({
-            ...s,
-            type: "LOW"
-        });
-    });
-
-    // Candle order
-    structure.sort((a, b) => a.index - b.index);
-
-    markers = [];
-
-    let previousHigh = null;
-    let previousLow = null;
-
-    HH = null;
-    HL = null;
-    LH = null;
-    LL = null;
-
-    for (const p of structure) {
-
-        if (p.type === "HIGH") {
-
-            if (previousHigh == null) {
-                previousHigh = p;
-                continue;
-            }
-
-            if (p.price > previousHigh.price) {
-
-                HH = p;
-
-                markers.push({
-                    time: p.time,
-                    position: "aboveBar",
-                    color: "#00bfff",
-                    shape: "arrowDown",
-                    text: "HH"
-                });
-
-            } else {
-
-                LH = p;
-
-                markers.push({
-                    time: p.time,
-                    position: "aboveBar",
-                    color: "#ff9900",
-                    shape: "arrowDown",
-                    text: "LH"
-                });
-
-            }
-
-            previousHigh = p;
-
-        } else {
-
-            if (previousLow == null) {
-                previousLow = p;
-                continue;
-            }
-
-            if (p.price > previousLow.price) {
-
-                HL = p;
-
-                markers.push({
-                    time: p.time,
-                    position: "belowBar",
-                    color: "#00ff66",
-                    shape: "arrowUp",
-                    text: "HL"
-                });
-
-            } else {
-
-                LL = p;
-
-                markers.push({
-                    time: p.time,
-                    position: "belowBar",
-                    color: "#ff4444",
-                    shape: "arrowUp",
-                    text: "LL"
-                });
-
-            }
-
-            previousLow = p;
-
-        }
-
-    }
-
-    candleSeries.setMarkers(markers);
-
-}
+                
 
         
 
