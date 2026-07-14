@@ -599,95 +599,13 @@ function detectSwingPoints() {
     
 }
 
-function filterMajorSwings() {
 
-    let all = [];
 
-    swingHighs.forEach(s => {
-        all.push({
-            ...s,
-            swing: "HIGH"
-        });
-    });
+    
 
-    swingLows.forEach(s => {
-        all.push({
-            ...s,
-            swing: "LOW"
-        });
-    });
+    
 
-    // Time order
-    all.sort((a, b) => a.index - b.index);
-
-    let major = [];
-
-    for (const s of all) {
-
-        // පළවෙනි swing
-        if (major.length === 0) {
-            major.push(s);
-            continue;
-        }
-
-        let last = major[major.length - 1];
-
-        // HIGH → HIGH
-        if (last.swing === "HIGH" && s.swing === "HIGH") {
-
-            // වැඩි High එක තියාගන්න
-            if (s.price > last.price) {
-                major[major.length - 1] = s;
-            }
-
-            continue;
-        }
-
-        // LOW → LOW
-        if (last.swing === "LOW" && s.swing === "LOW") {
-
-            // අඩු Low එක තියාගන්න
-            if (s.price < last.price) {
-                major[major.length - 1] = s;
-            }
-
-            continue;
-        }
-
-        // HIGH → LOW හෝ LOW → HIGH
-        major.push(s);
-    }
-// ===== Strength Filter =====
-
-const MIN_MOVE = 8; // පස්සේ 6 / 10 / 12 කරලා test කරන්න
-
-let filtered = [];
-
-for (const s of major) {
-
-    if (filtered.length === 0) {
-        filtered.push(s);
-        continue;
-    }
-
-    let last = filtered[filtered.length - 1];
-
-    if (Math.abs(s.price - last.price) < MIN_MOVE) {
-
-        // Move එක පොඩි නම් ignore
-        continue;
-
-    }
-
-    filtered.push(s);
-
-}
-
-major = filtered;
-    swingHighs = major.filter(x => x.swing === "HIGH");
-    swingLows = major.filter(x => x.swing === "LOW");
-
-}
+        
 
         
 
@@ -837,7 +755,7 @@ function buildStructureFromCandles() {
         return;
 
     detectSwingPoints();
- filterMajorSwings();
+ 
 
 //  buildStructure();
 
