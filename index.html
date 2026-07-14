@@ -626,87 +626,70 @@ function detectSwingPoints() {
 
     structureHistory = [];
 
-    if (swingHighs.length === 0 || swingLows.length === 0)
-        return;
-
-    // Merge swings
-    let swings = [];
-
-    swingHighs.forEach(s => {
-        swings.push({
-            ...s,
-            swing: "HIGH"
-        });
-    });
-
-    swingLows.forEach(s => {
-        swings.push({
-            ...s,
-            swing: "LOW"
-        });
-    });
-
-    // Time order
-    swings.sort((a, b) => a.index - b.index);
-
+    let prevHigh = null;
     let lastHigh = null;
+
+    let prevLow = null;
     let lastLow = null;
 
-    for (const s of swings) {
+    // ---------- HIGHS ----------
+    for (const h of swingHighs) {
 
-        if (s.swing === "HIGH") {
+        prevHigh = lastHigh;
+        lastHigh = h;
 
-            if (lastHigh === null) {
+        if (prevHigh == null)
+            continue;
 
-                s.type = "HH";
+        h.type = h.price > prevHigh.price ? "HH" : "LH";
 
-            } else {
-
-                s.type = (s.price > lastHigh.price)
-                    ? "HH"
-                    : "LH";
-
-            }
-
-            lastHigh = s;
-
-            if (s.type === "HH")
-                HH = s;
-            else
-                LH = s;
-
-        } else {
-
-            if (lastLow === null) {
-
-                s.type = "HL";
-
-            } else {
-
-                s.type = (s.price > lastLow.price)
-                    ? "HL"
-                    : "LL";
-
-            }
-
-            lastLow = s;
-
-            if (s.type === "HL")
-                HL = s;
-            else
-                LL = s;
-
-        }
+        if (h.type === "HH")
+            HH = h;
+        else
+            LH = h;
 
         structureHistory.push({
-            type: s.type,
-            time: s.time,
-            price: s.price
+            type: h.type,
+            time: h.time,
+            price: h.price
         });
 
     }
 
+    // ---------- LOWS ----------
+    for (const l of swingLows) {
+
+        prevLow = lastLow;
+        lastLow = l;
+
+        if (prevLow == null)
+            continue;
+
+        l.type = l.price > prevLow.price ? "HL" : "LL";
+
+        if (l.type === "HL")
+            HL = l;
+        else
+            LL = l;
+
+        structureHistory.push({
+            type: l.type,
+            time: l.time,
+            price: l.price
+        });
+
+    }
+
+    structureHistory.sort((a, b) => a.time - b.time);
+
 }
+
+    
+    
+
+            
+
+                
 
     
 
