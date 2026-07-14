@@ -617,7 +617,56 @@ function detectSwingPoints() {
 
 
 
-    
+    function buildStructure() {
+
+    prevHigh = null;
+    lastHigh = null;
+
+    prevLow = null;
+    lastLow = null;
+
+    HH = null;
+    HL = null;
+    LH = null;
+    LL = null;
+
+    structureHistory = [];
+
+    // ---------- HIGHS ----------
+
+    for (const h of swingHighs) {
+
+        prevHigh = lastHigh;
+        lastHigh = h;
+
+        if (prevHigh == null)
+            continue;
+
+        h.type = h.price > prevHigh.price ? "HH" : "LH";
+
+        structureHistory.push(h);
+
+    }
+
+    // ---------- LOWS ----------
+
+    for (const l of swingLows) {
+
+        prevLow = lastLow;
+        lastLow = l;
+
+        if (prevLow == null)
+            continue;
+
+        l.type = l.price > prevLow.price ? "HL" : "LL";
+
+        structureHistory.push(l);
+
+    }
+
+    structureHistory.sort((a, b) => a.index - b.index);
+
+}
 
     
 
