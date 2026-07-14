@@ -619,71 +619,120 @@ function detectSwingPoints() {
 
     function buildStructure() {
 
+    let structure = [];
+
+    // HIGH + LOW එකට එක list එකක්
+    swingHighs.forEach(s => {
+        structure.push({
+            ...s,
+            type: "HIGH"
+        });
+    });
+
+    swingLows.forEach(s => {
+        structure.push({
+            ...s,
+            type: "LOW"
+        });
+    });
+
+    // Candle order
+    structure.sort((a, b) => a.index - b.index);
+
+    markers = [];
+
+    let previousHigh = null;
+    let previousLow = null;
+
     HH = null;
     HL = null;
     LH = null;
     LL = null;
 
-    structureHistory = [];
+    for (const p of structure) {
 
-    let prevHigh = null;
-    let lastHigh = null;
+        if (p.type === "HIGH") {
 
-    let prevLow = null;
-    let lastLow = null;
+            if (previousHigh == null) {
+                previousHigh = p;
+                continue;
+            }
 
-    // ---------- HIGHS ----------
-    for (const h of swingHighs) {
+            if (p.price > previousHigh.price) {
 
-        prevHigh = lastHigh;
-        lastHigh = h;
+                HH = p;
 
-        if (prevHigh == null)
-            continue;
+                markers.push({
+                    time: p.time,
+                    position: "aboveBar",
+                    color: "#00bfff",
+                    shape: "arrowDown",
+                    text: "HH"
+                });
 
-        h.type = h.price > prevHigh.price ? "HH" : "LH";
+            } else {
 
-        if (h.type === "HH")
-            HH = h;
-        else
-            LH = h;
+                LH = p;
 
-        structureHistory.push({
-            type: h.type,
-            time: h.time,
-            price: h.price
-        });
+                markers.push({
+                    time: p.time,
+                    position: "aboveBar",
+                    color: "#ff9900",
+                    shape: "arrowDown",
+                    text: "LH"
+                });
+
+            }
+
+            previousHigh = p;
+
+        } else {
+
+            if (previousLow == null) {
+                previousLow = p;
+                continue;
+            }
+
+            if (p.price > previousLow.price) {
+
+                HL = p;
+
+                markers.push({
+                    time: p.time,
+                    position: "belowBar",
+                    color: "#00ff66",
+                    shape: "arrowUp",
+                    text: "HL"
+                });
+
+            } else {
+
+                LL = p;
+
+                markers.push({
+                    time: p.time,
+                    position: "belowBar",
+                    color: "#ff4444",
+                    shape: "arrowUp",
+                    text: "LL"
+                });
+
+            }
+
+            previousLow = p;
+
+        }
 
     }
 
-    // ---------- LOWS ----------
-    for (const l of swingLows) {
-
-        prevLow = lastLow;
-        lastLow = l;
-
-        if (prevLow == null)
-            continue;
-
-        l.type = l.price > prevLow.price ? "HL" : "LL";
-
-        if (l.type === "HL")
-            HL = l;
-        else
-            LL = l;
-
-        structureHistory.push({
-            type: l.type,
-            time: l.time,
-            price: l.price
-        });
-
-    }
-
-    structureHistory.sort((a, b) => a.time - b.time);
+    candleSeries.setMarkers(markers);
 
 }
 
+        
+
+
+        
     
     
 
