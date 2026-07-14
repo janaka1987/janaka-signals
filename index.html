@@ -793,7 +793,7 @@ function buildStructureFromCandles() {
   buildStructure();
 
     
-    drawStructureMarkers();
+    
 
 
  }
@@ -832,123 +832,24 @@ function buildStructureFromCandles() {
 
 
     
-            function drawStructureMarkers() {
-
-    let allMarkers = [];
-
-
-
-
+            
         
 
         
         
-const visibleHistory = structureHistory.slice(-20);
-const recentStructure = visibleHistory.filter(s =>
-    s.type === "HH" ||
-    s.type === "HL" ||
-    s.type === "LH" ||
-    s.type === "LL"
-).slice(-6);
 
-const recentSignals = visibleHistory.filter(s =>
-    s.type === "BOS" ||
-    s.type === "CHOCH"
-);
-    [...recentStructure, ...recentSignals].forEach(s => {
 
-        // HH / HL / LH / LL
-        if (
-            s.type === "HH" ||
-            s.type === "HL" ||
-            s.type === "LH" ||
-            s.type === "LL"
-        ) {
 
-            allMarkers.push({
+            
+                    
 
-                time: s.time,
+        
 
-                position:
-                    s.type === "HH" || s.type === "LH"
-                        ? "aboveBar"
-                        : "belowBar",
+                
 
-                color:
-                    s.type === "HH" ? "#00BFFF" :
-                    s.type === "HL" ? "#00FF66" :
-                    s.type === "LH" ? "#FF9900" :
-                    "#FF3333",
+        
+                
 
-                shape:
-                    s.type === "HH" || s.type === "LH"
-                        ? "arrowDown"
-                        : "arrowUp",
-
-                text: s.type
-
-            });
-
-        }
-
-        // BOS
-        if (s.type === "BOS") {
-
-            allMarkers.push({
-
-                time: s.time,
-
-                position:
-                    s.direction === "UP"
-                        ? "aboveBar"
-                        : "belowBar",
-
-                color: "#FFD700",
-
-                shape:
-                    s.direction === "UP"
-                        ? "arrowUp"
-                        : "arrowDown",
-
-                text:
-                    s.direction === "UP"
-                        ? "BOS↑"
-                        : "BOS↓"
-
-            });
-
-        }
-
-        // CHOCH
-        if (s.type === "CHOCH") {
-
-            allMarkers.push({
-
-                time: s.time,
-
-                position:
-                    s.direction === "UP"
-                        ? "belowBar"
-                        : "aboveBar",
-
-                color: "#00FFFF",
-
-                shape:
-                    s.direction === "UP"
-                        ? "arrowUp"
-                        : "arrowDown",
-
-                text: "CHOCH"
-
-            });
-
-        }
-
-    });
-
-    candleSeries.setMarkers(allMarkers);
-
-}
 
     
 function drawSupportResistance() {
