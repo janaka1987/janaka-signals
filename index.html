@@ -1,11 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Asset SMC Live Dashboard (Deriv)</title>
+    <!-- TradingView Lightweight Charts Library Loading -->
+    <script src="https://unpkg.com"></script>
+    <style>
+        :root {
+            --bg-color: #0b0e14;
+            --card-bg: #131a26;
+            --border-color: #222e44;
+            --text-color: #d1d5db;
+            --bullish: #22c55e;
+            --bearish: #ef4444;
+            --accent: #3b82f6;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+        }
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+            color: #fff;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        select {
+            background-color: #1e293b;
+            color: #fff;
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            outline: none;
+        }
+        select:hover {
+            border-color: var(--accent);
+        }
+        .status-badge {
+            background-color: #1e293b;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+        }
+        #status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--bearish);
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        #chart-container {
+            width: 100%;
+            height: 580px;
+            position: relative;
+            background-color: #0b0e14;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        .legend-panel {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            padding: 12px;
+            background-color: #1a2333;
+            border-radius: 6px;
+            font-size: 13px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .color-box {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
 
-updateMarketName();
-createChartIfNeeded();
-connect();
-</script>
+<div class="dashboard-container">
+    <div class="header">
+        <h1>Deriv SMC Dashboard</h1>
+        
+        <div class="controls">
+            <!-- Market Selection Categories -->
+            <select id="market-select" onchange="changeAsset()">
+                <optgroup label="Volatility Indices">
+                    <option value="1HZ10V">Volatility 10 (1s) Index</option>
+                    <option value="R_10">Volatility 10 Index</option>
+                    <option value="1HZ25V">Volatility 25 (1s) Index</option>
+                    <option value="R_25">Volatility 25 Index</option>
+                    <option value="1HZ50V">Volatility 50 (1s) Index</option>
+                    <option value="R_50">Volatility 50 Index</option>
+                    <option value="1HZ75V" selected>Volatility 75 (1s) Index</option>
+                    <option value="R_75">Volatility 75 Index</option>
+                    <option value="1HZ100V">Volatility 100 (1s) Index</option>
+                    <option value="R_100">Volatility 100 Index</option>
+                </optgroup>
+                <optgroup label="Jump Indices">
+                    <option value="JD10">Jump 10 Index</option>
+                    <option value="JD25">Jump 25 Index</option>
+                    <option value="JD50">Jump 50 Index</option>
+                    <option value="JD75">Jump 75 Index</option>
+                    <option value="JD100">Jump 100 Index</option>
+                </optgroup>
+                <optgroup label="Bull / Bear Markets">
+                    <option value="RDBULL">Bull Market Index</option>
+                    <option value="RDBEAR">Bear Market Index</option>
+                </optgroup>
+                <optgroup label="Forex Majors">
+                    <option value="frxEURUSD">EUR/USD</option>
+                    <option value="frxGBPUSD">GBP/USD</option>
+                    <option value="frxAUDUSD">AUD/USD</option>
+                    <option value="frxUSDJPY">USD/JPY</option>
+                    <option value="frxUSDCAD">USD/CAD</option>
+                    <option value="frxUSDCHF">USD/CHF</option>
+                    <option value="frxNZDUSD">NZD/USD</option>
+                </optgroup>
+                <optgroup label="Forex Crosses (Minors)">
+                    <option value="frxEURGBP">EUR/GBP</option>
+                    <option value="frxEURJPY">EUR/JPY</option>
+                    <option value="frxEURAUD">EUR/AUD</option>
+                    <option value="frxEURCAD">EUR/CAD</option>
+                    <option value="frxEURCHF">EUR/CHF</option>
+                    <option value="frxEURNZD">EUR/NZD</option>
+                    <option value="frxGBPJPY">GBP/JPY</option>
+                    <option value="frxGBPAUD">GBP/AUD</option>
+                    <option value="frxGBPCAD">GBP/CAD</option>
+                    <option value="frxGBPCHF">GBP/CHF</option>
+                    <option value="frxGBPNZD">GBP/NZD</option>
+                    <option value="frxAUDJPY">AUD/JPY</option>
+                    <option value="frxAUDCAD">AUD/CAD</option>
+                    <option value="frxAUDCHF">AUD/CHF</option>
+                    <option value="frxAUDNZD">AUD/NZD</option>
+                    <option value="frxCADJPY">CAD/JPY</option>
+                    <option value="frxCADCHF">CAD/CHF</option>
+                    <option value="frxCHFJPY">CHF/JPY</option>
+                    <option value="frxNZDJPY">NZD/JPY</option>
+                    <option value="frxNZDCAD">NZD/CAD</option>
+                    <option value="frxNZDCHF">NZD/CHF</option>
+                </optgroup>
+                <optgroup label="Forex Exotics">
+                    <option value="frxUSDSGD">USD/SGD</option>
+                    <option value="frxUSDHKD">USD/HKD</option>
+                    <option value="frxUSDMXN">USD/MXN</option>
+                    <option value="frxUSDTRY">USD/TRY</option>
+                    <option value="frxEURTRY">EUR/TRY</option>
+                </optgroup>
+            </select>
 
-</body>
-</html>
+            <!-- Timeframe Selection -->
+            <select id="tf-select" onchange="changeAsset()">
+                <option value="60" selected>1 Minute</option>
+                <option value="300">5 Minutes</option>
+                <option value="900">15 Minutes</option>
+                <option value="3600">1 Hour</option>
+                <option value="14400">4 Hours</option>
+                <option value="86400">1 Day</option>
+            </select>
+
+            <div class="status-badge">
+                <span id="status-dot"></span><span id="status-text">Connecting...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Candle Chart Window -->
+    <div id="chart-container"></div>
+
+    <!-- Indicator Legend Map -->
+    <div class="legend-panel">
+        <div class="legend-item"><div class="color-box" style="background: #22c55e;"></div> HH / HL (Bullish Structure)</div>
+        <div class="legend-item"><div class="color-box" style="background: #ef4444;"></div> LH / LL (Bearish Structure)</div>
+        <div class="legend-item"><div class="color-box" style="background: #eab308;"></div> BOS (Break of Structure)</div>
+        <div class="legend-item"><div class="color-box" style="background: #a855f7;"></div> CHoCH (Change of Character)</div>
+        <div class="legend-item"><div class="color-box" style="background: rgba(34, 197, 94, 0.4); height:4px; width:20px;"></div> Support (Demand Line)</div>
+        <div class="legend-item"><div class="color-box" style="background: rgba(239, 68, 68, 0.4); height:4px; width:20px;"></div> Resistance (Supply Line)</div>
+    </div>
+</div>
+
+<script>
+    const APP_ID = 1089;
+    const PIVOT_LEN = 5; // Left/Right structural scan parameter
+
+    let socket = null;
+    let chart = null, candleSeries = null;
+    let rawCandles = [];
+    let currentAsset = '1HZ75V';
+    let currentGranularity = 60;
+    let srLines = [];
+
+    // 1. Initialize Chart Framework Engine
+    function initChart() {
+        const container = document.getElementById('chart-container');
+        // Clear window if recreating
+        container.innerHTML = '';
+        
+        chart = LightweightCharts.createChart(container, {
+            layout: { background: { color: '#0b0e14' }, textColor: '#cbd5e1' },
+            grid: { vertLines: { color: '#161f30' }, horzLines: { color: '#161f30' } },
+            crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+
 
 
     
@@ -194,5 +427,4 @@ connect();
         
 
     
-
 
