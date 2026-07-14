@@ -657,7 +657,33 @@ function filterMajorSwings() {
         // HIGH → LOW හෝ LOW → HIGH
         major.push(s);
     }
+// ===== Strength Filter =====
 
+const MIN_MOVE = 8; // පස්සේ 6 / 10 / 12 කරලා test කරන්න
+
+let filtered = [];
+
+for (const s of major) {
+
+    if (filtered.length === 0) {
+        filtered.push(s);
+        continue;
+    }
+
+    let last = filtered[filtered.length - 1];
+
+    if (Math.abs(s.price - last.price) < MIN_MOVE) {
+
+        // Move එක පොඩි නම් ignore
+        continue;
+
+    }
+
+    filtered.push(s);
+
+}
+
+major = filtered;
     swingHighs = major.filter(x => x.swing === "HIGH");
     swingLows = major.filter(x => x.swing === "LOW");
 
