@@ -534,23 +534,7 @@ function detectSwingPoints() {
 
     if (candles.length < (PIVOT * 2 + 1))
         return;
-//==============================
-// STRUCTURE STATE
-//==============================
-
-let trend = 0;          // 1 = Bullish, -1 = Bearish, 0 = None
-
-let lastHigh = null;
-let prevHigh = null;
-
-let lastLow = null;
-let prevLow = null;
-
-let lastHighIndex = -1;
-let lastLowIndex = -1;
-
-let bos = "NONE";
-let choch = "NONE";
+        
     for (let i = PIVOT; i < candles.length - PIVOT; i++) {
 
         let isSwingHigh = true;
