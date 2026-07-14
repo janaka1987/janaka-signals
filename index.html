@@ -752,81 +752,81 @@ function drawStructureMarkers() {
             
     
 
-            
-            
-
-            
-
-                
-
-        
-
-
-        
-    
-    
-
-            
-
-                
-
-    
-
-        
-
-    
-
-
-            
-
-            
-    
-
-    
-
-        
-
-
-
-        
-    
-
-    
-    
-
-        
-        
-
-        
-
-    
-        
-
-        
-
-            
-            
-
-        
-
-            
-    
-
-function buildStructureFromCandles() {
+            function buildStructureFromCandles() {
 
     if (candles.length < (PIVOT * 2 + 1))
         return;
 
     detectSwingPoints();
- 
 
-  buildStructure();
+    buildStructure();
+
+    drawStructureMarkers();
+
+    buildSignals();
+
+    drawSupportResistance();
+
+    drawTrendLine();
+
+}
+            
+
+            
+
+                
+
+        
+
+
+        
+    
+    
+
+            
+
+                
+
+    
+
+        
+
+    
+
+
+            
+
+            
+    
+
+    
+
+        
+
+
+
+        
+    
 
     
     
 
+        
+        
 
- }
+        
+
+    
+        
+
+        
+
+            
+            
+
+        
+
+            
 
     
         
