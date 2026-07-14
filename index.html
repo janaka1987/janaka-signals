@@ -991,7 +991,33 @@ function drawSupportResistance() {
 
     if (trend === -1)
         trendText = "DOWNTREND";
+// --------------------
+// BOS / CHOCH Markers
+// --------------------
 
+if (BOS !== "NONE") {
+
+    markers.push({
+        time: candles[candles.length - 1].time,
+        position: trend === 1 ? "aboveBar" : "belowBar",
+        color: "#00aaff",
+        shape: "circle",
+        text: "BOS"
+    });
+
+}
+
+if (CHOCH !== "NONE") {
+
+    markers.push({
+        time: candles[candles.length - 1].time,
+        position: trend === 1 ? "belowBar" : "aboveBar",
+        color: "#ffaa00",
+        shape: "circle",
+        text: "CHOCH"
+    });
+
+}
     setText("bos", BOS);
     setText("choch", CHOCH);
     setText("trend", trendText);
