@@ -936,150 +936,21 @@ function drawSupportResistance() {
 
 }
         
-function buildSignals() {
 
-    let currentTrend = "RANGE";
+ 
 
     
 
-    BOS = "NONE";
-    CHOCH = "NONE";
-lastBOS = null;
-lastCHOCH = null;
-    for (const c of candles) {
+        
+        
 
-        // -------------------
-        // BOS UP
-        // -------------------
-        if (
-            HH &&
-            c.close > HH.price
-        ) {
+            
 
-            currentTrend = "UPTREND";
-            BOS = "BOS UP";
-if (lastBOS !== c.time) {
+    
 
-    lastBOS = c.time;
+    
 
-    structureHistory.push({
-        type: "BOS",
-        direction: "UP",
-        time: c.time,
-        price: c.close
-    });
-
-}
-        }
-
-        // -------------------
-        // BOS DOWN
-        // -------------------
-        if (
-            LL &&
-            c.close < LL.price
-        ) {
-
-            currentTrend = "DOWNTREND";
-            BOS = "BOS DOWN";
-if (lastBOS !== c.time) {
-
-    lastBOS = c.time;
-
-    structureHistory.push({
-        type: "BOS",
-        direction: "DOWN",
-        time: c.time,
-        price: c.close
-    });
-
-}
-        }
-
-        // -------------------
-        // CHOCH DOWN
-        // -------------------
-        if (
-            currentTrend === "UPTREND" &&
-            HL &&
-            c.close < HL.price
-        ) {
-
-            currentTrend = "DOWNTREND";
-            CHOCH = "CHOCH DOWN";
-if (lastCHOCH !== c.time) {
-
-    lastCHOCH = c.time;
-
-    structureHistory.push({
-        type: "CHOCH",
-        direction: "DOWN",
-        time: c.time,
-        price: c.close
-    });
-
-}
-        }
-
-        // -------------------
-        // CHOCH UP
-        // -------------------
-        if (
-            currentTrend === "DOWNTREND" &&
-            LH &&
-            c.close > LH.price
-        ) {
-
-            currentTrend = "UPTREND";
-            CHOCH = "CHOCH UP";
-if (lastCHOCH !== c.time) {
-
-    lastCHOCH = c.time;
-
-    structureHistory.push({
-        type: "CHOCH",
-        direction: "UP",
-        time: c.time,
-        price: c.close
-    });
-
-}
-        }
-
-    }
-
-    trend = currentTrend;
-
-    // Support / Resistance
-    currentSupport = null;
-    currentResistance = null;
-
-    if (trend === "UPTREND") {
-
-        if (HL)
-            currentSupport = HL.price;
-
-        if (HH)
-            currentResistance = HH.price;
-
-    }
-
-    if (trend === "DOWNTREND") {
-
-        if (LL)
-            currentSupport = LL.price;
-
-        if (LH)
-            currentResistance = LH.price;
-
-    }
-
-    setText("bos", BOS);
-    setText("choch", CHOCH);
-    setText("trend", trend);
-
-}
-  
+    
     
 
     
