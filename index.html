@@ -165,9 +165,16 @@ let HL = null;
 let LH = null;
 let LL = null;
 
+let prevHigh = null;
+let lastHigh = null;
 
+let prevLow = null;
+let lastLow = null;
 
-let trend = "RANGE";
+let lastHighIndex = -1;
+let lastLowIndex = -1;
+
+let trend = 0;
 
 let BOS = "NONE";
 let CHOCH = "NONE";
