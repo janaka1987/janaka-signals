@@ -668,69 +668,73 @@ function detectSwingPoints() {
 
 }
 
+    
+function drawStructureMarkers() {
+
     markers = [];
 
-for (const s of structureHistory) {
+    for (const s of structureHistory) {
 
-    if (s.type === "HH") {
+        if (s.type === "HH") {
 
-        HH = s;
+            HH = s;
 
-        markers.push({
-            time: s.time,
-            position: "aboveBar",
-            color: "#00ff66",
-            shape: "arrowDown",
-            text: "HH"
-        });
+            markers.push({
+                time: s.time,
+                position: "aboveBar",
+                color: "#00ff66",
+                shape: "arrowDown",
+                text: "HH"
+            });
 
-    }
+        } else if (s.type === "LH") {
 
-    else if (s.type === "LH") {
+            LH = s;
 
-        LH = s;
+            markers.push({
+                time: s.time,
+                position: "aboveBar",
+                color: "#ff4444",
+                shape: "arrowDown",
+                text: "LH"
+            });
 
-        markers.push({
-            time: s.time,
-            position: "aboveBar",
-            color: "#ff4444",
-            shape: "arrowDown",
-            text: "LH"
-        });
+        } else if (s.type === "HL") {
 
-    }
+            HL = s;
 
-    else if (s.type === "HL") {
+            markers.push({
+                time: s.time,
+                position: "belowBar",
+                color: "#00ff66",
+                shape: "arrowUp",
+                text: "HL"
+            });
 
-        HL = s;
+        } else if (s.type === "LL") {
 
-        markers.push({
-            time: s.time,
-            position: "belowBar",
-            color: "#00ff66",
-            shape: "arrowUp",
-            text: "HL"
-        });
+            LL = s;
 
-    }
+            markers.push({
+                time: s.time,
+                position: "belowBar",
+                color: "#ff4444",
+                shape: "arrowUp",
+                text: "LL"
+            });
 
-    else if (s.type === "LL") {
-
-        LL = s;
-
-        markers.push({
-            time: s.time,
-            position: "belowBar",
-            color: "#ff4444",
-            shape: "arrowUp",
-            text: "LL"
-        });
+        }
 
     }
+
+    candleSeries.setMarkers(markers);
 
 }
 
-candleSeries.setMarkers(markers);
+
+    
+
+  
 
         
 
