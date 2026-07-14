@@ -937,7 +937,66 @@ function drawSupportResistance() {
 }
         
 
- 
+ function buildSignals() {
+
+    BOS = "NONE";
+    CHOCH = "NONE";
+
+    if (candles.length === 0) return;
+
+    const lastClose = candles[candles.length - 1].close;
+
+    // --------------------
+    // Bullish Break
+    // --------------------
+    if (HH && lastClose > HH.price) {
+
+        if (trend === -1) {
+
+            CHOCH = "CHOCH UP";
+            trend = 1;
+
+        } else {
+
+            BOS = "BOS UP";
+            trend = 1;
+
+        }
+
+    }
+
+    // --------------------
+    // Bearish Break
+    // --------------------
+    else if (LL && lastClose < LL.price) {
+
+        if (trend === 1) {
+
+            CHOCH = "CHOCH DOWN";
+            trend = -1;
+
+        } else {
+
+            BOS = "BOS DOWN";
+            trend = -1;
+
+        }
+
+    }
+
+    let trendText = "WAIT";
+
+    if (trend === 1)
+        trendText = "UPTREND";
+
+    if (trend === -1)
+        trendText = "DOWNTREND";
+
+    setText("bos", BOS);
+    setText("choch", CHOCH);
+    setText("trend", trendText);
+
+}
 
     
 
