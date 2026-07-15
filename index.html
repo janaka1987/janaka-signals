@@ -1119,7 +1119,7 @@ function drawTrendLine() {
 // -------------------------
 // UPTREND
 // -------------------------
-if (trend === "UPTREND") {
+if (trend === 1) {
 
     const hls = swingLows.filter(s => s.type === "HL");
 
@@ -1151,8 +1151,7 @@ trendLineSeries.setData([
 // -------------------------
 // DOWNTREND
 // -------------------------
-if (trend === "DOWNTREND") {
-
+if (trend === -1) {
     const lhs = swingHighs.filter(s => s.type === "LH");
 
 if (lhs.length >= 2) {
