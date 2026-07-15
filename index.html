@@ -229,12 +229,16 @@
 
 <script>
     const APP_ID = "1089";
-    let chart, candleSeries, obSeries, fvgSeries, zigZagSeries, ws;
+    let chart, candleSeries, zigZagSeries, trendSeries, bosSeries;
+    let ws;
     let candles = [];
     let currentMarket = "R_100";
     let currentTimeframe = 60;
     
-    // Audio Context for beep sound
+    // Arrays for persistence
+    let persistentBOS = []; 
+    let persistentCHoCH = [];
+
     function playBeep(type) {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const oscillator = audioCtx.createOscillator();
@@ -243,7 +247,7 @@
         gainNode.connect(audioCtx.destination);
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(type === 'buy' ? 880 : 440, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
         oscillator.start();
         oscillator.stop(audioCtx.currentTime + 0.2);
     }
@@ -262,16 +266,19 @@
             wickUpColor: '#00ff88', wickDownColor: '#ff4d4d'
         });
 
-        zigZagSeries = chart.addLineSeries({ color: 'rgba(255, 255, 255, 0.1)', lineWidth: 1, lineStyle: 2 });
-        obSeries = chart.addLineSeries({ color: 'rgba(234, 179, 8, 0.5)', lineWidth: 2 });
-        fvgSeries = chart.addLineSeries({ color: 'rgba(168, 85, 247, 0.3)', lineWidth: 1 });
+        zigZagSeries = chart.addLineSeries({ color: 'rgba(255, 255, 255, 0.4)', lineWidth: 1, lineStyle: 2 });
+        trendSeries = chart.addLineSeries({ color: '#3b82f6', lineWidth: 2 });
+        bosSeries = chart.addLineSeries({ color: '#eab308', lineWidth: 1, lineStyle: 0 });
     }
 
     function connect() {
         if (ws) ws.close();
         ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
+        
         ws.onopen = () => {
             candles = [];
+            persistentBOS = [];
+            persistentCHoCH = [];
             candleSeries.setData([]);
             ws.send(JSON.stringify({
                 ticks_history: currentMarket,
@@ -293,95 +300,153 @@
             if (data.ohlc) {
                 const o = data.ohlc;
                 const newCandle = { time: o.open_time, open: o.open, high: o.high, low: o.low, close: o.close };
-                candleSeries.update(newCandle);
                 if (candles.length > 0 && candles[candles.length - 1].time === newCandle.time) {
                     candles[candles.length - 1] = newCandle;
                 } else {
                     candles.push(newCandle);
                 }
+                candleSeries.update(newCandle);
                 analyzeSMC();
             }
         };
     }
 
     function analyzeSMC() {
-        if (candles.length < 100) return;
+        if (candles.length < 50) return;
 
         let markers = [];
         let pivots = [];
-        const period = 5;
+        const lookback = 5;
 
-        // 1. PIVOT DETECTION
-        for (let i = period; i < candles.length - period; i++) {
+        // 1. ZIG ZAG & PIVOT FINDER (HH, HL, LH, LL)
+        for (let i = lookback; i < candles.length - lookback; i++) {
             let isHigh = true, isLow = true;
-            for (let j = i - period; j <= i + period; j++) {
+            for (let j = i - lookback; j <= i + lookback; j++) {
                 if (i === j) continue;
                 if (candles[j].high > candles[i].high) isHigh = false;
                 if (candles[j].low < candles[i].low) isLow = false;
             }
-            if (isHigh) pivots.push({ type: 'H', time: candles[i].time, price: candles[i].high, i: i });
-            if (isLow) pivots.push({ type: 'L', time: candles[i].time, price: candles[i].low, i: i });
+            if (isHigh) pivots.push({ type: 'H', time: candles[i].time, price: candles[i].high, index: i });
+            if (isLow) pivots.push({ type: 'L', time: candles[i].time, price: candles[i].low, index: i });
         }
 
-        // 2. ORDER BLOCK (OB) & FVG DETECTION
-        let lastOB = null;
-        let lastFVG = null;
-        for (let i = 2; i < candles.length; i++) {
-            // FVG Detection
-            if (candles[i-2].high < candles[i].low) { // Bullish FVG
-                lastFVG = { type: 'BULLISH', top: candles[i].low, bottom: candles[i-2].high };
-            } else if (candles[i-2].low > candles[i].high) { // Bearish FVG
-                lastFVG = { type: 'BEARISH', top: candles[i-2].low, bottom: candles[i].high };
+        // Refine Pivots to get Alternating ZigZag
+        let zigzagPoints = [];
+        pivots.forEach(p => {
+            if(zigzagPoints.length === 0) {
+                zigzagPoints.push(p);
+            } else {
+                let last = zigzagPoints[zigzagPoints.length-1];
+                if(last.type === p.type) {
+                    if((p.type === 'H' && p.price > last.price) || (p.type === 'L' && p.price < last.price)) {
+                        zigzagPoints[zigzagPoints.length-1] = p;
+                    }
+                } else {
+                    zigzagPoints.push(p);
+                }
+            }
+        });
+
+        // 2. STRUCTURE LABELING (HH, LL etc)
+        let smcMarkers = [];
+        for (let i = 2; i < zigzagPoints.length; i++) {
+            let curr = zigzagPoints[i];
+            let prevSame = zigzagPoints[i-2];
+            let label = "";
+            let color = "";
+
+            if (curr.type === 'H') {
+                label = curr.price > prevSame.price ? "HH" : "LH";
+                color = curr.price > prevSame.price ? "#00ff88" : "#ff4d4d";
+            } else {
+                label = curr.price < prevSame.price ? "LL" : "HL";
+                color = curr.price < prevSame.price ? "#ff4d4d" : "#00ff88";
+            }
+
+            smcMarkers.push({
+                time: curr.time,
+                position: curr.type === 'H' ? 'aboveBar' : 'belowBar',
+                color: color,
+                shape: 'text',
+                text: label
+            });
+        }
+
+        // 3. BOS & CHoCH DETECTION (Persistence)
+        if (zigzagPoints.length > 4) {
+            let lastPivot = zigzagPoints[zigzagPoints.length-1];
+            let prevPivot = zigzagPoints[zigzagPoints.length-3];
+            let price = candles[candles.length-1].close;
+
+            // Simple BOS Logic
+            if (lastPivot.type === 'H' && price > lastPivot.price) {
+                if (!persistentBOS.find(b => b.time === lastPivot.time)) {
+                    persistentBOS.push({ time: lastPivot.time, price: lastPivot.price, type: 'BOS' });
+                }
+            } else if (lastPivot.type === 'L' && price < lastPivot.price) {
+                if (!persistentBOS.find(b => b.time === lastPivot.time)) {
+                    persistentBOS.push({ time: lastPivot.time, price: lastPivot.price, type: 'BOS' });
+                }
             }
         }
 
-        // 3. SMC LOGIC & TRENDS
-        const lastH = pivots.filter(p => p.type === 'H').pop();
-        const lastL = pivots.filter(p => p.type === 'L').pop();
-        const currentTrend = lastH && lastL ? (lastH.price > pivots[pivots.length-3]?.price ? 'UP' : 'DOWN') : 'Neutral';
+        // Add BOS Markers
+        persistentBOS.forEach(bos => {
+            smcMarkers.push({
+                time: bos.time,
+                position: 'inBar',
+                color: '#3b82f6',
+                shape: 'arrowUp',
+                text: 'BOS'
+            });
+        });
 
-        // 4. MTF SIMULATION (Trend over 50 and 100 candles)
-        const trendM5 = candles[candles.length-1].close > candles[candles.length-50].close ? 'UP' : 'DOWN';
-        const trendM15 = candles[candles.length-1].close > candles[candles.length-100].close ? 'UP' : 'DOWN';
-        
-        // 5. PREMIUM/DISCOUNT (Equilibrium)
-        const maxPrice = Math.max(...candles.slice(-50).map(c => c.high));
-        const minPrice = Math.min(...candles.slice(-50).map(c => c.low));
-        const eq = (maxPrice + minPrice) / 2;
+        // 4. TRENDLINES & S/R
+        if (zigzagPoints.length >= 2) {
+            const lastH = zigzagPoints.filter(p => p.type === 'H').slice(-2);
+            const lastL = zigzagPoints.filter(p => p.type === 'L').slice(-2);
+            
+            // Draw Support/Resistance prices in stats box
+            if (lastH.length > 0) document.getElementById('resPrice').innerText = lastH[lastH.length-1].price.toFixed(2);
+            if (lastL.length > 0) document.getElementById('supPrice').innerText = lastL[lastL.length-1].price.toFixed(2);
+        }
+
+        // Update ZigZag Line
+        zigZagSeries.setData(zigzagPoints.map(p => ({ time: p.time, value: p.price })));
+        candleSeries.setMarkers(smcMarkers);
+
+        // 5. TECHNICAL CALCULATIONS FOR UI
         const currentPrice = candles[candles.length-1].close;
-        const zone = currentPrice > eq ? 'PREMIUM' : 'DISCOUNT';
+        const trend = zigzagPoints.length > 2 ? (zigzagPoints[zigzagPoints.length-1].price > zigzagPoints[zigzagPoints.length-3].price ? 'UP' : 'DOWN') : 'WAIT';
+        
+        const maxP = Math.max(...candles.slice(-50).map(c => c.high));
+        const minP = Math.min(...candles.slice(-50).map(c => c.low));
+        const equilibrium = (maxP + minP) / 2;
+        const zone = currentPrice > equilibrium ? 'PREMIUM' : 'DISCOUNT';
 
-        // 6. CANDLE PATTERN
-        const c1 = candles[candles.length-2];
-        const c2 = candles[candles.length-1];
-        let pattern = "NONE";
-        if (c2.close > c1.open && c2.open < c1.close && c2.close > c1.high) pattern = "BULLISH ENGULFING";
-        if (c2.close < c1.open && c2.open > c1.close && c2.close < c1.low) pattern = "BEARISH ENGULFING";
+        // Update Stats Box
+        document.getElementById('trendText').innerText = trend;
+        document.getElementById('trendText').className = trend === 'UP' ? 'val-g' : 'val-r';
+        document.getElementById('pZone').innerText = zone;
+        document.getElementById('eqPrice').innerText = equilibrium.toFixed(2);
+        document.getElementById('trendM1').innerText = trend;
+        document.getElementById('trendM1').className = trend === 'UP' ? 'val-g' : 'val-r';
 
-        // 7. ACCURACY CALCULATION
+        // Signal Logic
         let score = 0;
-        if (currentTrend === 'UP' && trendM5 === 'UP' && trendM15 === 'UP') score += 30;
-        if (currentTrend === 'DOWN' && trendM5 === 'DOWN' && trendM15 === 'DOWN') score += 30;
-        if (zone === 'DISCOUNT' && currentTrend === 'UP') score += 20;
-        if (zone === 'PREMIUM' && currentTrend === 'DOWN') score += 20;
-        if (pattern !== "NONE") score += 20;
-        if (Math.abs(currentPrice - minPrice) < (maxPrice - minPrice) * 0.1) score += 20; // Support proximity
-        if (Math.abs(currentPrice - maxPrice) < (maxPrice - minPrice) * 0.1) score += 20; // Resistance proximity
-        score = Math.min(score, 100);
+        if (trend === 'UP' && zone === 'DISCOUNT') score += 40;
+        if (trend === 'DOWN' && zone === 'PREMIUM') score += 40;
+        if (currentPrice > candles[candles.length-2].high) score += 20;
 
-        // 8. SIGNAL GENERATION
         const sigEl = document.getElementById('signalText');
         const accEl = document.getElementById('accuracyText');
         const accFill = document.getElementById('accuracyFill');
 
-        if (currentTrend === 'UP' && zone === 'DISCOUNT' && score >= 60) {
-            sigEl.innerText = "CALL (BUY) 2-3 MIN";
-            sigEl.style.color = "var(--green)";
-            if (score >= 85) playBeep('buy');
-        } else if (currentTrend === 'DOWN' && zone === 'PREMIUM' && score >= 60) {
-            sigEl.innerText = "PUT (SELL) 2-3 MIN";
-            sigEl.style.color = "var(--red)";
-            if (score >= 85) playBeep('sell');
+        if (score >= 60) {
+            const action = trend === 'UP' ? 'CALL (BUY)' : 'PUT (SELL)';
+            sigEl.innerText = action + " 2-3 MIN";
+            sigEl.style.color = trend === 'UP' ? 'var(--green)' : 'var(--red)';
+            if (score >= 80) playBeep(trend === 'UP' ? 'buy' : 'sell');
         } else {
             sigEl.innerText = "WAITING FOR SETUP...";
             sigEl.style.color = "#848d97";
@@ -389,38 +454,23 @@
 
         accEl.innerText = `ACCURACY: ${score}%`;
         accFill.style.width = `${score}%`;
-        accFill.style.background = score > 80 ? 'var(--green)' : (score > 50 ? 'var(--yellow)' : 'var(--red)');
-
-        // UPDATE UI
-        updateUI(currentTrend, trendM5, trendM15, zone, eq, minPrice, maxPrice, pattern, lastFVG);
-        
-        // Final Markers
-        pivots.forEach(p => {
-            markers.push({ time: p.time, position: p.type === 'H' ? 'aboveBar' : 'belowBar', color: '#fff', shape: 'text', text: p.type === 'H' ? 'H' : 'L' });
-        });
-        candleSeries.setMarkers(markers);
+        accFill.style.background = score > 70 ? 'var(--green)' : 'var(--yellow)';
     }
 
-    function updateUI(t1, t5, t15, zone, eq, sup, res, pat, fvg) {
-        document.getElementById('trendM1').innerText = t1;
-        document.getElementById('trendM1').className = t1 === 'UP' ? 'val-g' : 'val-r';
-        document.getElementById('trendM5').innerText = t5;
-        document.getElementById('trendM5').className = t5 === 'UP' ? 'val-g' : 'val-r';
-        document.getElementById('trendM15').innerText = t15;
-        document.getElementById('trendM15').className = t15 === 'UP' ? 'val-g' : 'val-r';
-        document.getElementById('trendText').innerText = t1;
-        document.getElementById('pZone').innerText = zone;
-        document.getElementById('eqPrice').innerText = eq.toFixed(2);
-        document.getElementById('supPrice').innerText = sup.toFixed(2);
-        document.getElementById('resPrice').innerText = res.toFixed(2);
-        document.getElementById('candConf').innerText = pat;
-        document.getElementById('fvgText').innerText = fvg ? fvg.type : "CLEAR";
-    }
+    document.getElementById('market').addEventListener('change', (e) => { 
+        currentMarket = e.target.value; 
+        connect(); 
+    });
+    
+    document.getElementById('timeframe').addEventListener('change', (e) => { 
+        currentTimeframe = e.target.value; 
+        connect(); 
+    });
 
-    document.getElementById('market').addEventListener('change', (e) => { currentMarket = e.target.value; connect(); });
-    document.getElementById('timeframe').addEventListener('change', (e) => { currentTimeframe = e.target.value; connect(); });
-
-    window.onload = () => { initChart(); connect(); };
+    window.onload = () => { 
+        initChart(); 
+        connect(); 
+    };
 </script>
 </body>
 </html>
