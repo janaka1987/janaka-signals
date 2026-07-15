@@ -1,1 +1,382 @@
-janaka
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JANAKA SMC DASHBOARD V4 PRO</title>
+    <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        :root {
+            --bg-color: #05070a;
+            --card-bg: #0d1117;
+            --border-color: #21262d;
+            --green: #00ff88;
+            --red: #ff4d4d;
+            --blue: #3b82f6;
+            --orange: #f39c12;
+            --purple: #a855f7;
+            --yellow: #eab308;
+            --text-main: #e6edf3;
+        }
+
+        body { 
+            background: var(--bg-color); 
+            color: var(--text-main); 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            padding: 15px; 
+        }
+
+        .header-title {
+            text-align: center;
+            color: var(--green);
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+        }
+
+        .top-bar {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .card { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border-color); 
+            border-radius: 12px; 
+            padding: 15px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        label { font-size: 11px; color: #848d97; font-weight: bold; margin-bottom: 5px; display: block; }
+        
+        select { 
+            width: 100%; 
+            padding: 10px; 
+            border-radius: 6px; 
+            background: #161b22; 
+            color: var(--green); 
+            border: 1px solid #30363d; 
+            font-weight: bold;
+            outline: none;
+        }
+
+        #chart { 
+            height: 550px; 
+            width: 100%; 
+            border-radius: 10px; 
+            overflow: hidden; 
+            position: relative;
+        }
+
+        .info-row-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 100%;
+        }
+
+        .info-row { font-size: 13px; font-weight: bold; }
+        .val-g { color: var(--green); }
+        .val-r { color: var(--red); }
+        .val-b { color: var(--blue); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat-box { 
+            background: var(--card-bg); 
+            padding: 12px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .stat-box span { display: block; font-size: 10px; color: #848d97; text-transform: uppercase; margin-bottom: 5px; }
+        .stat-box b { font-size: 15px; }
+
+        .legend-horizontal {
+            display: flex;
+            gap: 10px;
+            font-size: 10px;
+            justify-content: center;
+            margin-top: 5px;
+            flex-wrap: wrap;
+        }
+        .dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="header-title">JANAKA SMC DASHBOARD V4 PRO</div>
+
+<div class="top-bar">
+    <div class="card">
+        <label>MARKET SELECTION & TIMEFRAME</label>
+        <div style="display: flex; gap: 10px;">
+            <select id="market">
+                <optgroup label="Volatility Indices">
+                    <option value="R_10">Volatility 10</option>
+                    <option value="R_25">Volatility 25</option>
+                    <option value="R_50">Volatility 50</option>
+                    <option value="R_75">Volatility 75</option>
+                    <option value="R_100" selected>Volatility 100</option>
+                </optgroup>
+                <optgroup label="Forex">
+                    <option value="frxEURUSD">EUR/USD</option>
+                    <option value="frxGBPUSD">GBP/USD</option>
+                </optgroup>
+            </select>
+            <select id="timeframe">
+                <option value="60">1M</option>
+                <option value="300">5M</option>
+                <option value="900">15M</option>
+                <option value="3600">1H</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="card">
+        <label>LIVE MARKET MONITOR</label>
+        <div class="info-row-container">
+            <div class="info-row">Status: <span class="val-g">● Connected</span></div>
+            <div class="info-row">Trend: <span id="sideTrend" class="val-g">UPTREND</span></div>
+            <div class="info-row">Time: <span id="serverTime" style="color:#848d97">--:--:--</span></div>
+        </div>
+        <div class="legend-horizontal">
+            <div><span class="dot" style="background:var(--green)"></span> HH/HL</div>
+            <div><span class="dot" style="background:var(--red)"></span> LH/LL</div>
+            <div><span class="dot" style="background:var(--blue)"></span> BOS</div>
+            <div><span class="dot" style="background:var(--yellow)"></span> CHOCH</div>
+            <div><span class="dot" style="background:var(--orange)"></span> Trend</div>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="padding: 5px;">
+    <div id="chart"></div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-box"><span>TREND</span><b id="trendText" class="val-g">ANALYZING</b></div>
+    <div class="stat-box"><span>BOS</span><b id="bosText" class="val-b">NONE</b></div>
+    <div class="stat-box"><span>CHOCH</span><b id="chochText" class="val-b">NONE</b></div>
+    <div class="stat-box"><span>SUPPORT</span><b id="supPrice" class="val-g">0.00</b></div>
+    <div class="stat-box"><span>RESISTANCE</span><b id="resPrice" class="val-r">0.00</b></div>
+</div>
+
+<script>
+    const APP_ID = "1089";
+    let chart, candleSeries, trendLineSeries, zigZagSeries, ws;
+    let supLine, resLine;
+    let candles = [];
+    let currentMarket = "R_100";
+    let currentTimeframe = 60;
+
+    function initChart() {
+        chart = LightweightCharts.createChart(document.getElementById('chart'), {
+            layout: { background: { color: '#0d1117' }, textColor: '#cbd5e1' },
+            grid: { vertLines: { color: '#161b22' }, horzLines: { color: '#161b22' } },
+            crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+            rightPriceScale: { borderColor: '#30363d' },
+            timeScale: { borderColor: '#30363d', timeVisible: true }
+        });
+
+        candleSeries = chart.addCandlestickSeries({
+            upColor: '#00ff88', downColor: '#ff4d4d',
+            borderUpColor: '#00ff88', borderDownColor: '#ff4d4d',
+            wickUpColor: '#00ff88', wickDownColor: '#ff4d4d'
+        });
+
+        // Trend Lines
+        trendLineSeries = chart.addLineSeries({ color: '#f39c12', lineWidth: 2, lineStyle: 0 });
+        
+        // Zig Zag Line
+        zigZagSeries = chart.addLineSeries({ color: 'rgba(255, 255, 255, 0.15)', lineWidth: 1, lineStyle: 2 });
+
+        // S/R Lines (Using Line Series as horizontal markers)
+        supLine = chart.addLineSeries({ color: '#00ff88', lineWidth: 1, lineStyle: 2, title: 'SUP' });
+        resLine = chart.addLineSeries({ color: '#ff4d4d', lineWidth: 1, lineStyle: 2, title: 'RES' });
+    }
+
+    function connect() {
+        if (ws) ws.close();
+        ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
+
+        ws.onopen = () => {
+            candles = [];
+            candleSeries.setData([]);
+            ws.send(JSON.stringify({
+                ticks_history: currentMarket,
+                end: "latest", style: "candles",
+                granularity: parseInt(currentTimeframe),
+                count: 500, subscribe: 1
+            }));
+        };
+
+        ws.onmessage = (msg) => {
+            const data = JSON.parse(msg.data);
+            if (data.candles) {
+                candles = data.candles.map(c => ({
+                    time: c.epoch, open: c.open, high: c.high, low: c.low, close: c.close
+                }));
+                candleSeries.setData(candles);
+                analyzeSMC();
+            }
+            if (data.ohlc) {
+                const o = data.ohlc;
+                const newCandle = { time: o.open_time, open: o.open, high: o.high, low: o.low, close: o.close };
+                candleSeries.update(newCandle);
+                document.getElementById('serverTime').innerText = new Date().toLocaleTimeString();
+
+                const lastIdx = candles.length - 1;
+                if (candles.length > 0 && candles[lastIdx].time === newCandle.time) {
+                    candles[lastIdx] = newCandle;
+                } else {
+                    candles.push(newCandle);
+                }
+                analyzeSMC();
+            }
+        };
+    }
+
+    function analyzeSMC() {
+        if (candles.length < 50) return;
+
+        let markers = [];
+        let zigZagPoints = [];
+        let pivots = [];
+        const leftBars = 5;
+        const rightBars = 5;
+
+        // 1. Pivot Point Detection (Fractals)
+        for (let i = leftBars; i < candles.length - rightBars; i++) {
+            let isHigh = true;
+            let isLow = true;
+
+            for (let j = i - leftBars; j <= i + rightBars; j++) {
+                if (i === j) continue;
+                if (candles[j].high >= candles[i].high) isHigh = false;
+                if (candles[j].low <= candles[i].low) isLow = false;
+            }
+
+            if (isHigh) pivots.push({ type: 'H', time: candles[i].time, price: candles[i].high, index: i });
+            if (isLow) pivots.push({ type: 'L', time: candles[i].time, price: candles[i].low, index: i });
+        }
+
+        // 2. Identify HH, HL, LH, LL and Structure
+        let lastH = null, lastL = null;
+        let lastPivotType = null;
+        let trend = 'Neutral';
+
+        pivots.forEach((p, idx) => {
+            // ZigZag connection
+            zigZagPoints.push({ time: p.time, value: p.price });
+
+            if (p.type === 'H') {
+                let label = 'H';
+                let color = '#ffffff';
+
+                if (lastH) {
+                    if (p.price > lastH.price) {
+                        label = 'HH';
+                        color = '#00ff88';
+                        // BOS Check (Breaking previous High)
+                        if (candles[candles.length-1].close > lastH.price) {
+                             markers.push({ time: p.time, position: 'aboveBar', color: '#3b82f6', shape: 'arrowDown', text: 'BOS' });
+                             document.getElementById('bosText').innerText = "BULLISH BOS";
+                        }
+                    } else {
+                        label = 'LH';
+                        color = '#ff4d4d';
+                        // CHOCH Check (If trend was UP)
+                        if (trend === 'UP') {
+                            markers.push({ time: p.time, position: 'aboveBar', color: '#eab308', shape: 'arrowDown', text: 'CHOCH' });
+                            document.getElementById('chochText').innerText = "CHOCH BEARISH";
+                        }
+                    }
+                }
+                markers.push({ time: p.time, position: 'aboveBar', color: color, shape: 'text', text: label });
+                lastH = p;
+                trend = (label === 'HH') ? 'UP' : 'DOWN';
+            } else {
+                let label = 'L';
+                let color = '#ffffff';
+
+                if (lastL) {
+                    if (p.price < lastL.price) {
+                        label = 'LL';
+                        color = '#ff4d4d';
+                        if (candles[candles.length-1].close < lastL.price) {
+                             document.getElementById('bosText').innerText = "BEARISH BOS";
+                        }
+                    } else {
+                        label = 'HL';
+                        color = '#00ff88';
+                        if (trend === 'DOWN') {
+                            markers.push({ time: p.time, position: 'belowBar', color: '#eab308', shape: 'arrowUp', text: 'CHOCH' });
+                            document.getElementById('chochText').innerText = "CHOCH BULLISH";
+                        }
+                    }
+                }
+                markers.push({ time: p.time, position: 'belowBar', color: color, shape: 'text', text: label });
+                lastL = p;
+            }
+        });
+
+        // 3. Update Chart Elements
+        candleSeries.setMarkers(markers);
+        zigZagSeries.setData(zigZagPoints);
+
+        // Trend Lines (Last 2 similar pivots)
+        const highPivots = pivots.filter(p => p.type === 'H');
+        const lowPivots = pivots.filter(p => p.type === 'L');
+
+        if (highPivots.length >= 2 && lowPivots.length >= 2) {
+            const lp1 = lowPivots[lowPivots.length-2];
+            const lp2 = lowPivots[lowPivots.length-1];
+            const hp1 = highPivots[highPivots.length-2];
+            const hp2 = highPivots[highPivots.length-1];
+
+            // Auto Trend Line (connect latest lows for uptrend, highs for downtrend)
+            if (lp2.price > lp1.price) {
+                trendLineSeries.setData([{time: lp1.time, value: lp1.price}, {time: lp2.time, value: lp2.price}]);
+                document.getElementById('sideTrend').innerText = "UPTREND";
+                document.getElementById('sideTrend').className = "val-g";
+                document.getElementById('trendText').innerText = "UPTREND";
+            } else {
+                trendLineSeries.setData([{time: hp1.time, value: hp1.price}, {time: hp2.time, value: hp2.price}]);
+                document.getElementById('sideTrend').innerText = "DOWNTREND";
+                document.getElementById('sideTrend').className = "val-r";
+                document.getElementById('trendText').innerText = "DOWNTREND";
+            }
+
+            // S/R Lines (Horizontal)
+            const latestH = highPivots[highPivots.length-1].price;
+            const latestL = lowPivots[lowPivots.length-1].price;
+            
+            document.getElementById('resPrice').innerText = latestH.toFixed(2);
+            document.getElementById('supPrice').innerText = latestL.toFixed(2);
+
+            // Support/Resistance line visualization
+            const lastCandleTime = candles[candles.length-1].time;
+            supLine.setData([{time: lowPivots[lowPivots.length-1].time, value: latestL}, {time: lastCandleTime, value: latestL}]);
+            resLine.setData([{time: highPivots[highPivots.length-1].time, value: latestH}, {time: lastCandleTime, value: latestH}]);
+        }
+    }
+
+    document.getElementById('market').addEventListener('change', (e) => { currentMarket = e.target.value; connect(); });
+    document.getElementById('timeframe').addEventListener('change', (e) => { currentTimeframe = e.target.value; connect(); });
+
+    window.onload = () => { initChart(); connect(); };
+</script>
+</body>
+</html>
