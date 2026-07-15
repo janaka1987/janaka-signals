@@ -1,4 +1,263 @@
-janaka    
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMC Live Dashboard (Fixed Deriv Feed)</title>
+    <!-- TradingView Lightweight Charts - Direct official CDN Loading -->
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        :root {
+            --bg-color: #0b0e14;
+            --card-bg: #131a26;
+            --border-color: #222e44;
+            --text-color: #d1d5db;
+            --bullish: #22c55e;
+            --bearish: #ef4444;
+            --accent: #3b82f6;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+        }
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+            color: #fff;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        select {
+            background-color: #1e293b;
+            color: #fff;
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            outline: none;
+        }
+        .status-badge {
+            background-color: #1e293b;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+        }
+        #status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        #chart-container {
+            width: 100%;
+            height: 520px;
+            position: relative;
+            background-color: #0b0e14;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        .legend-panel {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            padding: 12px;
+            background-color: #1a2333;
+            border-radius: 6px;
+            font-size: 13px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .color-box {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+        }
+        /* System Log Console */
+        #console-log {
+            margin-top: 15px;
+            background-color: #070a0f;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #38bdf8;
+            height: 60px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <div class="header">
+        <h1>Deriv SMC Live Dashboard</h1>
+        
+        <div class="controls">
+            <!-- Market Selection Categories -->
+            <select id="market-select" onchange="changeAsset()">
+                <optgroup label="Volatility Indices">
+                    <option value="1HZ10V">Volatility 10 (1s) Index</option>
+                    <option value="R_10">Volatility 10 Index</option>
+                    <option value="1HZ25V">Volatility 25 (1s) Index</option>
+                    <option value="R_25">Volatility 25 Index</option>
+                    <option value="1HZ50V">Volatility 50 (1s) Index</option>
+                    <option value="R_50">Volatility 50 Index</option>
+                    <option value="1HZ75V" selected>Volatility 75 (1s) Index</option>
+                    <option value="R_75">Volatility 75 Index</option>
+                    <option value="1HZ100V">Volatility 100 (1s) Index</option>
+                    <option value="R_100">Volatility 100 Index</option>
+                </optgroup>
+                <optgroup label="Jump Indices">
+                    <option value="JD10">Jump 10 Index</option>
+                    <option value="JD25">Jump 25 Index</option>
+                    <option value="JD50">Jump 50 Index</option>
+                    <option value="JD75">Jump 75 Index</option>
+                    <option value="JD100">Jump 100 Index</option>
+                </optgroup>
+                <optgroup label="Bull / Bear Markets">
+                    <option value="RDBULL">Bull Market Index</option>
+                    <option value="RDBEAR">Bear Market Index</option>
+                </optgroup>
+                <optgroup label="Forex Majors">
+                    <option value="frxEURUSD">EUR/USD</option>
+                    <option value="frxGBPUSD">GBP/USD</option>
+                    <option value="frxAUDUSD">AUD/USD</option>
+                    <option value="frxUSDJPY">USD/JPY</option>
+                    <option value="frxUSDCAD">USD/CAD</option>
+                </optgroup>
+            </select>
+
+            <!-- Timeframe Selection -->
+            <select id="tf-select" onchange="changeAsset()">
+                <option value="60" selected>1 Minute</option>
+                <option value="300">5 Minutes</option>
+                <option value="900">15 Minutes</option>
+                <option value="3600">1 Hour</option>
+            </select>
+
+            <div class="status-badge">
+                <span id="status-dot"></span><span id="status-text">Disconnected</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Candle Chart Window -->
+    <div id="chart-container"></div>
+
+    <!-- Indicator Legend Map -->
+    <div class="legend-panel">
+        <div class="legend-item"><div class="color-box" style="background: #22c55e;"></div> HH / HL (Bullish)</div>
+        <div class="legend-item"><div class="color-box" style="background: #ef4444;"></div> LH / LL (Bearish)</div>
+        <div class="legend-item"><div class="color-box" style="background: #eab308;"></div> BOS (Break)</div>
+        <div class="legend-item"><div class="color-box" style="background: #a855f7;"></div> CHoCH (Reversal)</div>
+        <div class="legend-item"><div class="color-box" style="background: rgba(34, 197, 94, 0.4); height:4px; width:20px;"></div> Support Line</div>
+        <div class="legend-item"><div class="color-box" style="background: rgba(239, 68, 68, 0.4); height:4px; width:20px;"></div> Resistance Line</div>
+    </div>
+
+    <!-- Error/Activity Tracker Board -->
+    <div id="console-log">System Log: Initializing Framework Component Engine...</div>
+</div>
+
+<script>
+    // System Config
+    const PIVOT_LEN = 4; // Lower value makes detection fast on charts
+
+    let socket = null;
+    let chart = null, candleSeries = null;
+    let rawCandles = [];
+    let currentAsset = '1HZ75V';
+    let currentGranularity = 60;
+    let srLines = [];
+
+    function logToScreen(msg, isError = false) {
+        const consoleEl = document.getElementById('console-log');
+        consoleEl.innerHTML = `<span style="color:${isError ? '#f87171':'#38bdf8'}">[LOG] ${msg}</span>`;
+        console.error(msg);
+    }
+
+    // 1. Chart Layout Initialization
+    function initChart() {
+        try {
+            const container = document.getElementById('chart-container');
+            container.innerHTML = '';
+            
+            if (typeof LightweightCharts === 'undefined') {
+                logToScreen("ERROR: TradingView Library failed to load from Internet. Check network!", true);
+                return;
+            }
+
+            chart = LightweightCharts.createChart(container, {
+                layout: { background: { color: '#0b0e14' }, textColor: '#cbd5e1' },
+                grid: { vertLines: { color: '#161f30' }, horzLines: { color: '#161f30' } },
+                rightPriceScale: { borderColor: '#222e44', autoScale: true },
+                timeScale: { borderColor: '#222e44', timeVisible: true }
+            });
+
+            candleSeries = chart.addCandlestickSeries({
+                upColor: '#22c55e', downColor: '#ef4444',
+                borderUpColor: '#22c55e', borderDownColor: '#ef4444',
+                wickUpColor: '#22c55e', wickDownColor: '#ef4444',
+            });
+            logToScreen("TradingView Layout Rendered Successfully.");
+        } catch(e) {
+            logToScreen("Chart Init Exception: " + e.message, true);
+        }
+    }
+
+    // 2. Multi-App ID Connection Fail-Safe Pipeline Engine 
+    function connectDeriv() {
+        if(socket && socket.readyState === WebSocket.OPEN) {
+            socket.close();
+        }
+
+        document.getElementById('status-dot').style.backgroundColor = '#eab308';
+        document.getElementById('status-text').innerText = "Connecting Feed...";
+        logToScreen("Establishing secure websocket gateway handshake...");
+
+        // FIX: Using Deriv official public App ID 1 to prevent app_id blocking errors
+        socket = new WebSocket(`wss://://derivws.com`);
+
+        socket.onopen = () => {
+            document.getElementById('status-dot').style.backgroundColor = '#22c55e';
+
 
 
 
