@@ -1030,7 +1030,29 @@ function buildSignals() {
             currentResistance = HH ? HH.price : LH.price;
         }
     }
+// Trend from latest structure
 
+if (HH && HL) {
+
+    if (
+        HH.index > LH?.index &&
+        HL.index > LL?.index
+    ) {
+        trend = 1;
+    }
+
+}
+
+if (LH && LL) {
+
+    if (
+        LH.index > HH?.index &&
+        LL.index > HL?.index
+    ) {
+        trend = -1;
+    }
+
+}
     let trendText = "WAIT";
     if (trend === 1) trendText = "UPTREND";
     if (trend === -1) trendText = "DOWNTREND";
