@@ -938,7 +938,8 @@ function drawSupportResistance() {
 }
         
 
- function buildSignals() {
+ 
+function buildSignals() {
 
     BOS = "NONE";
     CHOCH = "NONE";
@@ -947,43 +948,82 @@ function drawSupportResistance() {
 
     const lastClose = candles[candles.length - 1].close;
 
-    // --------------------
-    // Bullish Break
-    // --------------------
-    if (HH && lastClose > HH.price) {
+    //--------------------------------------------------
+    // INITIAL TREND
+    //--------------------------------------------------
 
-        if (trend === -1) {
+    if (trend === 0) {
 
-            CHOCH = "CHOCH UP";
+        if (HH && HL)
             trend = 1;
 
-        } else {
+        else if (LH && LL)
+            trend = -1;
+    }
+
+    //--------------------------------------------------
+    // UPTREND
+    //--------------------------------------------------
+
+    if (trend === 1) {
+
+        // BOS
+        if (HH && lastClose > HH.price) {
 
             BOS = "BOS UP";
-            trend = 1;
+
+            currentSupport = HL ? HL.price : null;
+            currentResistance = HH.price;
 
         }
 
-    }
-
-    // --------------------
-    // Bearish Break
-    // --------------------
-    else if (LL && lastClose < LL.price) {
-
-        if (trend === 1) {
+        // CHOCH
+        if (HL && lastClose < HL.price) {
 
             CHOCH = "CHOCH DOWN";
+
             trend = -1;
 
-        } else {
-
-            BOS = "BOS DOWN";
-            trend = -1;
+            currentResistance = LH ? LH.price : HH.price;
+            currentSupport = LL ? LL.price : HL.price;
 
         }
 
     }
+
+    //--------------------------------------------------
+    // DOWNTREND
+    //--------------------------------------------------
+
+    else if (trend === -1) {
+
+        // BOS
+        if (LL && lastClose < LL.price) {
+
+            BOS = "BOS DOWN";
+
+            currentResistance = LH ? LH.price : null;
+            currentSupport = LL.price;
+
+        }
+
+        // CHOCH
+        if (LH && lastClose > LH.price) {
+
+            CHOCH = "CHOCH UP";
+
+            trend = 1;
+
+            currentSupport = HL ? HL.price : LL.price;
+            currentResistance = HH ? HH.price : LH.price;
+
+        }
+
+    }
+
+    //--------------------------------------------------
+    // Trend Text
+    //--------------------------------------------------
 
     let trendText = "WAIT";
 
@@ -992,38 +1032,45 @@ function drawSupportResistance() {
 
     if (trend === -1)
         trendText = "DOWNTREND";
-// --------------------
-// BOS / CHOCH Markers
-// --------------------
 
-if (BOS !== "NONE") {
+    //--------------------------------------------------
+    // BOS Marker
+    //--------------------------------------------------
 
-    markers.push({
-        time: candles[candles.length - 1].time,
-        position: trend === 1 ? "aboveBar" : "belowBar",
-        color: "#00aaff",
-        shape: "circle",
-        text: "BOS"
-    });
+    if (BOS !== "NONE") {
 
-}
+        markers.push({
+            time: candles[candles.length - 1].time,
+            position: trend === 1 ? "aboveBar" : "belowBar",
+            color: "#00bfff",
+            shape: "circle",
+            text: "BOS"
+        });
 
-if (CHOCH !== "NONE") {
+    }
 
-    markers.push({
-        time: candles[candles.length - 1].time,
-        position: trend === 1 ? "belowBar" : "aboveBar",
-        color: "#ffaa00",
-        shape: "circle",
-        text: "CHOCH"
-    });
+    //--------------------------------------------------
+    // CHOCH Marker
+    //--------------------------------------------------
 
-}
+    if (CHOCH !== "NONE") {
+
+        markers.push({
+            time: candles[candles.length - 1].time,
+            position: trend === 1 ? "belowBar" : "aboveBar",
+            color: "#ffaa00",
+            shape: "circle",
+            text: "CHOCH"
+        });
+
+    }
+
     setText("bos", BOS);
     setText("choch", CHOCH);
     setText("trend", trendText);
 
 }
+
 
     
 
