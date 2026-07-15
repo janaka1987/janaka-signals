@@ -1,1 +1,1350 @@
-jamaja
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JANAKA SMC DASHBOARD V3</title>
+
+<script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
+
+<style>
+body{
+  background:#0b1220;
+  color:white;
+  font-family:Arial,sans-serif;
+  margin:0;
+  padding:15px;
+}
+
+h1{
+  text-align:center;
+  color:#00ff88;
+  margin-top:0;
+}
+
+.card{
+  background:#111c2e;
+  border:1px solid #1f3b5b;
+  border-radius:12px;
+  padding:15px;
+  margin-bottom:12px;
+}
+
+select{
+  width:100%;
+  padding:10px;
+  font-size:16px;
+  border-radius:8px;
+  background:#0f172a;
+  color:white;
+  border:none;
+}
+
+#chart{
+  height:500px;
+  width:100%;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+
+.box{
+  background:#0f172a;
+  padding:12px;
+  border-radius:10px;
+}
+
+.value{
+  font-size:18px;
+  font-weight:bold;
+  margin-top:5px;
+}
+
+.small{
+  color:#94a3b8;
+  font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>JANAKA SMC DASHBOARD V3</h1>
+
+<div class="card">
+  <h3>Select Market</h3>
+  <select id="market">
+    <option value="R_10">Volatility 10</option>
+    <option value="R_25">Volatility 25</option>
+    <option value="R_50">Volatility 50</option>
+    <option value="R_75">Volatility 75</option>
+    <option value="R_100" selected>Volatility 100</option>
+
+    <option value="JD10">Jump 10</option>
+    <option value="JD25">Jump 25</option>
+    <option value="JD50">Jump 50</option>
+    <option value="JD75">Jump 75</option>
+    <option value="JD100">Jump 100</option>
+
+    <option value="RDBEAR">Bear Market</option>
+    <option value="RDBULL">Bull Market</option>
+
+    <option value="frxEURUSD">EUR/USD</option>
+    <option value="frxGBPUSD">GBP/USD</option>
+    <option value="frxUSDJPY">USD/JPY</option>
+    <option value="frxAUDUSD">AUD/USD</option>
+  </select>
+</div>
+
+<div class="card">
+  <h3>Market Info</h3>
+  <p>Selected Market: <span id="marketName">Volatility 100</span></p>
+  <p>Status: <span id="status">Connecting...</span></p>
+  <p class="small" id="infoText">Loading 1 minute candles...</p>
+</div>
+
+<div class="card">
+  <h3>📈 Live Candlestick Chart</h3>
+  <div id="chart"></div>
+</div>
+
+
+
+<div class="card">
+  <h3>⚡ Market Structure</h3>
+  <p>BOS: <span id="bos">NONE</span></p>
+  <p>CHOCH: <span id="choch">NONE</span></p>
+  <p>Trend: <span id="trend">WAIT</span></p>
+</div>
+
+<script>
+const APP_ID = "1089";
+const TIMEFRAME = 60; // 1 minute candles
+const MAX_CANDLES = 300;
+
+const marketSelect = document.getElementById("market");
+const marketNameEl = document.getElementById("marketName");
+const statusEl = document.getElementById("status");
+const infoTextEl = document.getElementById("infoText");
+const chartContainer = document.getElementById("chart");
+
+let ws = null;
+let chart = null;
+let candleSeries = null;
+//--------------------------------------------------
+// DATA
+//--------------------------------------------------
+
+let candles = [];
+let markers = [];
+
+const PIVOT = 2;
+const MAX_SWINGS = 200;
+
+let currentMarket = marketSelect.value;
+
+//--------------------------------------------------
+// SWINGS
+//--------------------------------------------------
+
+let swingHighs = [];
+let swingLows = [];
+
+let lastSwingHigh = null;
+let lastSwingLow = null;
+
+//--------------------------------------------------
+// MARKET STRUCTURE
+//--------------------------------------------------
+
+let HH = null;
+let HL = null;
+let LH = null;
+let LL = null;
+
+let prevHigh = null;
+let lastHigh = null;
+
+let prevLow = null;
+let lastLow = null;
+
+let lastHighIndex = -1;
+let lastLowIndex = -1;
+
+let trend = 0;
+
+let BOS = "NONE";
+let CHOCH = "NONE";
+// Support / Resistance
+let supportLine = null;
+let resistanceLine = null;
+
+let currentSupport = null;
+let currentResistance = null;
+
+
+let trendLineSeries = null;
+
+
+//--------------------------------------------------
+// STRUCTURE STATE
+//--------------------------------------------------
+
+let lastBreakDirection = null;
+let lastStructureType = null;
+
+//--------------------------------------------------
+// LIQUIDITY
+//--------------------------------------------------
+
+let weakHigh = null;
+let weakLow = null;
+
+let strongHigh = null;
+let strongLow = null;
+
+//--------------------------------------------------
+// ARRAYS
+//--------------------------------------------------
+
+let bosLines = [];
+let chochLines = [];
+let structureLabels = [];
+
+let lastBOS = null;
+let lastCHOCH = null;
+let brokenSwing = null;
+
+let structureHistory = [];
+let brokenCHOCH = null;
+
+let chochDirection = null;
+
+function setText(id, text){
+  document.getElementById(id).innerText = text;
+}
+
+function resetStructure() {
+
+    candles = [];
+    markers = [];
+
+    swingHighs = [];
+    swingLows = [];
+
+    lastSwingHigh = null;
+    lastSwingLow = null;
+
+    HH = null;
+    HL = null;
+    LH = null;
+    LL = null;
+
+    
+
+    trend = 0;
+
+prevHigh = null;
+lastHigh = null;
+
+prevLow = null;
+lastLow = null;
+
+lastHighIndex = -1;
+lastLowIndex = -1;
+
+    BOS = "NONE";
+    CHOCH = "NONE";
+
+    lastBreakDirection = null;
+lastStructureType = null;
+lastCHOCH = null;
+chochDirection = null;
+brokenCHOCH = null;
+brokenSwing = null;
+
+weakHigh = null;
+weakLow = null;
+  
+
+    strongHigh = null;
+    strongLow = null;
+
+    bosLines = [];
+    chochLines = [];
+    structureLabels = [];
+structureHistory = [];
+    
+
+    setText("bos", "NONE");
+    setText("choch", "NONE");
+    setText("trend", "WAIT");
+
+    if (candleSeries) {
+        candleSeries.setData([]);
+        if (candleSeries.setMarkers) {
+            candleSeries.setMarkers([]);
+        }
+    }
+}
+
+function marketToDisplayName(value){
+  const opt = [...marketSelect.options].find(o => o.value === value);
+  return opt ? opt.text : value;
+}
+
+function updateMarketName(){
+  marketNameEl.innerText = marketToDisplayName(currentMarket);
+}
+
+function createChartIfNeeded(){
+  if (chart) return;
+
+  chart = LightweightCharts.createChart(chartContainer, {
+    layout: {
+      background: { color: "#0f172a" },
+      textColor: "#ffffff"
+    },
+    grid: {
+      vertLines: { color: "#1f2937" },
+      horzLines: { color: "#1f2937" }
+    },
+    rightPriceScale: {
+      borderColor: "#1f2937"
+    },
+    timeScale: {
+      borderColor: "#1f2937",
+      timeVisible: true,
+      secondsVisible: false
+    },
+    width: chartContainer.clientWidth,
+    height: 500
+  });
+
+  candleSeries = chart.addCandlestickSeries({
+    upColor: "#00ff88",
+    downColor: "#ff4d4d",
+    borderUpColor: "#00ff88",
+    borderDownColor: "#ff4d4d",
+    wickUpColor: "#00ff88",
+    wickDownColor: "#ff4d4d"
+});
+    
+    
+    
+
+  const ro = new ResizeObserver(entries => {
+    for (const entry of entries) {
+      const { width } = entry.contentRect;
+      chart.applyOptions({ width: Math.floor(width) });
+    }
+  });
+  ro.observe(chartContainer);
+}
+
+function connect(){
+  if (ws) {
+    try { ws.close(); } catch (e) {}
+    ws = null;
+  }
+
+  statusEl.innerText = "Connecting...";
+  infoTextEl.innerText = "Loading 1 minute candles...";
+  resetStructure();
+  candles = [];
+  if (candleSeries) candleSeries.setData([]);
+
+  ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
+
+  ws.onopen = () => {
+    statusEl.innerText = "Connected 🟢";
+
+    ws.send(JSON.stringify({
+      ticks_history: currentMarket,
+      end: "latest",
+      style: "candles",
+      granularity: TIMEFRAME,
+      count: MAX_CANDLES,
+      subscribe: 1
+    
+    }));
+  
+ws.send(JSON.stringify({
+    ticks: currentMarket,
+    subscribe: 1
+}));
+};
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+if (data.msg_type === "tick") {
+
+    const price = Number(data.tick.quote);
+    const epoch = Number(data.tick.epoch);
+
+    const candleTime = Math.floor(epoch / 60) * 60;
+
+    if (candles.length === 0) return;
+
+    let last = candles[candles.length - 1];
+
+    if (last.time === candleTime) {
+
+        last.close = price;
+
+        if (price > last.high) last.high = price;
+        if (price < last.low) last.low = price;
+
+        candleSeries.update(last);
+
+    } else {
+
+        const newCandle = {
+            time: candleTime,
+            open: last.close,
+            high: price,
+            low: price,
+            close: price
+        };
+
+        candles.push(newCandle);
+
+        if (candles.length > MAX_CANDLES) {
+            candles.shift();
+        }
+
+        candleSeries.update(newCandle);
+
+        buildStructureFromCandles();
+    }
+
+    return;
+}
+    if (data.error) {
+      statusEl.innerText = "Error 🔴";
+      infoTextEl.innerText = data.error.message || "API error";
+      return;
+    }
+
+    if (data.msg_type === "candles" && Array.isArray(data.candles)) {
+      const formatted = data.candles
+        .map(c => ({
+          time: Number(c.epoch),
+          open: Number(c.open),
+          high: Number(c.high),
+          low: Number(c.low),
+          close: Number(c.close)
+        }))
+        .filter(c => Number.isFinite(c.time) && Number.isFinite(c.open) && Number.isFinite(c.high) && Number.isFinite(c.low) && Number.isFinite(c.close));
+
+      candles = formatted;
+      candleSeries.setData(candles);
+      chart.timeScale().fitContent();
+
+      infoTextEl.innerText = `Loaded ${candles.length} candles`;
+      buildStructureFromCandles();
+      chart.timeScale().fitContent();
+
+chart.timeScale().setVisibleLogicalRange({
+
+    from: candles.length - 80,
+    to: candles.length + 5
+
+});
+
+chart.timeScale().scrollToRealTime();
+
+return;
+    }
+
+    if (data.msg_type === "history" && data.history && Array.isArray(data.history.prices) && Array.isArray(data.history.times)) {
+      // Fallback if the API returns history arrays.
+      const prices = data.history.prices;
+      const times = data.history.times;
+
+      const fallback = [];
+      for (let i = 0; i < Math.min(prices.length, times.length); i++) {
+        const p = Number(prices[i]);
+        const t = Number(times[i]);
+        if (Number.isFinite(p) && Number.isFinite(t)) {
+          fallback.push({
+            time: t,
+            open: p,
+            high: p,
+            low: p,
+            close: p
+          });
+        }
+      }
+
+      if (fallback.length) {
+        candles = fallback;
+        candleSeries.setData(candles);
+        chart.timeScale().fitContent();
+        infoTextEl.innerText = `Loaded ${candles.length} candles`;
+        buildStructureFromCandles();
+      }
+      return;
+    }
+
+    // Live candle update fallback
+    if (data.msg_type === "candles" && data.candles && !Array.isArray(data.candles)) {
+      const c = data.candles;
+      const candle = {
+        time: Number(c.epoch),
+        open: Number(c.open),
+        high: Number(c.high),
+        low: Number(c.low),
+        close: Number(c.close)
+      };
+
+      if (Number.isFinite(candle.time) && Number.isFinite(candle.open) && Number.isFinite(candle.high) && Number.isFinite(candle.low) && Number.isFinite(candle.close)) {
+        upsertCandle(candle);
+      }
+    }
+  };
+
+  ws.onerror = () => {
+    statusEl.innerText = "Error 🔴";
+    infoTextEl.innerText = "WebSocket error";
+  };
+
+  ws.onclose = () => {
+    statusEl.innerText = "Disconnected 🔴";
+  };
+}
+
+function upsertCandle(candle){
+  if (!candles.length) {
+    candles.push(candle);
+    candleSeries.setData(candles);
+    return;
+  }
+
+  const last = candles[candles.length - 1];
+
+  if (last.time === candle.time) {
+    candles[candles.length - 1] = candle;
+    candleSeries.update(candle);
+  } else if (candle.time > last.time) {
+    candles.push(candle);
+    if (candles.length > MAX_CANDLES) candles.shift();
+    candleSeries.update(candle);
+  } else {
+    const idx = candles.findIndex(x => x.time === candle.time);
+    if (idx >= 0) {
+      candles[idx] = candle;
+      candleSeries.setData(candles);
+    }
+  }
+
+  buildStructureFromCandles();
+}
+function detectSwingPoints() {
+
+    swingHighs = [];
+    swingLows = [];
+    markers = [];
+
+    if (candles.length < (PIVOT * 2 + 1))
+        return;
+        
+    for (let i = PIVOT; i < candles.length - PIVOT; i++) {
+
+        let isSwingHigh = true;
+        let isSwingLow = true;
+
+        const currentHigh = candles[i].high;
+        const currentLow = candles[i].low;
+
+        for (let j = i - PIVOT; j <= i + PIVOT; j++) {
+
+            if (j === i)
+                continue;
+
+            if (candles[j].high >= currentHigh)
+                isSwingHigh = false;
+
+            if (candles[j].low <= currentLow)
+                isSwingLow = false;
+        }
+
+        if (isSwingHigh) {
+
+            swingHighs.push({
+                index: i,
+                time: candles[i].time,
+                price: currentHigh
+            });
+
+            markers.push({
+                time: candles[i].time,
+                position: "aboveBar",
+                color: "#ff4444",
+                shape: "arrowDown",
+                text: ""
+            });
+        }
+
+        if (isSwingLow) {
+
+            swingLows.push({
+                index: i,
+                time: candles[i].time,
+                price: currentLow
+            });
+
+            markers.push({
+                time: candles[i].time,
+                position: "belowBar",
+                color: "#00ff88",
+                shape: "arrowUp",
+                text: ""
+            });
+        }
+    }
+
+    if (swingHighs.length > MAX_SWINGS)
+        swingHighs.splice(0, swingHighs.length - MAX_SWINGS);
+
+    if (swingLows.length > MAX_SWINGS)
+        swingLows.splice(0, swingLows.length - MAX_SWINGS);
+
+    
+}
+
+
+
+    function buildStructure() {
+
+    prevHigh = null;
+    lastHigh = null;
+
+    prevLow = null;
+    lastLow = null;
+
+    HH = null;
+    HL = null;
+    LH = null;
+    LL = null;
+
+    structureHistory = [];
+
+    // ---------- HIGHS ----------
+
+    for (const h of swingHighs) {
+
+        prevHigh = lastHigh;
+        lastHigh = h;
+
+        if (prevHigh == null)
+            continue;
+
+        h.type = h.price > prevHigh.price ? "HH" : "LH";
+
+        structureHistory.push(h);
+
+    }
+
+    // ---------- LOWS ----------
+
+    for (const l of swingLows) {
+
+        prevLow = lastLow;
+        lastLow = l;
+
+        if (prevLow == null)
+            continue;
+
+        l.type = l.price > prevLow.price ? "HL" : "LL";
+
+        structureHistory.push(l);
+
+    }
+
+    structureHistory.sort((a, b) => a.index - b.index);
+
+}
+
+    
+function drawStructureMarkers() {
+
+    markers = [];
+
+    for (const s of structureHistory) {
+
+        if (s.type === "HH") {
+
+            HH = s;
+
+            markers.push({
+                time: s.time,
+                position: "aboveBar",
+                color: "#00ff66",
+                shape: "arrowDown",
+                text: "HH"
+            });
+
+        } else if (s.type === "LH") {
+
+            LH = s;
+
+            markers.push({
+                time: s.time,
+                position: "aboveBar",
+                color: "#ff4444",
+                shape: "arrowDown",
+                text: "LH"
+            });
+
+        } else if (s.type === "HL") {
+
+            HL = s;
+
+            markers.push({
+                time: s.time,
+                position: "belowBar",
+                color: "#00ff66",
+                shape: "arrowUp",
+                text: "HL"
+            });
+
+        } else if (s.type === "LL") {
+
+            LL = s;
+
+            markers.push({
+                time: s.time,
+                position: "belowBar",
+                color: "#ff4444",
+                shape: "arrowUp",
+                text: "LL"
+            });
+
+        }
+
+    }
+
+    candleSeries.setMarkers(markers);
+
+}
+
+
+    
+
+  
+
+        
+
+        
+
+        
+
+
+                
+
+    
+    
+
+    
+            
+    
+
+            function buildStructureFromCandles() {
+
+    if (candles.length < (PIVOT * 2 + 1))
+        return;
+
+    detectSwingPoints();
+
+    buildStructure();
+
+    drawStructureMarkers();
+
+    buildSignals();
+
+    drawSupportResistance();
+
+    drawTrendLine();
+candleSeries.setMarkers(markers);
+
+            }
+            
+
+            
+
+                
+
+        
+
+
+        
+    
+    
+
+            
+
+                
+
+    
+
+        
+
+    
+
+
+            
+
+            
+    
+
+    
+
+        
+
+
+
+        
+    
+
+    
+    
+
+        
+        
+
+        
+
+    
+        
+
+        
+
+            
+            
+
+        
+
+            
+
+    
+        
+
+        
+
+            
+
+    
+
+
+        
+    
+
+
+
+               
+
+
+
+    
+
+
+
+    
+
+        
+
+
+        
+
+
+
+
+    
+            
+        
+
+        
+        
+
+
+
+            
+                    
+
+        
+
+                
+
+        
+                
+
+
+    
+function drawSupportResistance() {
+
+    if (!candleSeries)
+        return;
+
+    // Remove old lines
+    if (supportLine) {
+        candleSeries.removePriceLine(supportLine);
+        supportLine = null;
+    }
+
+    if (resistanceLine) {
+        candleSeries.removePriceLine(resistanceLine);
+        resistanceLine = null;
+    }
+
+    // -------------------------
+    // Support
+    // -------------------------
+    if (currentSupport !== null) {
+
+        supportLine = candleSeries.createPriceLine({
+
+            price: currentSupport,
+            color: "#00ff88",
+            lineWidth: 2,
+            lineStyle: 2,
+            axisLabelVisible: true,
+            title: "SUPPORT"
+
+        });
+
+    }
+
+    // -------------------------
+    // Resistance
+    // -------------------------
+    if (currentResistance !== null) {
+
+        resistanceLine = candleSeries.createPriceLine({
+
+            price: currentResistance,
+            color: "#ff4444",
+            lineWidth: 2,
+            lineStyle: 2,
+            axisLabelVisible: true,
+            title: "RESISTANCE"
+
+        });
+
+    }
+
+}
+        
+
+ function buildSignals() {
+
+    BOS = "NONE";
+    CHOCH = "NONE";
+
+    if (candles.length === 0) return;
+
+    const lastClose = candles[candles.length - 1].close;
+
+    // --------------------
+    // Bullish Break
+    // --------------------
+    if (HH && lastClose > HH.price) {
+
+        if (trend === -1) {
+
+            CHOCH = "CHOCH UP";
+            trend = 1;
+
+        } else {
+
+            BOS = "BOS UP";
+            trend = 1;
+
+        }
+
+    }
+
+    // --------------------
+    // Bearish Break
+    // --------------------
+    else if (LL && lastClose < LL.price) {
+
+        if (trend === 1) {
+
+            CHOCH = "CHOCH DOWN";
+            trend = -1;
+
+        } else {
+
+            BOS = "BOS DOWN";
+            trend = -1;
+
+        }
+
+    }
+
+    let trendText = "WAIT";
+
+    if (trend === 1)
+        trendText = "UPTREND";
+
+    if (trend === -1)
+        trendText = "DOWNTREND";
+// --------------------
+// BOS / CHOCH Markers
+// --------------------
+
+if (BOS !== "NONE") {
+
+    markers.push({
+        time: candles[candles.length - 1].time,
+        position: trend === 1 ? "aboveBar" : "belowBar",
+        color: "#00aaff",
+        shape: "circle",
+        text: "BOS"
+    });
+
+}
+
+if (CHOCH !== "NONE") {
+
+    markers.push({
+        time: candles[candles.length - 1].time,
+        position: trend === 1 ? "belowBar" : "aboveBar",
+        color: "#ffaa00",
+        shape: "circle",
+        text: "CHOCH"
+    });
+
+}
+    setText("bos", BOS);
+    setText("choch", CHOCH);
+    setText("trend", trendText);
+
+}
+
+    
+
+        
+        
+
+            
+
+    
+
+    
+
+    
+    
+
+    
+
+        
+
+        
+        
+//------------------------------------------------
+// Trend Line
+//------------------------------------------------
+
+function drawTrendLine() {
+
+    if (!chart)
+        return;
+
+    // Remove old trend line
+    if (trendLineSeries) {
+        chart.removeSeries(trendLineSeries);
+        trendLineSeries = null;
+    }
+
+    trendLineSeries = chart.addLineSeries({
+
+        color: "#00aaff",
+        lineWidth: 2,
+        crosshairMarkerVisible: false,
+        lastValueVisible: false,
+        priceLineVisible: false
+
+    });
+// -------------------------
+// UPTREND
+// -------------------------
+if (trend === "UPTREND") {
+
+    const hls = swingLows.filter(s => s.type === "HL");
+
+if (hls.length >= 2) {
+
+    const p1 = hls[hls.length - 2];
+    const p2 = hls[hls.length - 1];
+
+      const slope =
+    (p2.price - p1.price) /
+    (p2.time - p1.time);
+
+const futureTime =
+    candles[candles.length - 1].time + (TIMEFRAME * 10);
+
+const futurePrice =
+    p2.price +
+    slope * (futureTime - p2.time);
+
+trendLineSeries.setData([
+    { time: p1.time, value: p1.price },
+    { time: futureTime, value: futurePrice }
+]);
+
+    }
+
+}
+
+// -------------------------
+// DOWNTREND
+// -------------------------
+if (trend === "DOWNTREND") {
+
+    const lhs = swingHighs.filter(s => s.type === "LH");
+
+if (lhs.length >= 2) {
+
+    const p1 = lhs[lhs.length - 2];
+    const p2 = lhs[lhs.length - 1];
+
+        const slope =
+    (p2.price - p1.price) /
+    (p2.time - p1.time);
+
+const futureTime =
+    candles[candles.length - 1].time + (TIMEFRAME * 10);
+
+const futurePrice =
+    p2.price +
+    slope * (futureTime - p2.time);
+
+trendLineSeries.setData([
+    { time: p1.time, value: p1.price },
+    { time: futureTime, value: futurePrice }
+]);
+
+    }
+
+}
+}
+    
+
+
+
+    
+
+
+    
+
+
+marketSelect.addEventListener("change", () => {
+  currentMarket = marketSelect.value;
+  updateMarketName();
+  connect();
+});
+
+updateMarketName();
+createChartIfNeeded();
+connect();
+</script>
+
+</body>
+</html>
+
+
+    
+
+        
+
+        
+        
+
+        
+
+
+
+    
+
+
+
+ 
+
+
+
+        
+
+   
+
+        
+
+        
+
+
+          
+
+            
+
+            
+            
+
+            
+
+
+    
+
+
+          
+          
+      
+
+            
+
+            
+          
+            
+    
+
+            
+
+            
+
+
+
+            
+
+        
+
+        
+
+        
+
+        
+
+        
+        
+            
+
+        
+    
+
+            
+
+        
+
+    
+        
+
+    
+
+    
+
+        
+        
+
+        
+
+    
+
+    
+    
+
+ 
+    
+    
+
+
+
+    
+
+        
+        
+            
+
+    
+        
+
+        
+        
+
+
+    
+    
+    
+
+    
+
+    
+
+
+        
+            
+    
+
+
+
+    
+
+    
+
+
+
+
+
+        
+            
+
+
+
+
+    
+
+    
+            
+
+    
+
+
+    
+
+    
+
+    
+    
+            
+
+    
+    
+            
+
+    
+
+
+
+
+
+
+
+        
+
+            
+        
+
+
+
+        
+
+
+        
+        
+
+    
+
+
+
+
