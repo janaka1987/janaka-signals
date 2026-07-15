@@ -1,1 +1,320 @@
-janaka
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JANAKA SMC DASHBOARD V4 PRO</title>
+    <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        :root {
+            --bg-color: #05070a;
+            --card-bg: #0d1117;
+            --border-color: #21262d;
+            --green: #00ff88;
+            --red: #ff4d4d;
+            --blue: #3b82f6;
+            --orange: #f39c12;
+            --text-main: #e6edf3;
+        }
+
+        body { 
+            background: var(--bg-color); 
+            color: var(--text-main); 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            padding: 15px; 
+        }
+
+        .header-title {
+            text-align: center;
+            color: var(--green);
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 15px;
+        }
+
+        .card { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border-color); 
+            border-radius: 12px; 
+            padding: 15px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        label { font-size: 11px; color: #848d97; font-weight: bold; margin-bottom: 5px; display: block; }
+        
+        select { 
+            width: 100%; 
+            padding: 10px; 
+            border-radius: 6px; 
+            background: #161b22; 
+            color: var(--green); 
+            border: 1px solid #30363d; 
+            font-weight: bold;
+            outline: none;
+            margin-bottom: 10px;
+        }
+
+        #chart { 
+            height: 520px; 
+            width: 100%; 
+            border-radius: 10px; 
+            overflow: hidden; 
+            position: relative;
+        }
+
+        .info-row { display: flex; justify-content: space-between; font-size: 12px; margin: 8px 0; border-bottom: 1px solid #1a1f26; padding-bottom: 4px; }
+        .val-g { color: var(--green); font-weight: bold; }
+        .val-r { color: var(--red); font-weight: bold; }
+        .val-b { color: var(--blue); font-weight: bold; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat-box { 
+            background: var(--card-bg); 
+            padding: 12px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .stat-box span { display: block; font-size: 10px; color: #848d97; text-transform: uppercase; margin-bottom: 5px; }
+        .stat-box b { font-size: 15px; }
+
+        .legend { font-size: 11px; line-height: 1.8; margin-top: 10px; }
+        .dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="header-title">JANAKA SMC DASHBOARD V4 PRO</div>
+
+<div class="main-grid">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="card">
+            <label>MARKET SELECTION</label>
+            <select id="market">
+                <optgroup label="Volatility Indices">
+                    <option value="R_10">Volatility 10</option>
+                    <option value="R_25">Volatility 25</option>
+                    <option value="R_50">Volatility 50</option>
+                    <option value="R_75">Volatility 75</option>
+                    <option value="R_100" selected>Volatility 100</option>
+                    <option value="1HZ10V">Volatility 10 (1s)</option>
+                    <option value="1HZ100V">Volatility 100 (1s)</option>
+                </optgroup>
+                <optgroup label="Jump Indices">
+                    <option value="JD10">Jump 10</option>
+                    <option value="JD25">Jump 25</option>
+                    <option value="JD50">Jump 50</option>
+                    <option value="JD100">Jump 100</option>
+                </optgroup>
+                <optgroup label="Bull/Bear Markets">
+                    <option value="RDBULL">Bull Market Index</option>
+                    <option value="RDBEAR">Bear Market Index</option>
+                </optgroup>
+                <optgroup label="Forex Major">
+                    <option value="frxEURUSD">EUR/USD</option>
+                    <option value="frxGBPUSD">GBP/USD</option>
+                    <option value="frxUSDJPY">USD/JPY</option>
+                    <option value="frxAUDUSD">AUD/USD</option>
+                </optgroup>
+                <optgroup label="Forex Minor">
+                    <option value="frxAUDCAD">AUD/CAD</option>
+                    <option value="frxGBPJPY">GBP/JPY</option>
+                    <option value="frxEURAUD">EUR/AUD</option>
+                </optgroup>
+            </select>
+
+            <label>TIMEFRAME</label>
+            <select id="timeframe">
+                <option value="60">1 Minute</option>
+                <option value="300">5 Minutes</option>
+                <option value="900">15 Minutes</option>
+                <option value="3600">1 Hour</option>
+            </select>
+        </div>
+
+        <div class="card" style="margin-top:15px;">
+            <label>MARKET INFO</label>
+            <div class="info-row"><span>Status:</span> <span class="val-g">● Connected</span></div>
+            <div class="info-row"><span>Trend:</span> <span id="sideTrend" class="val-g">UPTREND</span></div>
+            <div class="info-row"><span>Last Update:</span> <span id="serverTime" style="color:#848d97">--:--:--</span></div>
+            
+            <div class="legend">
+                <div><span class="dot" style="background:var(--green)"></span> HH / HL (Bullish)</div>
+                <div><span class="dot" style="background:var(--red)"></span> LH / LL (Bearish)</div>
+                <div><span class="dot" style="background:var(--blue)"></span> BOS / CHOCH</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Chart Area -->
+    <div class="content">
+        <div class="card" style="padding: 5px;">
+            <div id="chart"></div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box"><span>TREND</span><b id="trendText" class="val-g">ANALYZING</b></div>
+            <div class="stat-box"><span>BOS</span><b id="bosText" class="val-b">NONE</b></div>
+            <div class="stat-box"><span>CHOCH</span><b id="chochText" class="val-b">NONE</b></div>
+            <div class="stat-box"><span>SUPPORT</span><b id="supPrice" class="val-g">0.00</b></div>
+            <div class="stat-box"><span>RESISTANCE</span><b id="resPrice" class="val-r">0.00</b></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const APP_ID = "1089";
+    let chart, candleSeries, ws, srLines = [];
+    let candles = [];
+    let currentMarket = "R_100";
+    let currentTimeframe = 60;
+
+    function initChart() {
+        chart = LightweightCharts.createChart(document.getElementById('chart'), {
+            layout: { background: { color: '#0d1117' }, textColor: '#cbd5e1' },
+            grid: { vertLines: { color: '#161b22' }, horzLines: { color: '#161b22' } },
+            crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+            rightPriceScale: { borderColor: '#30363d' },
+            timeScale: { borderColor: '#30363d', timeVisible: true }
+        });
+
+        candleSeries = chart.addCandlestickSeries({
+            upColor: '#00ff88', downColor: '#ff4d4d',
+            borderUpColor: '#00ff88', borderDownColor: '#ff4d4d',
+            wickUpColor: '#00ff88', wickDownColor: '#ff4d4d'
+        });
+    }
+
+    function connect() {
+        if (ws) ws.close();
+        ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
+
+        ws.onopen = () => {
+            candles = [];
+            candleSeries.setData([]);
+            ws.send(JSON.stringify({
+                ticks_history: currentMarket,
+                end: "latest", style: "candles",
+                granularity: parseInt(currentTimeframe),
+                count: 300, subscribe: 1
+            }));
+        };
+
+        ws.onmessage = (msg) => {
+            const data = JSON.parse(msg.data);
+            if (data.candles) {
+                candles = data.candles.map(c => ({
+                    time: c.epoch, open: c.open, high: c.high, low: c.low, close: c.close
+                }));
+                candleSeries.setData(candles);
+                analyzeSMC();
+            }
+            if (data.ohlc) {
+                const o = data.ohlc;
+                const newCandle = { time: o.open_time, open: o.open, high: o.high, low: o.low, close: o.close };
+                candleSeries.update(newCandle);
+                
+                // Update server time
+                document.getElementById('serverTime').innerText = new Date().toLocaleTimeString();
+
+                if (candles.length > 0 && candles[candles.length-1].time === newCandle.time) {
+                    candles[candles.length-1] = newCandle;
+                } else {
+                    candles.push(newCandle);
+                }
+                if(candles.length % 5 === 0) analyzeSMC();
+            }
+        };
+    }
+
+    function analyzeSMC() {
+        if (candles.length < 30) return;
+
+        const period = 5; 
+        let highs = [], lows = [], markers = [];
+        
+        // 1. Detect Pivot Highs and Lows (Zig-Zag)
+        for (let i = period; i < candles.length - period; i++) {
+            let isHigh = true, isLow = true;
+            for (let j = i - period; j <= i + period; j++) {
+                if (candles[j].high > candles[i].high) isHigh = false;
+                if (candles[j].low < candles[i].low) isLow = false;
+            }
+            if (isHigh) highs.push({ idx: i, price: candles[i].high, time: candles[i].time });
+            if (isLow) lows.push({ idx: i, price: candles[i].low, time: candles[i].time });
+        }
+
+        // 2. Label Structure (HH, HL, LH, LL)
+        highs.forEach((h, idx) => {
+            if (idx > 0) {
+                let label = h.price > highs[idx-1].price ? "HH" : "LH";
+                markers.push({ time: h.time, position: 'aboveBar', color: label=="HH"?'#00ff88':'#ff4d4d', shape: 'arrowDown', text: label });
+            }
+        });
+
+        lows.forEach((l, idx) => {
+            if (idx > 0) {
+                let label = l.price < lows[idx-1].price ? "LL" : "HL";
+                markers.push({ time: l.time, position: 'belowBar', color: label=="HL"?'#00ff88':'#ff4d4d', shape: 'arrowUp', text: label });
+            }
+        });
+
+        // 3. BOS & CHOCH Detection
+        const lastClose = candles[candles.length - 1].close;
+        const prevHigh = highs[highs.length - 1]?.price;
+        const prevLow = lows[lows.length - 1]?.price;
+
+        if (prevHigh && lastClose > prevHigh) {
+            document.getElementById('bosText').innerText = "BULLISH BOS";
+            document.getElementById('trendText').innerText = "UPTREND";
+            document.getElementById('sideTrend').innerText = "UPTREND";
+            document.getElementById('trendText').className = "val-g";
+            markers.push({ time: candles[candles.length-1].time, position: 'aboveBar', color: '#3b82f6', shape: 'circle', text: 'BOS' });
+        } else if (prevLow && lastClose < prevLow) {
+            document.getElementById('bosText').innerText = "BEARISH BOS";
+            document.getElementById('trendText').innerText = "DOWNTREND";
+            document.getElementById('sideTrend').innerText = "DOWNTREND";
+            document.getElementById('trendText').className = "val-r";
+            markers.push({ time: candles[candles.length-1].time, position: 'belowBar', color: '#3b82f6', shape: 'circle', text: 'BOS' });
+        }
+
+        candleSeries.setMarkers(markers);
+
+        // 4. Support & Resistance Auto-lines
+        srLines.forEach(l => candleSeries.removePriceLine(l));
+        srLines = [];
+        if(prevHigh) {
+            srLines.push(candleSeries.createPriceLine({ price: prevHigh, color: '#ff4d4d', lineWidth: 1, lineStyle: 2, title: 'RES' }));
+            document.getElementById('resPrice').innerText = prevHigh.toFixed(2);
+        }
+        if(prevLow) {
+            srLines.push(candleSeries.createPriceLine({ price: prevLow, color: '#00ff88', lineWidth: 1, lineStyle: 2, title: 'SUP' }));
+            document.getElementById('supPrice').innerText = prevLow.toFixed(2);
+        }
+    }
+
+    document.getElementById('market').addEventListener('change', (e) => { currentMarket = e.target.value; connect(); });
+    document.getElementById('timeframe').addEventListener('change', (e) => { currentTimeframe = e.target.value; connect(); });
+
+    window.onload = () => { initChart(); connect(); };
+</script>
+
+</body>
+</html>
