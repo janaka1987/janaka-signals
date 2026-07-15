@@ -1,1 +1,235 @@
-janaka
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JANAKA SMC PRO DASHBOARD</title>
+    <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        body { background: #0b1220; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 10px; }
+        .header { text-align: center; padding: 10px; color: #00ff88; text-transform: uppercase; letter-spacing: 2px; }
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .card { background: #111c2e; border: 1px solid #1f3b5b; border-radius: 8px; padding: 15px; }
+        select { width: 100%; padding: 12px; border-radius: 5px; background: #0f172a; color: #00ff88; border: 1px solid #334155; font-weight: bold; }
+        #chart { height: 550px; width: 100%; border-radius: 8px; overflow: hidden; position: relative; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; text-align: center; }
+        .stat-box { background: #1e293b; padding: 10px; border-radius: 5px; border-bottom: 3px solid #3b82f6; }
+        .stat-box span { display: block; font-size: 12px; color: #94a3b8; }
+        .stat-box b { font-size: 16px; color: #fff; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h2 style="margin:0;">JANAKA SMC DASHBOARD V3 PRO</h2>
+</div>
+
+<div class="controls">
+    <div class="card">
+        <label>SELECT MARKET</label>
+        <select id="market">
+            <optgroup label="Volatility Indices">
+                <option value="R_10">Volatility 10</option>
+                <option value="R_25">Volatility 25</option>
+                <option value="R_50">Volatility 50</option>
+                <option value="R_75">Volatility 75</option>
+                <option value="R_100" selected>Volatility 100</option>
+                <option value="1HZ10V">Volatility 10 (1s)</option>
+                <option value="1HZ100V">Volatility 100 (1s)</option>
+            </optgroup>
+            <optgroup label="Jump Indices">
+                <option value="JD10">Jump 10</option>
+                <option value="JD25">Jump 25</option>
+                <option value="JD50">Jump 50</option>
+                <option value="JD75">Jump 75</option>
+                <option value="JD100">Jump 100</option>
+            </optgroup>
+            <optgroup label="Bull/Bear">
+                <option value="RDBULL">Bull Market</option>
+                <option value="RDBEAR">Bear Market</option>
+            </optgroup>
+            <optgroup label="Forex Major">
+                <option value="frxEURUSD">EUR/USD</option>
+                <option value="frxGBPUSD">GBP/USD</option>
+                <option value="frxUSDJPY">USD/JPY</option>
+                <option value="frxAUDUSD">AUD/USD</option>
+            </optgroup>
+            <optgroup label="Forex Minor">
+                <option value="frxAUDCAD">AUD/CAD</option>
+                <option value="frxEURAUD">EUR/AUD</option>
+                <option value="frxGBPJPY">GBP/JPY</option>
+            </optgroup>
+        </select>
+    </div>
+    <div class="card">
+        <label>TIMEFRAME</label>
+        <select id="timeframe">
+            <option value="60">1 Minute</option>
+            <option value="300">5 Minutes</option>
+            <option value="900">15 Minutes</option>
+            <option value="3600">1 Hour</option>
+        </select>
+    </div>
+</div>
+
+<div class="card" style="padding:5px;">
+    <div id="chart"></div>
+</div>
+
+<div class="stats">
+    <div class="stat-box"><span>TREND</span><b id="trendText">ANALYZING</b></div>
+    <div class="stat-box"><span>BOS</span><b id="bosText">NONE</b></div>
+    <div class="stat-box"><span>CHOCH</span><b id="chochText">NONE</b></div>
+</div>
+
+<script>
+    const APP_ID = "1089";
+    let chart, candleSeries, trendLineSeries, ws;
+    let candles = [];
+    let currentMarket = "R_100";
+    let currentTimeframe = 60;
+    let srLines = [];
+
+    function initChart() {
+        const chartElement = document.getElementById('chart');
+        chart = LightweightCharts.createChart(chartElement, {
+            layout: { background: { color: '#0f172a' }, textColor: '#cbd5e1' },
+            grid: { vertLines: { color: '#1e293b' }, horzLines: { color: '#1e293b' } },
+            crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+            rightPriceScale: { borderColor: '#334155' },
+            timeScale: { borderColor: '#334155', timeVisible: true }
+        });
+
+        candleSeries = chart.addCandlestickSeries({
+            upColor: '#00ff88', downColor: '#ff4d4d',
+            borderUpColor: '#00ff88', borderDownColor: '#ff4d4d',
+            wickUpColor: '#00ff88', wickDownColor: '#ff4d4d'
+        });
+
+        trendLineSeries = chart.addLineSeries({ color: '#3b82f6', lineWidth: 2, lineStyle: 2 });
+    }
+
+    function connect() {
+        if (ws) ws.close();
+        ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
+
+        ws.onopen = () => {
+            candles = [];
+            candleSeries.setData([]);
+            ws.send(JSON.stringify({
+                ticks_history: currentMarket,
+                end: "latest",
+                style: "candles",
+                granularity: parseInt(currentTimeframe),
+                count: 300,
+                subscribe: 1
+            }));
+        };
+
+        ws.onmessage = (msg) => {
+            const data = JSON.parse(msg.data);
+            if (data.candles) {
+                candles = data.candles.map(c => ({
+                    time: c.epoch, open: c.open, high: c.high, low: c.low, close: c.close
+                }));
+                candleSeries.setData(candles);
+                analyzeStructure();
+            }
+            if (data.ohlc) {
+                const o = data.ohlc;
+                const newCandle = { time: o.open_time, open: o.open, high: o.high, low: o.low, close: o.close };
+                candleSeries.update(newCandle);
+                
+                if (candles.length > 0 && candles[candles.length-1].time === newCandle.time) {
+                    candles[candles.length-1] = newCandle;
+                } else {
+                    candles.push(newCandle);
+                }
+                if(candles.length % 5 === 0) analyzeStructure(); // Analyze periodically
+            }
+        };
+    }
+
+    function analyzeStructure() {
+        if (candles.length < 20) return;
+
+        const p = 5; // ZigZag period
+        let highs = [], lows = [], markers = [];
+        
+        // 1. Detect Pivot Highs and Lows (Zig-Zag points)
+        for (let i = p; i < candles.length - p; i++) {
+            let isHigh = true, isLow = true;
+            for (let j = i - p; j <= i + p; j++) {
+                if (candles[j].high > candles[i].high) isHigh = false;
+                if (candles[j].low < candles[i].low) isLow = false;
+            }
+
+            if (isHigh) highs.push({ index: i, price: candles[i].high, time: candles[i].time });
+            if (isLow) lows.push({ index: i, price: candles[i].low, time: candles[i].time });
+        }
+
+        // 2. Label Structure (HH, HL, LH, LL)
+        let lastType = "";
+        highs.forEach((h, idx) => {
+            if (idx > 0) {
+                let label = h.price > highs[idx-1].price ? "HH" : "LH";
+                markers.push({ time: h.time, position: 'aboveBar', color: '#ff4d4d', shape: 'arrowDown', text: label });
+            }
+        });
+
+        lows.forEach((l, idx) => {
+            if (idx > 0) {
+                let label = l.price < lows[idx-1].price ? "LL" : "HL";
+                markers.push({ time: l.time, position: 'belowBar', color: '#00ff88', shape: 'arrowUp', text: label });
+            }
+        });
+
+        // 3. BOS & CHOCH Logic
+        const lastClose = candles[candles.length - 1].close;
+        const lastHigh = highs[highs.length - 1]?.price;
+        const lastLow = lows[lows.length - 1]?.price;
+
+        if (lastHigh && lastClose > lastHigh) {
+            document.getElementById('bosText').innerText = "BULLISH BOS";
+            document.getElementById('trendText').innerText = "UPTREND";
+            markers.push({ time: candles[candles.length-1].time, position: 'aboveBar', color: '#3b82f6', shape: 'circle', text: 'BOS' });
+        } else if (lastLow && lastClose < lastLow) {
+            document.getElementById('bosText').innerText = "BEARISH BOS";
+            document.getElementById('trendText').innerText = "DOWNTREND";
+            markers.push({ time: candles[candles.length-1].time, position: 'belowBar', color: '#3b82f6', shape: 'circle', text: 'BOS' });
+        }
+
+        candleSeries.setMarkers(markers);
+
+        // 4. Trend Line
+        if (highs.length > 2) {
+            const h1 = highs[highs.length - 2];
+            const h2 = highs[highs.length - 1];
+            trendLineSeries.setData([{ time: h1.time, value: h1.price }, { time: h2.time, value: h2.price }]);
+        }
+
+        // 5. Support & Resistance
+        srLines.forEach(line => candleSeries.removePriceLine(line));
+        srLines = [];
+        if(lastHigh) srLines.push(candleSeries.createPriceLine({ price: lastHigh, color: '#f43f5e', lineWidth: 1, lineStyle: 2, title: 'RESISTANCE' }));
+        if(lastLow) srLines.push(candleSeries.createPriceLine({ price: lastLow, color: '#10b981', lineWidth: 1, lineStyle: 2, title: 'SUPPORT' }));
+    }
+
+    document.getElementById('market').addEventListener('change', (e) => {
+        currentMarket = e.target.value;
+        connect();
+    });
+
+    document.getElementById('timeframe').addEventListener('change', (e) => {
+        currentTimeframe = e.target.value;
+        connect();
+    });
+
+    window.onload = () => {
+        initChart();
+        connect();
+    };
+</script>
+
+</body>
+</html>
