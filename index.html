@@ -619,12 +619,6 @@ function detectSwingPoints() {
 
     function buildStructure() {
 
-    prevHigh = null;
-    lastHigh = null;
-
-    prevLow = null;
-    lastLow = null;
-
     HH = null;
     HL = null;
     LH = null;
@@ -632,41 +626,85 @@ function detectSwingPoints() {
 
     structureHistory = [];
 
-    // ---------- HIGHS ----------
+    let lastHigh = null;
+    let lastLow = null;
 
-    for (const h of swingHighs) {
+    let expectHigh = true;
 
-        prevHigh = lastHigh;
-        lastHigh = h;
+    while (true) {
 
-        if (prevHigh == null)
-            continue;
+        let next = null;
 
-        h.type = h.price > prevHigh.price ? "HH" : "LH";
+        if (expectHigh) {
 
-        structureHistory.push(h);
+            next = swingHighs.find(h => lastHigh == null || h.index > lastHigh.index);
+
+            if (!next) break;
+
+            if (lastHigh) {
+
+                next.type = next.price > lastHigh.price ? "HH" : "LH";
+
+                structureHistory.push(next);
+
+            }
+
+            lastHigh = next;
+            expectHigh = false;
+
+        } else {
+
+            next = swingLows.find(l => lastLow == null || l.index > lastLow.index);
+
+            if (!next) break;
+
+            if (lastLow) {
+
+                next.type = next.price > lastLow.price ? "HL" : "LL";
+
+                structureHistory.push(next);
+
+            }
+
+            lastLow = next;
+            expectHigh = true;
+
+        }
 
     }
 
-    // ---------- LOWS ----------
+    // Latest structure
+    for (const s of structureHistory) {
 
-    for (const l of swingLows) {
+        switch (s.type) {
 
-        prevLow = lastLow;
-        lastLow = l;
+            case "HH":
+                HH = s;
+                break;
 
-        if (prevLow == null)
-            continue;
+            case "HL":
+                HL = s;
+                break;
 
-        l.type = l.price > prevLow.price ? "HL" : "LL";
+            case "LH":
+                LH = s;
+                break;
 
-        structureHistory.push(l);
+            case "LL":
+                LL = s;
+                break;
+
+        }
 
     }
-
-    structureHistory.sort((a, b) => a.index - b.index);
 
 }
+
+    
+
+        
+
+        
 
     
 function drawStructureMarkers() {
