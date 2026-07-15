@@ -944,134 +944,97 @@ function buildSignals() {
     BOS = "NONE";
     CHOCH = "NONE";
 
-    if (candles.length === 0) return;
+    if (candles.length < 2) return;
 
-    const lastClose = candles[candles.length - 1].close;
+    const last = candles[candles.length - 1];
+    const prev = candles[candles.length - 2];
+    const lastClose = last.close;
+    const prevClose = prev.close;
 
-    //--------------------------------------------------
-    // INITIAL TREND
-    //--------------------------------------------------
-
+    // initial trend
     if (trend === 0) {
-
-        if (HH && HL)
-            trend = 1;
-
-        else if (LH && LL)
-            trend = -1;
+        if (HH && HL) trend = 1;
+        else if (LH && LL) trend = -1;
     }
 
-    //--------------------------------------------------
     // UPTREND
-    //--------------------------------------------------
-
     if (trend === 1) {
 
-        // BOS
-        if (HH && lastClose > HH.price) {
-
+        // BOS UP = close crosses above HH
+        if (HH && prevClose <= HH.price && lastClose > HH.price) {
             BOS = "BOS UP";
-
             currentSupport = HL ? HL.price : null;
             currentResistance = HH.price;
-
         }
-
-        // CHOCH
-        if (HL && lastClose < HL.price) {
-
+        // CHOCH DOWN = close crosses below HL
+        else if (HL && prevClose >= HL.price && lastClose < HL.price) {
             CHOCH = "CHOCH DOWN";
-
             trend = -1;
-
-            currentResistance = LH ? LH.price : HH.price;
             currentSupport = LL ? LL.price : HL.price;
-
+            currentResistance = LH ? LH.price : HH.price;
         }
-
     }
 
-    //--------------------------------------------------
     // DOWNTREND
-    //--------------------------------------------------
-
     else if (trend === -1) {
 
-        // BOS
-        if (LL && lastClose < LL.price) {
-
+        // BOS DOWN = close crosses below LL
+        if (LL && prevClose >= LL.price && lastClose < LL.price) {
             BOS = "BOS DOWN";
-
-            currentResistance = LH ? LH.price : null;
             currentSupport = LL.price;
-
+            currentResistance = LH ? LH.price : null;
         }
-
-        // CHOCH
-        if (LH && lastClose > LH.price) {
-
+        // CHOCH UP = close crosses above LH
+        else if (LH && prevClose <= LH.price && lastClose > LH.price) {
             CHOCH = "CHOCH UP";
-
             trend = 1;
-
             currentSupport = HL ? HL.price : LL.price;
             currentResistance = HH ? HH.price : LH.price;
-
         }
-
     }
 
-    //--------------------------------------------------
-    // Trend Text
-    //--------------------------------------------------
-
     let trendText = "WAIT";
-
-    if (trend === 1)
-        trendText = "UPTREND";
-
-    if (trend === -1)
-        trendText = "DOWNTREND";
-
-    //--------------------------------------------------
-    // BOS Marker
-    //--------------------------------------------------
+    if (trend === 1) trendText = "UPTREND";
+    if (trend === -1) trendText = "DOWNTREND";
 
     if (BOS !== "NONE") {
-
         markers.push({
-            time: candles[candles.length - 1].time,
+            time: last.time,
             position: trend === 1 ? "aboveBar" : "belowBar",
-            color: "#00bfff",
+            color: "#00aaff",
             shape: "circle",
             text: "BOS"
         });
-
     }
 
-    //--------------------------------------------------
-    // CHOCH Marker
-    //--------------------------------------------------
-
     if (CHOCH !== "NONE") {
-
         markers.push({
-            time: candles[candles.length - 1].time,
+            time: last.time,
             position: trend === 1 ? "belowBar" : "aboveBar",
             color: "#ffaa00",
             shape: "circle",
             text: "CHOCH"
         });
-
     }
 
     setText("bos", BOS);
     setText("choch", CHOCH);
     setText("trend", trendText);
-
 }
 
+    
 
+        
+        
+
+
+            
+
+    
+
+
+
+    
     
 
         
