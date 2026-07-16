@@ -209,14 +209,14 @@
 </div>
 
 <div class="stats-grid">
-    <div class="stat-box"><span>1M TREND</span><b id="trendText" class="val-g">--</b></div>
-    <div class="stat-box"><span>ORDER BLOCK</span><b id="obText" class="val-y">WAITING</b></div>
-    <div class="stat-box"><span>FVG / GAP</span><b id="fvgText" style="color:var(--purple)">CLEAR</b></div>
-    <div class="stat-box"><span>LIQUIDITY</span><b id="liqText" style="color:var(--blue)">STABLE</b></div>
-    <div class="stat-box"><span>SUPPORT</span><b id="supPrice" class="val-g">0.00</b></div>
-    <div class="stat-box"><span>RESISTANCE</span><b id="resPrice" class="val-r">0.00</b></div>
-    <div class="stat-box"><span>EQUILIBRIUM</span><b id="eqPrice" style="color:#848d97">0.00</b></div>
-    <div class="stat-box"><span>CANDLE CONF.</span><b id="candConf" class="val-g">--</b></div>
+    <div class="stat-box"><span>1M TREND</span><br><b id="trendText" class="val-g">--</b></div>
+    <div class="stat-box"><span>ORDER BLOCK</span><br><b id="obText" class="val-y">WAITING</b></div>
+    <div class="stat-box"><span>FVG / GAP</span><br><b id="fvgText" style="color:var(--purple)">CLEAR</b></div>
+    <div class="stat-box"><span>LIQUIDITY</span><br><b id="liqText" style="color:var(--blue)">STABLE</b></div>
+    <div class="stat-box"><span>SUPPORT</span><br><b id="supPrice" class="val-g">0.00</b></div>
+    <div class="stat-box"><span>RESISTANCE</span><br><b id="resPrice" class="val-r">0.00</b></div>
+    <div class="stat-box"><span>EQUILIBRIUM</span><br><b id="eqPrice" style="color:#848d97">0.00</b></div>
+    <div class="stat-box"><span>CANDLE CONF.</span><br><b id="candConf" class="val-g">--</b></div>
 </div>
 
 <div class="signal-box">
@@ -229,23 +229,24 @@
 
 <script>
     const APP_ID = "1089";
-    let chart, candleSeries, obSeries, fvgSeries, zigZagSeries, ws;
+    let chart, candleSeries, obSeries, fvgSeries, trendLineSeries, resLineSeries, supLineSeries, ws;
     let candles = [];
     let currentMarket = "R_100";
     let currentTimeframe = 60;
     
-    // Audio Context for beep sound
     function playBeep(type) {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(type === 'buy' ? 880 : 440, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.2);
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(type === 'buy' ? 880 : 440, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.2);
+        } catch(e) {}
     }
 
     function initChart() {
@@ -262,9 +263,11 @@
             wickUpColor: '#00ff88', wickDownColor: '#ff4d4d'
         });
 
-        zigZagSeries = chart.addLineSeries({ color: 'rgba(255, 255, 255, 0.1)', lineWidth: 1, lineStyle: 2 });
+        // SMC drawing series
+        trendLineSeries = chart.addLineSeries({ color: '#3b82f6', lineWidth: 1, lineStyle: 2 });
+        resLineSeries = chart.addLineSeries({ color: '#ff4d4d', lineWidth: 1, priceLineVisible: false });
+        supLineSeries = chart.addLineSeries({ color: '#00ff88', lineWidth: 1, priceLineVisible: false });
         obSeries = chart.addLineSeries({ color: 'rgba(234, 179, 8, 0.5)', lineWidth: 2 });
-        fvgSeries = chart.addLineSeries({ color: 'rgba(168, 85, 247, 0.3)', lineWidth: 1 });
     }
 
     function connect() {
@@ -311,7 +314,7 @@
         let pivots = [];
         const period = 5;
 
-        // 1. PIVOT DETECTION
+        // 1. PIVOT DETECTION & HH/HL/LH/LL Labels
         for (let i = period; i < candles.length - period; i++) {
             let isHigh = true, isLow = true;
             for (let j = i - period; j <= i + period; j++) {
@@ -319,89 +322,103 @@
                 if (candles[j].high > candles[i].high) isHigh = false;
                 if (candles[j].low < candles[i].low) isLow = false;
             }
-            if (isHigh) pivots.push({ type: 'H', time: candles[i].time, price: candles[i].high, i: i });
-            if (isLow) pivots.push({ type: 'L', time: candles[i].time, price: candles[i].low, i: i });
-        }
-
-        // 2. ORDER BLOCK (OB) & FVG DETECTION
-        let lastOB = null;
-        let lastFVG = null;
-        for (let i = 2; i < candles.length; i++) {
-            // FVG Detection
-            if (candles[i-2].high < candles[i].low) { // Bullish FVG
-                lastFVG = { type: 'BULLISH', top: candles[i].low, bottom: candles[i-2].high };
-            } else if (candles[i-2].low > candles[i].high) { // Bearish FVG
-                lastFVG = { type: 'BEARISH', top: candles[i-2].low, bottom: candles[i].high };
+            if (isHigh) {
+                let lastH = pivots.filter(p => p.type.includes('H')).pop();
+                let label = lastH ? (candles[i].high > lastH.price ? 'HH' : 'LH') : 'H';
+                pivots.push({ type: label, time: candles[i].time, price: candles[i].high });
+                markers.push({ time: candles[i].time, position: 'aboveBar', color: label === 'HH' ? '#00ff88' : '#ff4d4d', shape: 'text', text: label });
+            }
+            if (isLow) {
+                let lastL = pivots.filter(p => p.type.includes('L')).pop();
+                let label = lastL ? (candles[i].low < lastL.price ? 'LL' : 'HL') : 'L';
+                pivots.push({ type: label, time: candles[i].time, price: candles[i].low });
+                markers.push({ time: candles[i].time, position: 'belowBar', color: label === 'HL' ? '#00ff88' : '#ff4d4d', shape: 'text', text: label });
             }
         }
 
-        // 3. SMC LOGIC & TRENDS
-        const lastH = pivots.filter(p => p.type === 'H').pop();
-        const lastL = pivots.filter(p => p.type === 'L').pop();
-        const currentTrend = lastH && lastL ? (lastH.price > pivots[pivots.length-3]?.price ? 'UP' : 'DOWN') : 'Neutral';
+        // 2. BOS & CHoCH Logic
+        let currentTrend = "Neutral";
+        if (pivots.length > 3) {
+            for (let i = 2; i < pivots.length; i++) {
+                const p = pivots[i];
+                const prevP = pivots[i-1];
 
-        // 4. MTF SIMULATION (Trend over 50 and 100 candles)
+                // BOS (Continuation)
+                if (p.type === 'HH' && prevP.type === 'LH') {
+                    markers.push({ time: p.time, position: 'aboveBar', color: '#3b82f6', shape: 'arrowDown', text: 'BOS ↑' });
+                    currentTrend = "UP";
+                } else if (p.type === 'LL' && prevP.type === 'HL') {
+                    markers.push({ time: p.time, position: 'belowBar', color: '#3b82f6', shape: 'arrowUp', text: 'BOS ↓' });
+                    currentTrend = "DOWN";
+                }
+
+                // CHoCH (Trend Change)
+                if (currentTrend === "UP" && p.type === "LL") {
+                    markers.push({ time: p.time, position: 'belowBar', color: '#a855f7', shape: 'arrowUp', text: 'CHoCH ⚡' });
+                    currentTrend = "DOWN";
+                } else if (currentTrend === "DOWN" && p.type === "HH") {
+                    markers.push({ time: p.time, position: 'aboveBar', color: '#a855f7', shape: 'arrowDown', text: 'CHoCH ⚡' });
+                    currentTrend = "UP";
+                }
+            }
+        }
+
+        // 3. AUTO TRENDLINES & S/R
+        const lastH = pivots.filter(p => p.type.includes('H')).slice(-2);
+        const lastL = pivots.filter(p => p.type.includes('L')).slice(-2);
+        if (lastH.length === 2) trendLineSeries.setData([{time: lastH[0].time, value: lastH[0].price}, {time: lastH[1].time, value: lastH[1].price}]);
+        
+        const finalH = pivots.filter(p => p.type.includes('H')).pop();
+        const finalL = pivots.filter(p => p.type.includes('L')).pop();
+        if (finalH) resLineSeries.setData([{time: candles[candles.length-50].time, value: finalH.price}, {time: candles[candles.length-1].time, value: finalH.price}]);
+        if (finalL) supLineSeries.setData([{time: candles[candles.length-50].time, value: finalL.price}, {time: candles[candles.length-1].time, value: finalL.price}]);
+
+        // 4. ORIGINAL SIGNAL LOGIC (Score Based)
         const trendM5 = candles[candles.length-1].close > candles[candles.length-50].close ? 'UP' : 'DOWN';
         const trendM15 = candles[candles.length-1].close > candles[candles.length-100].close ? 'UP' : 'DOWN';
-        
-        // 5. PREMIUM/DISCOUNT (Equilibrium)
         const maxPrice = Math.max(...candles.slice(-50).map(c => c.high));
         const minPrice = Math.min(...candles.slice(-50).map(c => c.low));
         const eq = (maxPrice + minPrice) / 2;
         const currentPrice = candles[candles.length-1].close;
         const zone = currentPrice > eq ? 'PREMIUM' : 'DISCOUNT';
 
-        // 6. CANDLE PATTERN
-        const c1 = candles[candles.length-2];
-        const c2 = candles[candles.length-1];
         let pattern = "NONE";
-        if (c2.close > c1.open && c2.open < c1.close && c2.close > c1.high) pattern = "BULLISH ENGULFING";
-        if (c2.close < c1.open && c2.open > c1.close && c2.close < c1.low) pattern = "BEARISH ENGULFING";
+        const c1 = candles[candles.length-2], c2 = candles[candles.length-1];
+        if (c2.close > c1.open && c2.close > c1.high) pattern = "BULLISH ENG.";
+        if (c2.close < c1.open && c2.close < c1.low) pattern = "BEARISH ENG.";
 
-        // 7. ACCURACY CALCULATION
         let score = 0;
         if (currentTrend === 'UP' && trendM5 === 'UP' && trendM15 === 'UP') score += 30;
         if (currentTrend === 'DOWN' && trendM5 === 'DOWN' && trendM15 === 'DOWN') score += 30;
         if (zone === 'DISCOUNT' && currentTrend === 'UP') score += 20;
         if (zone === 'PREMIUM' && currentTrend === 'DOWN') score += 20;
         if (pattern !== "NONE") score += 20;
-        if (Math.abs(currentPrice - minPrice) < (maxPrice - minPrice) * 0.1) score += 20; // Support proximity
-        if (Math.abs(currentPrice - maxPrice) < (maxPrice - minPrice) * 0.1) score += 20; // Resistance proximity
+        if (Math.abs(currentPrice - minPrice) < (maxPrice - minPrice) * 0.1) score += 20;
+        if (Math.abs(currentPrice - maxPrice) < (maxPrice - minPrice) * 0.1) score += 20;
         score = Math.min(score, 100);
 
-        // 8. SIGNAL GENERATION
+        // Update Original Signal UI
         const sigEl = document.getElementById('signalText');
-        const accEl = document.getElementById('accuracyText');
-        const accFill = document.getElementById('accuracyFill');
-
         if (currentTrend === 'UP' && zone === 'DISCOUNT' && score >= 60) {
-            sigEl.innerText = "CALL (BUY) 2-3 MIN";
-            sigEl.style.color = "var(--green)";
+            sigEl.innerText = "CALL (BUY) 2-3 MIN"; sigEl.style.color = "var(--green)";
             if (score >= 85) playBeep('buy');
         } else if (currentTrend === 'DOWN' && zone === 'PREMIUM' && score >= 60) {
-            sigEl.innerText = "PUT (SELL) 2-3 MIN";
-            sigEl.style.color = "var(--red)";
+            sigEl.innerText = "PUT (SELL) 2-3 MIN"; sigEl.style.color = "var(--red)";
             if (score >= 85) playBeep('sell');
         } else {
-            sigEl.innerText = "WAITING FOR SETUP...";
-            sigEl.style.color = "#848d97";
+            sigEl.innerText = "WAITING FOR SETUP..."; sigEl.style.color = "#848d97";
         }
 
-        accEl.innerText = `ACCURACY: ${score}%`;
-        accFill.style.width = `${score}%`;
-        accFill.style.background = score > 80 ? 'var(--green)' : (score > 50 ? 'var(--yellow)' : 'var(--red)');
+        document.getElementById('accuracyText').innerText = `ACCURACY: ${score}%`;
+        document.getElementById('accuracyFill').style.width = `${score}%`;
+        document.getElementById('accuracyFill').style.background = score > 80 ? 'var(--green)' : (score > 50 ? 'var(--yellow)' : 'var(--red)');
 
-        // UPDATE UI
-        updateUI(currentTrend, trendM5, trendM15, zone, eq, minPrice, maxPrice, pattern, lastFVG);
-        
-        // Final Markers
-        pivots.forEach(p => {
-            markers.push({ time: p.time, position: p.type === 'H' ? 'aboveBar' : 'belowBar', color: '#fff', shape: 'text', text: p.type === 'H' ? 'H' : 'L' });
-        });
+        // Update Original Stats UI
+        updateUI(currentTrend, trendM5, trendM15, zone, eq, minPrice, maxPrice, pattern);
         candleSeries.setMarkers(markers);
     }
 
-    function updateUI(t1, t5, t15, zone, eq, sup, res, pat, fvg) {
+    function updateUI(t1, t5, t15, zone, eq, sup, res, pat) {
         document.getElementById('trendM1').innerText = t1;
         document.getElementById('trendM1').className = t1 === 'UP' ? 'val-g' : 'val-r';
         document.getElementById('trendM5').innerText = t5;
@@ -414,7 +431,6 @@
         document.getElementById('supPrice').innerText = sup.toFixed(2);
         document.getElementById('resPrice').innerText = res.toFixed(2);
         document.getElementById('candConf').innerText = pat;
-        document.getElementById('fvgText').innerText = fvg ? fvg.type : "CLEAR";
     }
 
     document.getElementById('market').addEventListener('change', (e) => { currentMarket = e.target.value; connect(); });
