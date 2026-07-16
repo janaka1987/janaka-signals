@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JANAKA SMC DASHBOARD V5 PRO</title>
+    <title>JANAKA SMC DASHBOARD V6 PRO - UPDATED</title>
     <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         :root {
@@ -19,187 +19,44 @@
             --text-main: #e6edf3;
         }
 
-        body { 
-            background: var(--bg-color); 
-            color: var(--text-main); 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            margin: 0; 
-            padding: 10px; 
-        }
-
-        .header-title {
-            text-align: center;
-            color: var(--green);
-            font-size: 20px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-            text-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
-        }
-
-        .top-bar {
-            display: grid;
-            grid-template-columns: 1.2fr 2fr;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .card { 
-            background: var(--card-bg); 
-            border: 1px solid var(--border-color); 
-            border-radius: 10px; 
-            padding: 12px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-
-        label { font-size: 10px; color: #848d97; font-weight: bold; margin-bottom: 5px; display: block; }
-        
-        select { 
-            width: 100%; 
-            padding: 8px; 
-            border-radius: 5px; 
-            background: #161b22; 
-            color: var(--green); 
-            border: 1px solid #30363d; 
-            font-weight: bold;
-            outline: none;
-            font-size: 12px;
-        }
-
-        #chart { 
-            height: 450px; 
-            width: 100%; 
-            border-radius: 8px; 
-            overflow: hidden; 
-        }
-
-        .info-row-container {
-            display: flex;
-            justify-content: space-around;
-            gap: 10px;
-        }
-
-        .info-row { font-size: 11px; font-weight: bold; }
-        .val-g { color: var(--green); }
-        .val-r { color: var(--red); }
-        .val-y { color: var(--yellow); }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .stat-box { 
-            background: var(--card-bg); 
-            padding: 10px; 
-            border-radius: 8px; 
-            border: 1px solid var(--border-color);
-            text-align: center;
-        }
-
-        .stat-box span { display: block; font-size: 9px; color: #848d97; text-transform: uppercase; margin-bottom: 3px; }
+        body { background: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; }
+        .header-title { text-align: center; color: var(--green); font-size: 20px; font-weight: bold; margin-bottom: 10px; }
+        .top-bar { display: grid; grid-template-columns: 1.2fr 2fr; gap: 10px; margin-bottom: 10px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; }
+        label { font-size: 10px; color: #848d97; font-weight: bold; }
+        select { width: 100%; padding: 8px; margin-top:5px; background: #161b22; color: var(--green); border: 1px solid #30363d; border-radius: 5px; outline: none; }
+        #chart { height: 450px; width: 100%; border-radius: 8px; overflow: hidden; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+        .stat-box { background: var(--card-bg); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); text-align: center; }
+        .stat-box span { display: block; font-size: 9px; color: #848d97; text-transform: uppercase; }
         .stat-box b { font-size: 13px; }
-
-        .signal-box {
-            grid-column: span 4;
-            background: linear-gradient(145deg, #161b22, #0d1117);
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-            border: 2px solid var(--border-color);
-            margin-top: 5px;
-            position: relative;
-        }
-
-        #signalText { font-size: 22px; font-weight: bold; letter-spacing: 2px; display: block; }
-        #accuracyText { 
-            font-size: 14px; 
-            margin-top: 5px; 
-            display: inline-block; 
-            padding: 3px 10px; 
-            border-radius: 20px;
-            background: rgba(255,255,255,0.05);
-        }
-
-        .win-rate-tag {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 10px;
-            color: var(--blue);
-            font-weight: bold;
-        }
-
-        .accuracy-bar-bg {
-            height: 4px;
-            background: #30363d;
-            border-radius: 2px;
-            margin-top: 8px;
-            width: 60%;
-            margin-left: 20%;
-        }
-        #accuracyFill {
-            height: 100%;
-            width: 0%;
-            background: var(--green);
-            border-radius: 2px;
-            transition: width 0.5s;
-        }
-
-        .legend-horizontal {
-            display: flex;
-            gap: 8px;
-            font-size: 9px;
-            justify-content: center;
-            margin-top: 5px;
-            flex-wrap: wrap;
-        }
-        .dot { height: 7px; width: 7px; border-radius: 50%; display: inline-block; margin-right: 3px; }
+        .signal-box { background: linear-gradient(145deg, #161b22, #0d1117); padding: 15px; border-radius: 12px; text-align: center; border: 2px solid var(--border-color); margin-top: 10px; }
+        #signalText { font-size: 22px; font-weight: bold; }
+        .val-g { color: var(--green); } .val-r { color: var(--red); } .val-y { color: var(--yellow); }
     </style>
 </head>
 <body>
 
-<div class="header-title">JANAKA SMC DASHBOARD V5 PRO</div>
+<div class="header-title">JANAKA SMC DASHBOARD V6 PRO</div>
 
 <div class="top-bar">
     <div class="card">
         <label>SETTINGS</label>
-        <div style="display: flex; flex-direction: column; gap: 5px;">
-            <select id="market">
-                <optgroup label="Volatility Indices">
-                    <option value="R_10">Volatility 10</option>
-                    <option value="R_25">Volatility 25</option>
-                    <option value="R_50">Volatility 50</option>
-                    <option value="R_75">Volatility 75</option>
-                    <option value="R_100" selected>Volatility 100</option>
-                </optgroup>
-                <optgroup label="Forex">
-                    <option value="frxEURUSD">EUR/USD</option>
-                </optgroup>
-            </select>
-            <select id="timeframe">
-                <option value="60">1M (Scalping)</option>
-                <option value="300">5M (Intraday)</option>
-            </select>
-        </div>
+        <select id="market">
+            <option value="R_100">Volatility 100</option>
+            <option value="R_75">Volatility 75</option>
+            <option value="R_50">Volatility 50</option>
+        </select>
+        <select id="timeframe">
+            <option value="60">1M (Scalping)</option>
+            <option value="300">5M (Intraday)</option>
+        </select>
     </div>
-
     <div class="card">
-        <label>SMC MULTI-TIME MONITOR</label>
-        <div class="info-row-container">
-            <div class="info-row">M1: <span id="trendM1" class="val-g">--</span></div>
-            <div class="info-row">M5: <span id="trendM5" class="val-g">--</span></div>
-            <div class="info-row">M15: <span id="trendM15" class="val-g">--</span></div>
-            <div class="info-row">Zone: <span id="pZone" class="val-y">--</span></div>
-        </div>
-        <div class="legend-horizontal">
-            <div><span class="dot" style="background:var(--green)"></span> HH/HL</div>
-            <div><span class="dot" style="background:var(--red)"></span> LH/LL</div>
-            <div><span class="dot" style="background:var(--blue)"></span> BOS</div>
-            <div><span class="dot" style="background:var(--yellow)"></span> OB</div>
-            <div><span class="dot" style="background:var(--purple)"></span> FVG</div>
+        <label>SMC STATUS</label>
+        <div style="display: flex; justify-content: space-around; margin-top: 10px;">
+            <div>Trend: <span id="trendM1" class="val-g">--</span></div>
+            <div>Zone: <span id="pZone" class="val-y">--</span></div>
         </div>
     </div>
 </div>
@@ -209,48 +66,27 @@
 </div>
 
 <div class="stats-grid">
-    <div class="stat-box"><span>1M TREND</span><b id="trendText" class="val-g">--</b></div>
+    <div class="stat-box"><span>1M TREND</span><b id="trendText">--</b></div>
     <div class="stat-box"><span>ORDER BLOCK</span><b id="obText" class="val-y">WAITING</b></div>
-    <div class="stat-box"><span>FVG / GAP</span><b id="fvgText" style="color:var(--purple)">CLEAR</b></div>
-    <div class="stat-box"><span>LIQUIDITY</span><b id="liqText" style="color:var(--blue)">STABLE</b></div>
-    <div class="stat-box"><span>SUPPORT</span><b id="supPrice" class="val-g">0.00</b></div>
-    <div class="stat-box"><span>RESISTANCE</span><b id="resPrice" class="val-r">0.00</b></div>
-    <div class="stat-box"><span>EQUILIBRIUM</span><b id="eqPrice" style="color:#848d97">0.00</b></div>
-    <div class="stat-box"><span>CANDLE CONF.</span><b id="candConf" class="val-g">--</b></div>
+    <div class="stat-box"><span>BOS/CHoCH</span><b id="strucText" style="color:var(--blue)">NONE</b></div>
+    <div class="stat-box"><span>LIQUIDITY</span><b id="liqText" style="color:var(--purple)">STABLE</b></div>
 </div>
 
 <div class="signal-box">
-    <div class="win-rate-tag">WIN RATE: <span id="winRateDisplay">88%</span></div>
-    <span style="font-size: 10px; color: #848d97;">ALGO CONFLUENCE SIGNAL (2-3 MINS)</span>
     <div id="signalText">ANALYZING MARKET...</div>
-    <div id="accuracyText">ACCURACY: 0%</div>
-    <div class="accuracy-bar-bg"><div id="accuracyFill"></div></div>
+    <div id="accuracyText" style="font-size: 12px; color: #848d97;">WAITING FOR SETUP</div>
 </div>
 
 <script>
     const APP_ID = "1089";
-    let chart, candleSeries, zigZagSeries, trendSeries, bosSeries;
-    let ws;
-    let candles = [];
-    let currentMarket = "R_100";
-    let currentTimeframe = 60;
+    let chart, candleSeries, zigZagSeries, trendHighSeries, trendLowSeries;
+    let ws, candles = [];
+    let currentMarket = "R_100", currentTimeframe = 60;
     
-    // Arrays for persistence
-    let persistentBOS = []; 
-    let persistentCHoCH = [];
-
-    function playBeep(type) {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(type === 'buy' ? 880 : 440, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.2);
-    }
+    // Persistent Markers Arrays
+    let structureMarkers = []; 
+    let lastProcessedTime = 0;
+    let supportLine, resistanceLine;
 
     function initChart() {
         chart = LightweightCharts.createChart(document.getElementById('chart'), {
@@ -260,51 +96,29 @@
             timeScale: { borderColor: '#30363d', timeVisible: true }
         });
 
-        candleSeries = chart.addCandlestickSeries({
-            upColor: '#00ff88', downColor: '#ff4d4d',
-            borderUpColor: '#00ff88', borderDownColor: '#ff4d4d',
-            wickUpColor: '#00ff88', wickDownColor: '#ff4d4d'
-        });
-
-        zigZagSeries = chart.addLineSeries({ color: 'rgba(255, 255, 255, 0.4)', lineWidth: 1, lineStyle: 2 });
-        trendSeries = chart.addLineSeries({ color: '#3b82f6', lineWidth: 2 });
-        bosSeries = chart.addLineSeries({ color: '#eab308', lineWidth: 1, lineStyle: 0 });
+        candleSeries = chart.addCandlestickSeries({ upColor: '#00ff88', downColor: '#ff4d4d' });
+        zigZagSeries = chart.addLineSeries({ color: 'rgba(255, 255, 255, 0.2)', lineWidth: 1, lineStyle: 2 });
+        
+        // Series for Trend Lines
+        trendHighSeries = chart.addLineSeries({ color: '#3b82f6', lineWidth: 1, lineStyle: 2 });
+        trendLowSeries = chart.addLineSeries({ color: '#ff4d4d', lineWidth: 1, lineStyle: 2 });
     }
 
     function connect() {
         if (ws) ws.close();
         ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
-        
         ws.onopen = () => {
-            candles = [];
-            persistentBOS = [];
-            persistentCHoCH = [];
-            candleSeries.setData([]);
-            ws.send(JSON.stringify({
-                ticks_history: currentMarket,
-                end: "latest", style: "candles",
-                granularity: parseInt(currentTimeframe),
-                count: 500, subscribe: 1
-            }));
+            candles = []; structureMarkers = [];
+            ws.send(JSON.stringify({ ticks_history: currentMarket, end: "latest", style: "candles", granularity: parseInt(currentTimeframe), count: 500, subscribe: 1 }));
         };
-
         ws.onmessage = (msg) => {
             const data = JSON.parse(msg.data);
-            if (data.candles) {
-                candles = data.candles.map(c => ({
-                    time: c.epoch, open: c.open, high: c.high, low: c.low, close: c.close
-                }));
-                candleSeries.setData(candles);
-                analyzeSMC();
-            }
+            if (data.candles) { candles = data.candles.map(c => ({ time: c.epoch, open: c.open, high: c.high, low: c.low, close: c.close })); candleSeries.setData(candles); }
             if (data.ohlc) {
                 const o = data.ohlc;
                 const newCandle = { time: o.open_time, open: o.open, high: o.high, low: o.low, close: o.close };
-                if (candles.length > 0 && candles[candles.length - 1].time === newCandle.time) {
-                    candles[candles.length - 1] = newCandle;
-                } else {
-                    candles.push(newCandle);
-                }
+                if (candles.length > 0 && candles[candles.length - 1].time === newCandle.time) candles[candles.length - 1] = newCandle;
+                else candles.push(newCandle);
                 candleSeries.update(newCandle);
                 analyzeSMC();
             }
@@ -313,164 +127,106 @@
 
     function analyzeSMC() {
         if (candles.length < 50) return;
-
-        let markers = [];
-        let pivots = [];
         const lookback = 5;
+        let pivots = [];
 
-        // 1. ZIG ZAG & PIVOT FINDER (HH, HL, LH, LL)
+        // 1. Pivot Detection (HH, HL, LH, LL)
         for (let i = lookback; i < candles.length - lookback; i++) {
-            let isHigh = true, isLow = true;
+            let isH = true, isL = true;
             for (let j = i - lookback; j <= i + lookback; j++) {
                 if (i === j) continue;
-                if (candles[j].high > candles[i].high) isHigh = false;
-                if (candles[j].low < candles[i].low) isLow = false;
+                if (candles[j].high > candles[i].high) isH = false;
+                if (candles[j].low < candles[i].low) isL = false;
             }
-            if (isHigh) pivots.push({ type: 'H', time: candles[i].time, price: candles[i].high, index: i });
-            if (isLow) pivots.push({ type: 'L', time: candles[i].time, price: candles[i].low, index: i });
+            if (isH) pivots.push({ type: 'H', time: candles[i].time, price: candles[i].high });
+            if (isL) pivots.push({ type: 'L', time: candles[i].time, price: candles[i].low });
         }
 
-        // Refine Pivots to get Alternating ZigZag
-        let zigzagPoints = [];
+        let zigzag = [];
         pivots.forEach(p => {
-            if(zigzagPoints.length === 0) {
-                zigzagPoints.push(p);
-            } else {
-                let last = zigzagPoints[zigzagPoints.length-1];
-                if(last.type === p.type) {
-                    if((p.type === 'H' && p.price > last.price) || (p.type === 'L' && p.price < last.price)) {
-                        zigzagPoints[zigzagPoints.length-1] = p;
-                    }
-                } else {
-                    zigzagPoints.push(p);
-                }
-            }
+            if (zigzag.length === 0 || zigzag[zigzag.length-1].type !== p.type) zigzag.push(p);
+            else if ((p.type === 'H' && p.price > zigzag[zigzag.length-1].price) || (p.type === 'L' && p.price < zigzag[zigzag.length-1].price)) zigzag[zigzag.length-1] = p;
         });
+        zigZagSeries.setData(zigzag.map(z => ({ time: z.time, value: z.price })));
 
-        // 2. STRUCTURE LABELING (HH, LL etc)
-        let smcMarkers = [];
-        for (let i = 2; i < zigzagPoints.length; i++) {
-            let curr = zigzagPoints[i];
-            let prevSame = zigzagPoints[i-2];
-            let label = "";
-            let color = "";
+        // 2. BOS & CHoCH Logic (Persistent)
+        if (zigzag.length > 4) {
+            let lastP = zigzag[zigzag.length-1];
+            let prevP = zigzag[zigzag.length-2];
+            let prevSameP = zigzag[zigzag.length-3];
+            let currentPrice = candles[candles.length-1].close;
 
-            if (curr.type === 'H') {
-                label = curr.price > prevSame.price ? "HH" : "LH";
-                color = curr.price > prevSame.price ? "#00ff88" : "#ff4d4d";
-            } else {
-                label = curr.price < prevSame.price ? "LL" : "HL";
-                color = curr.price < prevSame.price ? "#ff4d4d" : "#00ff88";
+            // Trend & Structure logic
+            let trend = zigzag[zigzag.length-1].price > zigzag[zigzag.length-3].price ? 'UP' : 'DOWN';
+
+            // Detect BOS
+            if (trend === 'UP' && currentPrice > lastP.price && lastP.type === 'H' && lastP.time > lastProcessedTime) {
+                addMarker(lastP.time, 'BOS', '#3b82f6', 'aboveBar');
+                lastProcessedTime = lastP.time;
+            } 
+            // Detect CHoCH (Trend Reversal)
+            else if (trend === 'DOWN' && currentPrice > lastP.price && lastP.type === 'H' && lastP.time > lastProcessedTime) {
+                addMarker(lastP.time, 'CHoCH', '#a855f7', 'aboveBar');
+                lastProcessedTime = lastP.time;
             }
 
-            smcMarkers.push({
-                time: curr.time,
-                position: curr.type === 'H' ? 'aboveBar' : 'belowBar',
-                color: color,
-                shape: 'text',
-                text: label
-            });
+            document.getElementById('strucText').innerText = trend === 'UP' ? "BOS (BULL)" : "BOS (BEAR)";
         }
 
-        // 3. BOS & CHoCH DETECTION (Persistence)
-        if (zigzagPoints.length > 4) {
-            let lastPivot = zigzagPoints[zigzagPoints.length-1];
-            let prevPivot = zigzagPoints[zigzagPoints.length-3];
-            let price = candles[candles.length-1].close;
+        // 3. Draw S/R Lines (Horizontal)
+        const lastH = zigzag.filter(p => p.type === 'H').pop();
+        const lastL = zigzag.filter(p => p.type === 'L').pop();
 
-            // Simple BOS Logic
-            if (lastPivot.type === 'H' && price > lastPivot.price) {
-                if (!persistentBOS.find(b => b.time === lastPivot.time)) {
-                    persistentBOS.push({ time: lastPivot.time, price: lastPivot.price, type: 'BOS' });
-                }
-            } else if (lastPivot.type === 'L' && price < lastPivot.price) {
-                if (!persistentBOS.find(b => b.time === lastPivot.time)) {
-                    persistentBOS.push({ time: lastPivot.time, price: lastPivot.price, type: 'BOS' });
-                }
-            }
+        if (lastH) {
+            if (resistanceLine) candleSeries.removePriceLine(resistanceLine);
+            resistanceLine = candleSeries.createPriceLine({ price: lastH.price, color: '#ff4d4d', lineWidth: 2, lineStyle: 0, axisLabelVisible: true, title: 'RESISTANCE' });
+        }
+        if (lastL) {
+            if (supportLine) candleSeries.removePriceLine(supportLine);
+            supportLine = candleSeries.createPriceLine({ price: lastL.price, color: '#00ff88', lineWidth: 2, lineStyle: 0, axisLabelVisible: true, title: 'SUPPORT' });
         }
 
-        // Add BOS Markers
-        persistentBOS.forEach(bos => {
-            smcMarkers.push({
-                time: bos.time,
-                position: 'inBar',
-                color: '#3b82f6',
-                shape: 'arrowUp',
-                text: 'BOS'
-            });
-        });
+        // 4. Draw Trend Lines (Connecting last two pivots)
+        const highPivots = zigzag.filter(p => p.type === 'H').slice(-2);
+        const lowPivots = zigzag.filter(p => p.type === 'L').slice(-2);
+        if(highPivots.length == 2) trendHighSeries.setData([{time: highPivots[0].time, value: highPivots[0].price}, {time: highPivots[1].time, value: highPivots[1].price}]);
+        if(lowPivots.length == 2) trendLowSeries.setData([{time: lowPivots[0].time, value: lowPivots[0].price}, {time: lowPivots[1].time, value: lowPivots[1].price}]);
 
-        // 4. TRENDLINES & S/R
-        if (zigzagPoints.length >= 2) {
-            const lastH = zigzagPoints.filter(p => p.type === 'H').slice(-2);
-            const lastL = zigzagPoints.filter(p => p.type === 'L').slice(-2);
-            
-            // Draw Support/Resistance prices in stats box
-            if (lastH.length > 0) document.getElementById('resPrice').innerText = lastH[lastH.length-1].price.toFixed(2);
-            if (lastL.length > 0) document.getElementById('supPrice').innerText = lastL[lastL.length-1].price.toFixed(2);
-        }
-
-        // Update ZigZag Line
-        zigZagSeries.setData(zigzagPoints.map(p => ({ time: p.time, value: p.price })));
-        candleSeries.setMarkers(smcMarkers);
-
-        // 5. TECHNICAL CALCULATIONS FOR UI
-        const currentPrice = candles[candles.length-1].close;
-        const trend = zigzagPoints.length > 2 ? (zigzagPoints[zigzagPoints.length-1].price > zigzagPoints[zigzagPoints.length-3].price ? 'UP' : 'DOWN') : 'WAIT';
-        
-        const maxP = Math.max(...candles.slice(-50).map(c => c.high));
-        const minP = Math.min(...candles.slice(-50).map(c => c.low));
-        const equilibrium = (maxP + minP) / 2;
-        const zone = currentPrice > equilibrium ? 'PREMIUM' : 'DISCOUNT';
-
-        // Update Stats Box
-        document.getElementById('trendText').innerText = trend;
-        document.getElementById('trendText').className = trend === 'UP' ? 'val-g' : 'val-r';
-        document.getElementById('pZone').innerText = zone;
-        document.getElementById('eqPrice').innerText = equilibrium.toFixed(2);
-        document.getElementById('trendM1').innerText = trend;
-        document.getElementById('trendM1').className = trend === 'UP' ? 'val-g' : 'val-r';
-
-        // Signal Logic
-        let score = 0;
-        if (trend === 'UP' && zone === 'DISCOUNT') score += 40;
-        if (trend === 'DOWN' && zone === 'PREMIUM') score += 40;
-        if (currentPrice > candles[candles.length-2].high) score += 20;
-
-        const sigEl = document.getElementById('signalText');
-        const accEl = document.getElementById('accuracyText');
-        const accFill = document.getElementById('accuracyFill');
-
-        if (score >= 60) {
-            const action = trend === 'UP' ? 'CALL (BUY)' : 'PUT (SELL)';
-            sigEl.innerText = action + " 2-3 MIN";
-            sigEl.style.color = trend === 'UP' ? 'var(--green)' : 'var(--red)';
-            if (score >= 80) playBeep(trend === 'UP' ? 'buy' : 'sell');
-        } else {
-            sigEl.innerText = "WAITING FOR SETUP...";
-            sigEl.style.color = "#848d97";
-        }
-
-        accEl.innerText = `ACCURACY: ${score}%`;
-        accFill.style.width = `${score}%`;
-        accFill.style.background = score > 70 ? 'var(--green)' : 'var(--yellow)';
+        candleSeries.setMarkers(structureMarkers);
+        updateUI(zigzag);
     }
 
-    document.getElementById('market').addEventListener('change', (e) => { 
-        currentMarket = e.target.value; 
-        connect(); 
-    });
-    
-    document.getElementById('timeframe').addEventListener('change', (e) => { 
-        currentTimeframe = e.target.value; 
-        connect(); 
-    });
+    function addMarker(time, text, color, pos) {
+        if (!structureMarkers.find(m => m.time === time && m.text === text)) {
+            structureMarkers.push({ time: time, position: pos, color: color, shape: 'arrowUp', text: text });
+        }
+    }
 
-    window.onload = () => { 
-        initChart(); 
-        connect(); 
-    };
+    function updateUI(zigzag) {
+        const trend = zigzag[zigzag.length-1].price > zigzag[zigzag.length-3].price ? 'UP' : 'DOWN';
+        const cp = candles[candles.length-1].close;
+        const eq = (Math.max(...candles.slice(-50).map(c=>c.high)) + Math.min(...candles.slice(-50).map(c=>c.low))) / 2;
+        const zone = cp > eq ? 'PREMIUM' : 'DISCOUNT';
+
+        document.getElementById('trendText').innerText = trend;
+        document.getElementById('trendM1').innerText = trend;
+        document.getElementById('pZone').innerText = zone;
+        
+        if (trend === 'UP' && zone === 'DISCOUNT') {
+            document.getElementById('signalText').innerText = "BUY SETUP (2-3M)";
+            document.getElementById('signalText').className = "val-g";
+        } else if (trend === 'DOWN' && zone === 'PREMIUM') {
+            document.getElementById('signalText').innerText = "SELL SETUP (2-3M)";
+            document.getElementById('signalText').className = "val-r";
+        } else {
+            document.getElementById('signalText').innerText = "WAITING FOR SETUP...";
+            document.getElementById('signalText').className = "";
+        }
+    }
+
+    document.getElementById('market').onchange = (e) => { currentMarket = e.target.value; connect(); };
+    document.getElementById('timeframe').onchange = (e) => { currentTimeframe = e.target.value; connect(); };
+    window.onload = () => { initChart(); connect(); };
 </script>
 </body>
 </html>
