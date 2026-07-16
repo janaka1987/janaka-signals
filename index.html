@@ -39,7 +39,7 @@
 
         .top-bar {
             display: grid;
-            grid-template-columns: 1.2fr 2fr;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 10px;
             margin-bottom: 10px;
         }
@@ -66,19 +66,18 @@
             font-size: 12px;
         }
 
+        .slider-row { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
+        input[type="range"] { flex: 1; accent-color: var(--green); cursor: pointer; }
+        .slider-val { font-size: 10px; color: var(--green); min-width: 25px; font-weight: bold; }
+
         #chart { 
-            height: 450px; 
+            height: 400px; 
             width: 100%; 
             border-radius: 8px; 
             overflow: hidden; 
         }
 
-        .info-row-container {
-            display: flex;
-            justify-content: space-around;
-            gap: 10px;
-        }
-
+        .info-row-container { display: flex; justify-content: space-around; gap: 10px; }
         .info-row { font-size: 11px; font-weight: bold; }
         .val-g { color: var(--green); }
         .val-r { color: var(--red); }
@@ -123,40 +122,21 @@
             background: rgba(255,255,255,0.05);
         }
 
-        .win-rate-tag {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 10px;
-            color: var(--blue);
-            font-weight: bold;
-        }
+        .win-rate-tag { position: absolute; top: 10px; right: 15px; font-size: 10px; color: var(--blue); font-weight: bold; }
 
-        .accuracy-bar-bg {
-            height: 4px;
-            background: #30363d;
-            border-radius: 2px;
-            margin-top: 8px;
-            width: 60%;
-            margin-left: 20%;
-        }
-        #accuracyFill {
-            height: 100%;
-            width: 0%;
-            background: var(--green);
-            border-radius: 2px;
-            transition: width 0.5s;
-        }
+        .accuracy-bar-bg { height: 4px; background: #30363d; border-radius: 2px; margin-top: 8px; width: 60%; margin-left: 20%; }
+        #accuracyFill { height: 100%; width: 0%; background: var(--green); border-radius: 2px; transition: width 0.5s; }
 
-        .legend-horizontal {
-            display: flex;
-            gap: 8px;
-            font-size: 9px;
-            justify-content: center;
-            margin-top: 5px;
-            flex-wrap: wrap;
-        }
+        .legend-horizontal { display: flex; gap: 8px; font-size: 9px; justify-content: center; margin-top: 5px; flex-wrap: wrap; }
         .dot { height: 7px; width: 7px; border-radius: 50%; display: inline-block; margin-right: 3px; }
+        
+        .toggle-container { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+        .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider-toggle { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #30363d; transition: .4s; border-radius: 18px; }
+        .slider-toggle:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider-toggle { background-color: var(--green); }
+        input:checked + .slider-toggle:before { transform: translateX(16px); }
     </style>
 </head>
 <body>
@@ -183,6 +163,31 @@
                 <option value="60">1M (Scalping)</option>
                 <option value="300">5M (Intraday)</option>
             </select>
+        </div>
+    </div>
+
+    <!-- NEW ALARM CONTROL BOX -->
+    <div class="card">
+        <div class="toggle-container">
+            <label style="margin:0;">ALARM CONTROL</label>
+            <label class="switch">
+                <input type="checkbox" id="alarmToggle" checked>
+                <span class="slider-toggle"></span>
+            </label>
+        </div>
+        <div style="margin-top: 5px;">
+            <label>MIN ACCURACY (+/-)</label>
+            <div class="slider-row">
+                <input type="range" id="accThreshold" min="20" max="100" value="50">
+                <span class="slider-val" id="accVal">50%</span>
+            </div>
+        </div>
+        <div style="margin-top: 5px;">
+            <label>ALARM VOLUME (+/-)</label>
+            <div class="slider-row">
+                <input type="range" id="volSlider" min="0" max="1" step="0.1" value="0.8">
+                <span class="slider-val" id="volVal">80%</span>
+            </div>
         </div>
     </div>
 
@@ -233,20 +238,27 @@
     let candles = [];
     let currentMarket = "R_100";
     let currentTimeframe = 60;
-    
-    function playBeep(type) {
-        try {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(type === 'buy' ? 880 : 440, audioCtx.currentTime);
-            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.2);
-        } catch(e) {}
+    let lastSpokenSignal = ""; 
+
+    function speakSignal(type, score) {
+        if (!document.getElementById('alarmToggle').checked) return;
+        
+        const threshold = parseInt(document.getElementById('accThreshold').value);
+        if (score < threshold) return;
+
+        let message = "";
+        if (score >= 60) {
+            message = type === 'buy' ? "High Accuracy Signal: Buy Now" : "High Accuracy Signal: Sell Now";
+        } else {
+            message = type === 'buy' ? "New Buy Signal" : "New Sell Signal";
+        }
+
+        if (lastSpokenSignal !== message) {
+            const utterance = new SpeechSynthesisUtterance(message);
+            utterance.volume = parseFloat(document.getElementById('volSlider').value);
+            window.speechSynthesis.speak(utterance);
+            lastSpokenSignal = message;
+        }
     }
 
     function initChart() {
@@ -263,7 +275,6 @@
             wickUpColor: '#00ff88', wickDownColor: '#ff4d4d'
         });
 
-        // SMC drawing series
         trendLineSeries = chart.addLineSeries({ color: '#3b82f6', lineWidth: 1, lineStyle: 2 });
         resLineSeries = chart.addLineSeries({ color: '#ff4d4d', lineWidth: 1, priceLineVisible: false });
         supLineSeries = chart.addLineSeries({ color: '#00ff88', lineWidth: 1, priceLineVisible: false });
@@ -314,7 +325,6 @@
         let pivots = [];
         const period = 5;
 
-        // 1. PIVOT DETECTION & HH/HL/LH/LL Labels
         for (let i = period; i < candles.length - period; i++) {
             let isHigh = true, isLow = true;
             for (let j = i - period; j <= i + period; j++) {
@@ -336,44 +346,42 @@
             }
         }
 
-        // 2. BOS & CHoCH Logic
         let currentTrend = "Neutral";
-        if (pivots.length > 3) {
-            for (let i = 2; i < pivots.length; i++) {
-                const p = pivots[i];
-                const prevP = pivots[i-1];
+        let lastHH = null, lastLL = null, lastHL = null, lastLH = null;
 
-                // BOS (Continuation)
-                if (p.type === 'HH' && prevP.type === 'LH') {
-                    markers.push({ time: p.time, position: 'aboveBar', color: '#3b82f6', shape: 'arrowDown', text: 'BOS ↑' });
-                    currentTrend = "UP";
-                } else if (p.type === 'LL' && prevP.type === 'HL') {
-                    markers.push({ time: p.time, position: 'belowBar', color: '#3b82f6', shape: 'arrowUp', text: 'BOS ↓' });
-                    currentTrend = "DOWN";
-                }
-
-                // CHoCH (Trend Change)
-                if (currentTrend === "UP" && p.type === "LL") {
+        pivots.forEach((p) => {
+            if (currentTrend === "UP") {
+                if (lastHL && p.price < lastHL.price) {
                     markers.push({ time: p.time, position: 'belowBar', color: '#a855f7', shape: 'arrowUp', text: 'CHoCH ⚡' });
                     currentTrend = "DOWN";
-                } else if (currentTrend === "DOWN" && p.type === "HH") {
+                } else if (lastHH && (p.type === 'HH' || p.type === 'LH') && p.price > lastHH.price) {
+                    markers.push({ time: p.time, position: 'aboveBar', color: '#3b82f6', shape: 'arrowDown', text: 'BOS ↑' });
+                }
+            } else if (currentTrend === "DOWN") {
+                if (lastLH && p.price > lastLH.price) {
                     markers.push({ time: p.time, position: 'aboveBar', color: '#a855f7', shape: 'arrowDown', text: 'CHoCH ⚡' });
                     currentTrend = "UP";
+                } else if (lastLL && (p.type === 'LL' || p.type === 'HL') && p.price < lastLL.price) {
+                    markers.push({ time: p.time, position: 'belowBar', color: '#3b82f6', shape: 'arrowUp', text: 'BOS ↓' });
                 }
             }
-        }
 
-        // 3. AUTO TRENDLINES & S/R
-        const lastH = pivots.filter(p => p.type.includes('H')).slice(-2);
-        const lastL = pivots.filter(p => p.type.includes('L')).slice(-2);
-        if (lastH.length === 2) trendLineSeries.setData([{time: lastH[0].time, value: lastH[0].price}, {time: lastH[1].time, value: lastH[1].price}]);
-        
+            if (currentTrend === "Neutral") {
+                if (p.type === 'HH') currentTrend = "UP";
+                if (p.type === 'LL') currentTrend = "DOWN";
+            }
+
+            if (p.type === 'HH') lastHH = p;
+            if (p.type === 'HL') lastHL = p;
+            if (p.type === 'LH') lastLH = p;
+            if (p.type === 'LL') lastLL = p;
+        });
+
         const finalH = pivots.filter(p => p.type.includes('H')).pop();
         const finalL = pivots.filter(p => p.type.includes('L')).pop();
         if (finalH) resLineSeries.setData([{time: candles[candles.length-50].time, value: finalH.price}, {time: candles[candles.length-1].time, value: finalH.price}]);
         if (finalL) supLineSeries.setData([{time: candles[candles.length-50].time, value: finalL.price}, {time: candles[candles.length-1].time, value: finalL.price}]);
 
-        // 4. ORIGINAL SIGNAL LOGIC (Score Based)
         const trendM5 = candles[candles.length-1].close > candles[candles.length-50].close ? 'UP' : 'DOWN';
         const trendM15 = candles[candles.length-1].close > candles[candles.length-100].close ? 'UP' : 'DOWN';
         const maxPrice = Math.max(...candles.slice(-50).map(c => c.high));
@@ -393,27 +401,24 @@
         if (zone === 'DISCOUNT' && currentTrend === 'UP') score += 20;
         if (zone === 'PREMIUM' && currentTrend === 'DOWN') score += 20;
         if (pattern !== "NONE") score += 20;
-        if (Math.abs(currentPrice - minPrice) < (maxPrice - minPrice) * 0.1) score += 20;
-        if (Math.abs(currentPrice - maxPrice) < (maxPrice - minPrice) * 0.1) score += 20;
         score = Math.min(score, 100);
 
-        // Update Original Signal UI
         const sigEl = document.getElementById('signalText');
-        if (currentTrend === 'UP' && zone === 'DISCOUNT' && score >= 60) {
+        if (currentTrend === 'UP' && zone === 'DISCOUNT' && score >= 20) {
             sigEl.innerText = "CALL (BUY) 2-3 MIN"; sigEl.style.color = "var(--green)";
-            if (score >= 85) playBeep('buy');
-        } else if (currentTrend === 'DOWN' && zone === 'PREMIUM' && score >= 60) {
+            speakSignal('buy', score);
+        } else if (currentTrend === 'DOWN' && zone === 'PREMIUM' && score >= 20) {
             sigEl.innerText = "PUT (SELL) 2-3 MIN"; sigEl.style.color = "var(--red)";
-            if (score >= 85) playBeep('sell');
+            speakSignal('sell', score);
         } else {
             sigEl.innerText = "WAITING FOR SETUP..."; sigEl.style.color = "#848d97";
+            lastSpokenSignal = ""; 
         }
 
         document.getElementById('accuracyText').innerText = `ACCURACY: ${score}%`;
         document.getElementById('accuracyFill').style.width = `${score}%`;
         document.getElementById('accuracyFill').style.background = score > 80 ? 'var(--green)' : (score > 50 ? 'var(--yellow)' : 'var(--red)');
 
-        // Update Original Stats UI
         updateUI(currentTrend, trendM5, trendM15, zone, eq, minPrice, maxPrice, pattern);
         candleSeries.setMarkers(markers);
     }
@@ -433,10 +438,21 @@
         document.getElementById('candConf').innerText = pat;
     }
 
+    // Slider UI Listeners
+    document.getElementById('accThreshold').oninput = (e) => document.getElementById('accVal').innerText = e.target.value + '%';
+    document.getElementById('volSlider').oninput = (e) => document.getElementById('volVal').innerText = Math.round(e.target.value * 100) + '%';
+    
     document.getElementById('market').addEventListener('change', (e) => { currentMarket = e.target.value; connect(); });
     document.getElementById('timeframe').addEventListener('change', (e) => { currentTimeframe = e.target.value; connect(); });
 
     window.onload = () => { initChart(); connect(); };
+    
+    // Voice activation hack for browsers
+    document.addEventListener('click', () => {
+        if (window.speechSynthesis.speaking) return;
+        const u = new SpeechSynthesisUtterance("");
+        window.speechSynthesis.speak(u);
+    }, { once: true });
 </script>
 </body>
 </html>
