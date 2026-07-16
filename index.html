@@ -154,9 +154,54 @@
                     <option value="R_50">Volatility 50</option>
                     <option value="R_75">Volatility 75</option>
                     <option value="R_100" selected>Volatility 100</option>
+                    <option value="1HZ10V">Volatility 10 (1s)</option>
+                    <option value="1HZ25V">Volatility 25 (1s)</option>
+                    <option value="1HZ50V">Volatility 50 (1s)</option>
+                    <option value="1HZ75V">Volatility 75 (1s)</option>
+                    <option value="1HZ100V">Volatility 100 (1s)</option>
                 </optgroup>
-                <optgroup label="Forex">
+                <optgroup label="Jump Indices">
+                    <option value="JD10">Jump 10</option>
+                    <option value="JD25">Jump 25</option>
+                    <option value="JD50">Jump 50</option>
+                    <option value="JD75">Jump 75</option>
+                    <option value="JD100">Jump 100</option>
+                </optgroup>
+                <optgroup label="Bull/Bear Market">
+                    <option value="RDBULL">Bull Market</option>
+                    <option value="RDBEAR">Bear Market</option>
+                </optgroup>
+                <optgroup label="Commodities">
+                    <option value="frxXAUUSD">Gold (XAU/USD)</option>
+                </optgroup>
+                <optgroup label="Forex Major">
+                    <option value="frxAUDUSD">AUD/USD</option>
+                    <option value="frxEURGBP">EUR/GBP</option>
+                    <option value="frxEURJPY">EUR/JPY</option>
                     <option value="frxEURUSD">EUR/USD</option>
+                    <option value="frxGBPUSD">GBP/USD</option>
+                    <option value="frxNZDUSD">NZD/USD</option>
+                    <option value="frxUSDCAD">USD/CAD</option>
+                    <option value="frxUSDCHF">USD/CHF</option>
+                    <option value="frxUSDJPY">USD/JPY</option>
+                    <option value="frxEURCHF">EUR/CHF</option>
+                    <option value="frxEURCAD">EUR/CAD</option>
+                    <option value="frxAUDJPY">AUD/JPY</option>
+                    <option value="frxGBPJPY">GBP/JPY</option>
+                    <option value="frxCADJPY">CAD/JPY</option>
+                </optgroup>
+                <optgroup label="Forex Minor">
+                    <option value="frxGBPAUD">GBP/AUD</option>
+                    <option value="frxGBPCAD">GBP/CAD</option>
+                    <option value="frxGBPCHF">GBP/CHF</option>
+                    <option value="frxGBPNZD">GBP/NZD</option>
+                    <option value="frxAUDCAD">AUD/CAD</option>
+                    <option value="frxAUDCHF">AUD/CHF</option>
+                    <option value="frxAUDNZD">AUD/NZD</option>
+                    <option value="frxNZDJPY">NZD/JPY</option>
+                    <option value="frxCHFJPY">CHF/JPY</option>
+                    <option value="frxCADCHF">CAD/CHF</option>
+                    <option value="frxNZDCAD">NZD/CAD</option>
                 </optgroup>
             </select>
             <select id="timeframe">
@@ -432,9 +477,13 @@
         document.getElementById('trendM15').className = t15 === 'UP' ? 'val-g' : 'val-r';
         document.getElementById('trendText').innerText = t1;
         document.getElementById('pZone').innerText = zone;
-        document.getElementById('eqPrice').innerText = eq.toFixed(2);
-        document.getElementById('supPrice').innerText = sup.toFixed(2);
-        document.getElementById('resPrice').innerText = res.toFixed(2);
+        
+        // Auto-detect decimals for Forex/Gold vs Indices
+        const decimals = currentMarket.startsWith('frx') ? 5 : 2;
+        document.getElementById('eqPrice').innerText = eq.toFixed(decimals);
+        document.getElementById('supPrice').innerText = sup.toFixed(decimals);
+        document.getElementById('resPrice').innerText = res.toFixed(decimals);
+        
         document.getElementById('candConf').innerText = pat;
     }
 
