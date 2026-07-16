@@ -328,7 +328,7 @@
 
     function connect() {
         if (ws) ws.close();
-        ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
+        ws = new WebSocket(wss://ws.derivws.com/websockets/v3?app_id=${APP_ID});
         ws.onopen = () => {
             candles = [];
             candleSeries.setData([]);
@@ -460,8 +460,8 @@
             lastSpokenSignal = ""; 
         }
 
-        document.getElementById('accuracyText').innerText = `ACCURACY: ${score}%`;
-        document.getElementById('accuracyFill').style.width = `${score}%`;
+        document.getElementById('accuracyText').innerText = ACCURACY: ${score}%;
+        document.getElementById('accuracyFill').style.width = ${score}%;
         document.getElementById('accuracyFill').style.background = score > 80 ? 'var(--green)' : (score > 50 ? 'var(--yellow)' : 'var(--red)');
 
         updateUI(currentTrend, trendM5, trendM15, zone, eq, minPrice, maxPrice, pattern);
