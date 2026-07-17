@@ -37,7 +37,6 @@
             text-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
         }
 
-        /* --- New Clock Styles --- */
         .clock-container {
             text-align: center;
             font-family: 'Courier New', Courier, monospace;
@@ -170,7 +169,6 @@
 
 <div class="header-title">JANAKA SMC DASHBOARD V5 PRO</div>
 
-<!-- Digital Clock Section -->
 <div class="clock-container">
     <span id="clockDate">--/--/----</span>
     <span id="clockTime">00:00:00</span>
@@ -321,7 +319,6 @@
     let lastSpokenSignal = ""; 
     let signalHistory = [];
 
-    // Update Clock Function
     function updateClock() {
         const now = new Date();
         const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -347,7 +344,7 @@
     function addToHistory(type, accuracy, price) {
         const now = new Date();
         const timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-        const expiryTime = Date.now() + (3 * 60 * 1000); // 3-Min Expiry
+        const expiryTime = Date.now() + (3 * 60 * 1000); 
 
         const newSignal = {
             id: Date.now(),
@@ -445,7 +442,6 @@
         });
         candleSeries = chart.addCandlestickSeries({ upColor: '#00ff88', downColor: '#ff4d4d', borderUpColor: '#00ff88', borderDownColor: '#ff4d4d', wickUpColor: '#00ff88', wickDownColor: '#ff4d4d' });
         
-        // TREND LINE WITH LINEWIDTH 2
         trendLineSeries = chart.addLineSeries({ color: '#3b82f6', lineWidth: 2, lineStyle: 0 }); 
         
         resLineSeries = chart.addLineSeries({ color: '#ff4d4d', lineWidth: 1, priceLineVisible: false });
@@ -550,13 +546,24 @@
         if (finalH) resLineSeries.setData([{time: candles[candles.length-50].time, value: finalH.price}, {time: candles[candles.length-1].time, value: finalH.price}]);
         if (finalL) supLineSeries.setData([{time: candles[candles.length-50].time, value: finalL.price}, {time: candles[candles.length-1].time, value: finalL.price}]);
 
-        // --- DYNAMIC TREND LINE LOGIC ---
-        if (pivots.length >= 2) {
-            const lastTwo = pivots.slice(-2);
+        // --- FIXED DYNAMIC TREND LINE LOGIC ---
+        let trendPivots = [];
+        if (currentTrend === "UP") {
+            // Uptrend: Filter for Low points (L, HL, LL)
+            trendPivots = pivots.filter(p => p.type.includes('L'));
+        } else if (currentTrend === "DOWN") {
+            // Downtrend: Filter for High points (H, HH, LH)
+            trendPivots = pivots.filter(p => p.type.includes('H'));
+        }
+
+        if (trendPivots.length >= 2) {
+            const lastTwo = trendPivots.slice(-2);
             trendLineSeries.setData([
                 { time: lastTwo[0].time, value: lastTwo[0].price },
                 { time: lastTwo[1].time, value: lastTwo[1].price }
             ]);
+        } else {
+            trendLineSeries.setData([]);
         }
 
         const trendM5 = candles[candles.length-1].close > candles[candles.length-50].close ? 'UP' : 'DOWN';
@@ -617,7 +624,7 @@
         checkAndResetHistory(); 
         connect(); 
         setInterval(updateSignalResults, 1000); 
-        setInterval(updateClock, 1000); // Start Clock
+        setInterval(updateClock, 1000); 
         updateClock(); 
     };
     document.addEventListener('click', () => { if (window.speechSynthesis.speaking) return; const u = new SpeechSynthesisUtterance(""); window.speechSynthesis.speak(u); }, { once: true });
