@@ -138,7 +138,6 @@
         input:checked + .slider-toggle { background-color: var(--green); }
         input:checked + .slider-toggle:before { transform: translateX(16px); }
 
-        /* --- UPDATED SIGNAL HISTORY STYLES --- */
         .history-card { margin-top: 15px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; }
         .history-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 10px; }
         .history-title { font-size: 14px; font-weight: bold; color: var(--blue); }
@@ -273,7 +272,6 @@
     <div class="accuracy-bar-bg"><div id="accuracyFill"></div></div>
 </div>
 
-<!-- HISTORY BOX -->
 <div class="history-card">
     <div class="history-header">
         <div class="history-title">SIGNAL HISTORY (TODAY)</div>
@@ -332,7 +330,8 @@
             entryPrice: parseFloat(price),
             accuracy: accuracy,
             status: 'PENDING',
-            expiry: expiryTime
+            expiry: expiryTime,
+            checked: false
         };
 
         signalHistory.unshift(newSignal);
@@ -374,24 +373,43 @@
         document.getElementById('winRateDisplay').innerText = wr > 0 ? wr + "%" : "88%";
     }
 
+    // UPDATED: Background Result Checker
     function updateSignalResults() {
         if (signalHistory.length === 0) return;
-        let changed = false;
         const now = Date.now();
-        const currentPrice = candles.length > 0 ? candles[candles.length - 1].close : null;
 
         signalHistory.forEach(sig => {
-            if (sig.status === 'PENDING' && now >= sig.expiry && currentPrice && sig.rawMarket === currentMarket) {
-                if (sig.type === 'BUY') sig.status = currentPrice > sig.entryPrice ? 'WIN' : 'LOSS';
-                else sig.status = currentPrice < sig.entryPrice ? 'WIN' : 'LOSS';
-                changed = true;
+            if (sig.status === 'PENDING' && now >= sig.expiry && !sig.checked) {
+                sig.checked = true; // පරීක්ෂා කිරීම ආරම්භ කළ බව සටහන් කරයි
+                
+                // දැනට බලන Market එකේ සිග්නල් එකක් නම් වහාම පරීක්ෂා කරයි
+                if (sig.rawMarket === currentMarket && candles.length > 0) {
+                    const currentPrice = candles[candles.length - 1].close;
+                    processResult(sig, currentPrice);
+                } else {
+                    // වෙනත් Market එකක සිග්නල් එකක් නම් Deriv එකෙන් වහාම මිල ඉල්ලයි (Background Check)
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                            ticks_history: sig.rawMarket,
+                            end: "latest",
+                            count: 1,
+                            subscribe: 0,
+                            passthrough: { "signal_id": sig.id }
+                        }));
+                    }
+                }
             }
         });
+    }
 
-        if (changed) {
-            localStorage.setItem('janaka_signal_history', JSON.stringify(signalHistory));
-            renderHistory();
+    function processResult(sig, currentPrice) {
+        if (sig.type === 'BUY') {
+            sig.status = currentPrice > sig.entryPrice ? 'WIN' : 'LOSS';
+        } else {
+            sig.status = currentPrice < sig.entryPrice ? 'WIN' : 'LOSS';
         }
+        localStorage.setItem('janaka_signal_history', JSON.stringify(signalHistory));
+        renderHistory();
     }
 
     function initChart() {
@@ -417,6 +435,17 @@
         };
         ws.onmessage = (msg) => {
             const data = JSON.parse(msg.data);
+            
+            // Background Price Check Response handling
+            if (data.history && data.passthrough && data.passthrough.signal_id) {
+                const sig = signalHistory.find(s => s.id === data.passthrough.signal_id);
+                if (sig && sig.status === 'PENDING') {
+                    const lastPrice = data.history.prices[0];
+                    processResult(sig, lastPrice);
+                }
+                return;
+            }
+
             if (data.candles) {
                 candles = data.candles.map(c => ({ time: c.epoch, open: c.open, high: c.high, low: c.low, close: c.close }));
                 candleSeries.setData(candles);
@@ -429,7 +458,6 @@
                 else candles.push(newCandle);
                 candleSeries.update(newCandle);
                 analyzeSMC();
-                updateSignalResults();
             }
         };
     }
@@ -448,7 +476,6 @@
         }
     }
 
-    // --- 100% ORIGINAL SMC LOGIC ---
     function analyzeSMC() {
         if (candles.length < 100) return;
         let markers = []; let pivots = []; const period = 5;
