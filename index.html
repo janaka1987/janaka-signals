@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JANAKA SMC DASHBOARD V5 PRO</title>
+    <title>JANAKA SMC DASHBOARD V5 PRO - FIXED</title>
     <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         :root {
@@ -167,7 +167,7 @@
 </head>
 <body>
 
-<div class="header-title">JANAKA SMC DASHBOARD V5 PRO</div>
+<div class="header-title">JANAKA SMC DASHBOARD V5 PRO - FIXED</div>
 
 <div class="clock-container">
     <span id="clockDate">--/--/----</span>
@@ -318,6 +318,9 @@
     let currentTimeframe = 60;
     let lastSpokenSignal = ""; 
     let signalHistory = [];
+    let reconnectAttempts = 0;
+    let lastAnalysisTime = 0;
+    const ANALYSIS_DELAY = 1000;
 
     function updateClock() {
         const now = new Date();
@@ -450,12 +453,27 @@
     }
 
     function connect() {
-        if (ws) ws.close();
+        if (ws) {
+            ws.close();
+        }
+        
         ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
+        
         ws.onopen = () => {
-            candles = []; candleSeries.setData([]);
-            ws.send(JSON.stringify({ ticks_history: currentMarket, end: "latest", style: "candles", granularity: parseInt(currentTimeframe), count: 500, subscribe: 1 }));
+            console.log("WebSocket Connected");
+            reconnectAttempts = 0;
+            candles = []; 
+            candleSeries.setData([]);
+            ws.send(JSON.stringify({ 
+                ticks_history: currentMarket, 
+                end: "latest", 
+                style: "candles", 
+                granularity: parseInt(currentTimeframe), 
+                count: 500, 
+                subscribe: 1 
+            }));
         };
+        
         ws.onmessage = (msg) => {
             const data = JSON.parse(msg.data);
             if (data.history && data.passthrough && data.passthrough.signal_id) {
@@ -474,11 +492,28 @@
             if (data.ohlc) {
                 const o = data.ohlc;
                 const newCandle = { time: o.open_time, open: o.open, high: o.high, low: o.low, close: o.close };
-                if (candles.length > 0 && candles[candles.length - 1].time === newCandle.time) candles[candles.length - 1] = newCandle;
-                else candles.push(newCandle);
+                if (candles.length > 0 && candles[candles.length - 1].time === newCandle.time) {
+                    candles[candles.length - 1] = newCandle;
+                } else {
+                    candles.push(newCandle);
+                }
                 candleSeries.update(newCandle);
                 analyzeSMC();
             }
+        };
+        
+        ws.onclose = () => {
+            console.log("WebSocket Disconnected. Reconnecting...");
+            setTimeout(() => {
+                reconnectAttempts++;
+                if (reconnectAttempts <= 5) {
+                    connect();
+                }
+            }, 3000 * reconnectAttempts);
+        };
+        
+        ws.onerror = (error) => {
+            console.error("WebSocket Error:", error);
         };
     }
 
@@ -497,8 +532,16 @@
     }
 
     function analyzeSMC() {
+        const now = Date.now();
+        if (now - lastAnalysisTime < ANALYSIS_DELAY) return;
+        lastAnalysisTime = now;
+
         if (candles.length < 100) return;
-        let markers = []; let pivots = []; const period = 5;
+        
+        let markers = []; 
+        let pivots = []; 
+        const period = 5;
+        
         for (let i = period; i < candles.length - period; i++) {
             let isHigh = true, isLow = true;
             for (let j = i - period; j <= i + period; j++) {
@@ -519,26 +562,45 @@
                 markers.push({ time: candles[i].time, position: 'belowBar', color: label === 'HL' ? '#00ff88' : '#ff4d4d', shape: 'text', text: label });
             }
         }
+        
         let currentTrend = "Neutral";
         let lastHH = null, lastLL = null, lastHL = null, lastLH = null;
+        
+        // --- FIXED BOS and CHoCH Logic ---
         pivots.forEach((p) => {
             if (currentTrend === "UP") {
-                if (lastHL && p.price < lastHL.price) {
-                    markers.push({ time: p.time, position: 'belowBar', color: '#a855f7', shape: 'arrowUp', text: 'CHoCH ⚡' });
+                // CHoCH: Uptrend එකක් තිබියදී පහළ ලක්ෂ්‍යයක් (HL) බිඳ වැටීම
+                if (lastHL && p.type.includes('L') && p.price < lastHL.price) {
+                    markers.push({ time: p.time, position: 'belowBar', color: '#ff4d4d', shape: 'arrowDown', text: 'CHoCH ⚡' });
                     currentTrend = "DOWN";
-                } else if (lastHH && (p.type === 'HH' || p.type === 'LH') && p.price > lastHH.price) {
-                    markers.push({ time: p.time, position: 'aboveBar', color: '#3b82f6', shape: 'arrowDown', text: 'BOS ↑' });
+                } 
+                // BOS: Uptrend එකේදී පෙර උපරිමය (HH) බි දැමීම
+                else if (lastHH && p.type === 'HH' && p.price > lastHH.price) {
+                    markers.push({ time: p.time, position: 'aboveBar', color: '#00ff88', shape: 'arrowUp', text: 'BOS ↑' });
                 }
-            } else if (currentTrend === "DOWN") {
-                if (lastLH && p.price > lastLH.price) {
-                    markers.push({ time: p.time, position: 'aboveBar', color: '#a855f7', shape: 'arrowDown', text: 'CHoCH ⚡' });
+            } 
+            else if (currentTrend === "DOWN") {
+                // CHoCH: Downtrend එකක් තිබියදී ඉහළ ලක්ෂ්‍යයක් (LH) බිඳ දැමීම
+                if (lastLH && p.type.includes('H') && p.price > lastLH.price) {
+                    markers.push({ time: p.time, position: 'aboveBar', color: '#00ff88', shape: 'arrowUp', text: 'CHoCH ' });
                     currentTrend = "UP";
-                } else if (lastLL && (p.type === 'LL' || p.type === 'HL') && p.price < lastLL.price) {
-                    markers.push({ time: p.time, position: 'belowBar', color: '#3b82f6', shape: 'arrowUp', text: 'BOS ↓' });
+                } 
+                // BOS: Downtrend එකේදී පෙර අවමය (LL) බිඳ වැටීම
+                else if (lastLL && p.type === 'LL' && p.price < lastLL.price) {
+                    markers.push({ time: p.time, position: 'belowBar', color: '#ff4d4d', shape: 'arrowDown', text: 'BOS ↓' });
                 }
             }
-            if (currentTrend === "Neutral") { if (p.type === 'HH') currentTrend = "UP"; if (p.type === 'LL') currentTrend = "DOWN"; }
-            if (p.type === 'HH') lastHH = p; if (p.type === 'HL') lastHL = p; if (p.type === 'LH') lastLH = p; if (p.type === 'LL') lastLL = p;
+            
+            // Neutral තත්ත්වයේදී මලික Trend එක තීරණය කිරීම
+            if (currentTrend === "Neutral") { 
+                if (p.type === 'HH') currentTrend = "UP"; 
+                if (p.type === 'LL') currentTrend = "DOWN"; 
+            }
+            
+            if (p.type === 'HH') lastHH = p; 
+            if (p.type === 'HL') lastHL = p; 
+            if (p.type === 'LH') lastLH = p; 
+            if (p.type === 'LL') lastLL = p;
         });
 
         const finalH = pivots.filter(p => p.type.includes('H')).pop();
@@ -549,10 +611,8 @@
         // --- FIXED DYNAMIC TREND LINE LOGIC ---
         let trendPivots = [];
         if (currentTrend === "UP") {
-            // Uptrend: Filter for Low points (L, HL, LL)
             trendPivots = pivots.filter(p => p.type.includes('L'));
         } else if (currentTrend === "DOWN") {
-            // Downtrend: Filter for High points (H, HH, LH)
             trendPivots = pivots.filter(p => p.type.includes('H'));
         }
 
@@ -573,10 +633,17 @@
         const eq = (maxPrice + minPrice) / 2;
         const currentPrice = candles[candles.length-1].close;
         const zone = currentPrice > eq ? 'PREMIUM' : 'DISCOUNT';
+        
+        // --- FIXED CANDLE PATTERN DETECTION ---
         let pattern = "NONE";
-        const c1 = candles[candles.length-2], c2 = candles[candles.length-1];
-        if (c2.close > c1.open && c2.close > c1.high) pattern = "BULLISH ENG.";
-        if (c2.close < c1.open && c2.close < c1.low) pattern = "BEARISH ENG.";
+        const c1 = candles[candles.length-2];
+        const c2 = candles[candles.length-1];
+        
+        const isBullishEngulfing = (c2.close > c1.open) && (c2.open < c1.close);
+        const isBearishEngulfing = (c2.close < c1.open) && (c2.open > c1.close);
+        
+        if (isBullishEngulfing) pattern = "BULLISH ENG.";
+        if (isBearishEngulfing) pattern = "BEARISH ENG.";
 
         let score = 0;
         if (currentTrend === 'UP' && trendM5 === 'UP' && trendM15 === 'UP') score += 30;
@@ -587,9 +654,22 @@
         score = Math.min(score, 100);
 
         const sigEl = document.getElementById('signalText');
-        if (currentTrend === 'UP' && zone === 'DISCOUNT' && score >= 20) { sigEl.innerText = "CALL (BUY) 2-3 MIN"; sigEl.style.color = "var(--green)"; speakSignal('buy', score); }
-        else if (currentTrend === 'DOWN' && zone === 'PREMIUM' && score >= 20) { sigEl.innerText = "PUT (SELL) 2-3 MIN"; sigEl.style.color = "var(--red)"; speakSignal('sell', score); }
-        else { sigEl.innerText = "WAITING FOR SETUP..."; sigEl.style.color = "#848d97"; lastSpokenSignal = ""; }
+        // --- FIXED THRESHOLD FROM 20 TO 60 ---
+        if (currentTrend === 'UP' && zone === 'DISCOUNT' && score >= 60) { 
+            sigEl.innerText = "CALL (BUY) 2-3 MIN"; 
+            sigEl.style.color = "var(--green)"; 
+            speakSignal('buy', score); 
+        }
+        else if (currentTrend === 'DOWN' && zone === 'PREMIUM' && score >= 60) { 
+            sigEl.innerText = "PUT (SELL) 2-3 MIN"; 
+            sigEl.style.color = "var(--red)"; 
+            speakSignal('sell', score); 
+        }
+        else { 
+            sigEl.innerText = "WAITING FOR SETUP..."; 
+            sigEl.style.color = "#848d97"; 
+            lastSpokenSignal = ""; 
+        }
 
         document.getElementById('accuracyText').innerText = `ACCURACY: ${score}%`;
         document.getElementById('accuracyFill').style.width = `${score}%`;
