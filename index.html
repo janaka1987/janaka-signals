@@ -33,9 +33,22 @@
             font-size: 20px;
             font-weight: bold;
             letter-spacing: 2px;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             text-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
         }
+
+        /* --- New Clock Styles --- */
+        .clock-container {
+            text-align: center;
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--blue);
+            font-size: 14px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+        }
+        #clockDate { color: var(--text-main); margin-right: 10px; }
+        #clockTime { color: var(--yellow); }
 
         .top-bar {
             display: grid;
@@ -156,6 +169,12 @@
 <body>
 
 <div class="header-title">JANAKA SMC DASHBOARD V5 PRO</div>
+
+<!-- Digital Clock Section -->
+<div class="clock-container">
+    <span id="clockDate">--/--/----</span>
+    <span id="clockTime">00:00:00</span>
+</div>
 
 <div class="top-bar">
     <div class="card">
@@ -302,6 +321,15 @@
     let lastSpokenSignal = ""; 
     let signalHistory = [];
 
+    // Update Clock Function
+    function updateClock() {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        const timeStr = now.toLocaleTimeString('en-GB', { hour12: false });
+        document.getElementById('clockDate').innerText = dateStr;
+        document.getElementById('clockTime').innerText = timeStr;
+    }
+
     function checkAndResetHistory() {
         const today = new Date().toDateString();
         const lastSavedDate = localStorage.getItem('lastSavedDate');
@@ -373,21 +401,17 @@
         document.getElementById('winRateDisplay').innerText = wr > 0 ? wr + "%" : "88%";
     }
 
-    // UPDATED: Background Result Checker
     function updateSignalResults() {
         if (signalHistory.length === 0) return;
         const now = Date.now();
 
         signalHistory.forEach(sig => {
             if (sig.status === 'PENDING' && now >= sig.expiry && !sig.checked) {
-                sig.checked = true; // පරීක්ෂා කිරීම ආරම්භ කළ බව සටහන් කරයි
-                
-                // දැනට බලන Market එකේ සිග්නල් එකක් නම් වහාම පරීක්ෂා කරයි
+                sig.checked = true;
                 if (sig.rawMarket === currentMarket && candles.length > 0) {
                     const currentPrice = candles[candles.length - 1].close;
                     processResult(sig, currentPrice);
                 } else {
-                    // වෙනත් Market එකක සිග්නල් එකක් නම් Deriv එකෙන් වහාම මිල ඉල්ලයි (Background Check)
                     if (ws && ws.readyState === WebSocket.OPEN) {
                         ws.send(JSON.stringify({
                             ticks_history: sig.rawMarket,
@@ -420,7 +444,10 @@
             timeScale: { borderColor: '#30363d', timeVisible: true }
         });
         candleSeries = chart.addCandlestickSeries({ upColor: '#00ff88', downColor: '#ff4d4d', borderUpColor: '#00ff88', borderDownColor: '#ff4d4d', wickUpColor: '#00ff88', wickDownColor: '#ff4d4d' });
-        trendLineSeries = chart.addLineSeries({ color: '#3b82f6', lineWidth: 1, lineStyle: 2 });
+        
+        // TREND LINE WITH LINEWIDTH 2
+        trendLineSeries = chart.addLineSeries({ color: '#3b82f6', lineWidth: 2, lineStyle: 0 }); 
+        
         resLineSeries = chart.addLineSeries({ color: '#ff4d4d', lineWidth: 1, priceLineVisible: false });
         supLineSeries = chart.addLineSeries({ color: '#00ff88', lineWidth: 1, priceLineVisible: false });
         obSeries = chart.addLineSeries({ color: 'rgba(234, 179, 8, 0.5)', lineWidth: 2 });
@@ -435,8 +462,6 @@
         };
         ws.onmessage = (msg) => {
             const data = JSON.parse(msg.data);
-            
-            // Background Price Check Response handling
             if (data.history && data.passthrough && data.passthrough.signal_id) {
                 const sig = signalHistory.find(s => s.id === data.passthrough.signal_id);
                 if (sig && sig.status === 'PENDING') {
@@ -445,7 +470,6 @@
                 }
                 return;
             }
-
             if (data.candles) {
                 candles = data.candles.map(c => ({ time: c.epoch, open: c.open, high: c.high, low: c.low, close: c.close }));
                 candleSeries.setData(candles);
@@ -526,6 +550,15 @@
         if (finalH) resLineSeries.setData([{time: candles[candles.length-50].time, value: finalH.price}, {time: candles[candles.length-1].time, value: finalH.price}]);
         if (finalL) supLineSeries.setData([{time: candles[candles.length-50].time, value: finalL.price}, {time: candles[candles.length-1].time, value: finalL.price}]);
 
+        // --- DYNAMIC TREND LINE LOGIC ---
+        if (pivots.length >= 2) {
+            const lastTwo = pivots.slice(-2);
+            trendLineSeries.setData([
+                { time: lastTwo[0].time, value: lastTwo[0].price },
+                { time: lastTwo[1].time, value: lastTwo[1].price }
+            ]);
+        }
+
         const trendM5 = candles[candles.length-1].close > candles[candles.length-50].close ? 'UP' : 'DOWN';
         const trendM15 = candles[candles.length-1].close > candles[candles.length-100].close ? 'UP' : 'DOWN';
         const maxPrice = Math.max(...candles.slice(-50).map(c => c.high));
@@ -579,7 +612,14 @@
     document.getElementById('market').addEventListener('change', (e) => { currentMarket = e.target.value; connect(); });
     document.getElementById('timeframe').addEventListener('change', (e) => { currentTimeframe = e.target.value; connect(); });
 
-    window.onload = () => { initChart(); checkAndResetHistory(); connect(); setInterval(updateSignalResults, 1000); };
+    window.onload = () => { 
+        initChart(); 
+        checkAndResetHistory(); 
+        connect(); 
+        setInterval(updateSignalResults, 1000); 
+        setInterval(updateClock, 1000); // Start Clock
+        updateClock(); 
+    };
     document.addEventListener('click', () => { if (window.speechSynthesis.speaking) return; const u = new SpeechSynthesisUtterance(""); window.speechSynthesis.speak(u); }, { once: true });
 </script>
 </body>
