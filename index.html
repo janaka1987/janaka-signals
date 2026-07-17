@@ -320,7 +320,9 @@
     let signalHistory = [];
     let reconnectAttempts = 0;
     let lastAnalysisTime = 0;
-    const ANALYSIS_DELAY = 1000;
+    let lastMarkersHash = "";
+    let lastTrend = "";
+    const ANALYSIS_DELAY = 2000; // 2 seconds debounce
 
     function updateClock() {
         const now = new Date();
@@ -437,19 +439,86 @@
     }
 
     function initChart() {
-        chart = LightweightCharts.createChart(document.getElementById('chart'), {
-            layout: { background: { color: '#0d1117' }, textColor: '#cbd5e1' },
-            grid: { vertLines: { color: '#161b22' }, horzLines: { color: '#161b22' } },
-            rightPriceScale: { borderColor: '#30363d' },
-            timeScale: { borderColor: '#30363d', timeVisible: true }
+        const chartContainer = document.getElementById('chart');
+        
+        chart = LightweightCharts.createChart(chartContainer, {
+            layout: { 
+                background: { color: '#0d1117' }, 
+                textColor: '#cbd5e1' 
+            },
+            grid: { 
+                vertLines: { color: '#161b22' }, 
+                horzLines: { color: '#161b22' } 
+            },
+            rightPriceScale: { 
+                borderColor: '#30363d',
+                scaleMargins: {
+                    top: 0.1,
+                    bottom: 0.2
+                }
+            },
+            timeScale: { 
+                borderColor: '#30363d', 
+                timeVisible: true,
+                fixLeftEdge: true,
+                fixRightEdge: false
+            },
+            handleScroll: {
+                vertTouchDrag: false,
+                horzTouchDrag: true,
+                mouseWheel: true
+            },
+            handleScale: {
+                axisPressedMouseMove: {
+                    time: true,
+                    price: true
+                },
+                mouseWheel: true,
+                pinch: true
+            },
+            width: chartContainer.clientWidth,
+            height: 400
         });
-        candleSeries = chart.addCandlestickSeries({ upColor: '#00ff88', downColor: '#ff4d4d', borderUpColor: '#00ff88', borderDownColor: '#ff4d4d', wickUpColor: '#00ff88', wickDownColor: '#ff4d4d' });
         
-        trendLineSeries = chart.addLineSeries({ color: '#3b82f6', lineWidth: 2, lineStyle: 0 }); 
+        candleSeries = chart.addCandlestickSeries({ 
+            upColor: '#00ff88', 
+            downColor: '#ff4d4d', 
+            borderUpColor: '#00ff88', 
+            borderDownColor: '#ff4d4d', 
+            wickUpColor: '#00ff88', 
+            wickDownColor: '#ff4d4d' 
+        });
         
-        resLineSeries = chart.addLineSeries({ color: '#ff4d4d', lineWidth: 1, priceLineVisible: false });
-        supLineSeries = chart.addLineSeries({ color: '#00ff88', lineWidth: 1, priceLineVisible: false });
-        obSeries = chart.addLineSeries({ color: 'rgba(234, 179, 8, 0.5)', lineWidth: 2 });
+        trendLineSeries = chart.addLineSeries({ 
+            color: '#3b82f6', 
+            lineWidth: 2, 
+            lineStyle: 0 
+        }); 
+        
+        resLineSeries = chart.addLineSeries({ 
+            color: '#ff4d4d', 
+            lineWidth: 1, 
+            priceLineVisible: false 
+        });
+        
+        supLineSeries = chart.addLineSeries({ 
+            color: '#00ff88', 
+            lineWidth: 1, 
+            priceLineVisible: false 
+        });
+        
+        obSeries = chart.addLineSeries({ 
+            color: 'rgba(234, 179, 8, 0.5)', 
+            lineWidth: 2 
+        });
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            chart.applyOptions({ 
+                width: chartContainer.clientWidth,
+                height: 400
+            });
+        });
     }
 
     function connect() {
@@ -464,6 +533,8 @@
             reconnectAttempts = 0;
             candles = []; 
             candleSeries.setData([]);
+            lastMarkersHash = "";
+            lastTrend = "";
             ws.send(JSON.stringify({ 
                 ticks_history: currentMarket, 
                 end: "latest", 
@@ -542,6 +613,7 @@
         let pivots = []; 
         const period = 5;
         
+        // Detect pivots
         for (let i = period; i < candles.length - period; i++) {
             let isHigh = true, isLow = true;
             for (let j = i - period; j <= i + period; j++) {
@@ -565,86 +637,138 @@
         
         let currentTrend = "Neutral";
         let lastHH = null, lastLL = null, lastHL = null, lastLH = null;
+        let structureBroken = false;
         
-        // --- FIXED BOS and CHoCH Logic ---
+        // BOS and CHoCH Detection - FIXED LOGIC
         pivots.forEach((p) => {
             if (currentTrend === "UP") {
-                // CHoCH: Uptrend එකක් තිබියදී පහළ ලක්ෂ්‍යයක් (HL) බිඳ වැටීම
-                if (lastHL && p.type.includes('L') && p.price < lastHL.price) {
-                    markers.push({ time: p.time, position: 'belowBar', color: '#ff4d4d', shape: 'arrowDown', text: 'CHoCH ⚡' });
+                // BOS: Uptrend එකේ අලුත් HH එකක්
+                if (p.type === 'HH' && lastHH && p.price > lastHH.price) {
+                    markers.push({ 
+                        time: p.time, 
+                        position: 'aboveBar', 
+                        color: '#00ff88', 
+                        shape: 'arrowUp', 
+                        text: 'BOS ↑' 
+                    });
+                }
+                
+                // CHoCH: Uptrend එක break වෙලා LL එකක්
+                if (p.type === 'LL' && lastHL && p.price < lastHL.price && !structureBroken) {
+                    markers.push({ 
+                        time: p.time, 
+                        position: 'belowBar', 
+                        color: '#ff4d4d', 
+                        shape: 'arrowDown', 
+                        text: 'CHoCH ' 
+                    });
                     currentTrend = "DOWN";
-                } 
-                // BOS: Uptrend එකේදී පෙර උපරිමය (HH) බි දැමීම
-                else if (lastHH && p.type === 'HH' && p.price > lastHH.price) {
-                    markers.push({ time: p.time, position: 'aboveBar', color: '#00ff88', shape: 'arrowUp', text: 'BOS ↑' });
+                    structureBroken = true;
                 }
             } 
             else if (currentTrend === "DOWN") {
-                // CHoCH: Downtrend එකක් තිබියදී ඉහළ ලක්ෂ්‍යයක් (LH) බිඳ දැමීම
-                if (lastLH && p.type.includes('H') && p.price > lastLH.price) {
-                    markers.push({ time: p.time, position: 'aboveBar', color: '#00ff88', shape: 'arrowUp', text: 'CHoCH ' });
+                // BOS: Downtrend එකේ අලුත් LL එකක්
+                if (p.type === 'LL' && lastLL && p.price < lastLL.price) {
+                    markers.push({ 
+                        time: p.time, 
+                        position: 'belowBar', 
+                        color: '#ff4d4d', 
+                        shape: 'arrowDown', 
+                        text: 'BOS ↓' 
+                    });
+                }
+                
+                // CHoCH: Downtrend එක break වෙලා HH එකක්
+                if (p.type === 'HH' && lastLH && p.price > lastLH.price && !structureBroken) {
+                    markers.push({ 
+                        time: p.time, 
+                        position: 'aboveBar', 
+                        color: '#00ff88', 
+                        shape: 'arrowUp', 
+                        text: 'CHoCH ' 
+                    });
                     currentTrend = "UP";
-                } 
-                // BOS: Downtrend එකේදී පෙර අවමය (LL) බිඳ වැටීම
-                else if (lastLL && p.type === 'LL' && p.price < lastLL.price) {
-                    markers.push({ time: p.time, position: 'belowBar', color: '#ff4d4d', shape: 'arrowDown', text: 'BOS ↓' });
+                    structureBroken = true;
                 }
             }
             
-            // Neutral තත්ත්වයේදී මලික Trend එක තීරණය කිරීම
-            if (currentTrend === "Neutral") { 
+            // Neutral තත්ත්වයේදී
+            if (currentTrend === "Neutral") {
                 if (p.type === 'HH') currentTrend = "UP"; 
                 if (p.type === 'LL') currentTrend = "DOWN"; 
             }
             
+            // Update last pivot references
             if (p.type === 'HH') lastHH = p; 
             if (p.type === 'HL') lastHL = p; 
             if (p.type === 'LH') lastLH = p; 
             if (p.type === 'LL') lastLL = p;
+            
+            // Reset structureBroken flag after trend change
+            if (structureBroken && ((currentTrend === "UP" && p.type === 'HH') || (currentTrend === "DOWN" && p.type === 'LL'))) {
+                structureBroken = false;
+            }
         });
 
+        // Support and Resistance lines
         const finalH = pivots.filter(p => p.type.includes('H')).pop();
         const finalL = pivots.filter(p => p.type.includes('L')).pop();
-        if (finalH) resLineSeries.setData([{time: candles[candles.length-50].time, value: finalH.price}, {time: candles[candles.length-1].time, value: finalH.price}]);
-        if (finalL) supLineSeries.setData([{time: candles[candles.length-50].time, value: finalL.price}, {time: candles[candles.length-1].time, value: finalL.price}]);
+        if (finalH) {
+            resLineSeries.setData([
+                {time: candles[candles.length-50].time, value: finalH.price}, 
+                {time: candles[candles.length-1].time, value: finalH.price}
+            ]);
+        }
+        if (finalL) {
+            supLineSeries.setData([
+                {time: candles[candles.length-50].time, value: finalL.price}, 
+                {time: candles[candles.length-1].time, value: finalL.price}
+            ]);
+        }
 
-        // --- FIXED DYNAMIC TREND LINE LOGIC ---
+        // Trend Line - FIXED LOGIC (use last 3 points for better accuracy)
         let trendPivots = [];
         if (currentTrend === "UP") {
-            trendPivots = pivots.filter(p => p.type.includes('L'));
+            trendPivots = pivots.filter(p => p.type === 'HL').slice(-3);
         } else if (currentTrend === "DOWN") {
-            trendPivots = pivots.filter(p => p.type.includes('H'));
+            trendPivots = pivots.filter(p => p.type === 'LH').slice(-3);
         }
 
         if (trendPivots.length >= 2) {
-            const lastTwo = trendPivots.slice(-2);
-            trendLineSeries.setData([
-                { time: lastTwo[0].time, value: lastTwo[0].price },
-                { time: lastTwo[1].time, value: lastTwo[1].price }
-            ]);
+            const trendLineData = trendPivots.map(p => ({
+                time: p.time,
+                value: p.price
+            }));
+            trendLineSeries.setData(trendLineData);
         } else {
             trendLineSeries.setData([]);
         }
 
+        // Multi-timeframe analysis
         const trendM5 = candles[candles.length-1].close > candles[candles.length-50].close ? 'UP' : 'DOWN';
         const trendM15 = candles[candles.length-1].close > candles[candles.length-100].close ? 'UP' : 'DOWN';
+        
+        // Premium/Discount Zone
         const maxPrice = Math.max(...candles.slice(-50).map(c => c.high));
         const minPrice = Math.min(...candles.slice(-50).map(c => c.low));
         const eq = (maxPrice + minPrice) / 2;
         const currentPrice = candles[candles.length-1].close;
         const zone = currentPrice > eq ? 'PREMIUM' : 'DISCOUNT';
         
-        // --- FIXED CANDLE PATTERN DETECTION ---
+        // Candle Pattern Detection
         let pattern = "NONE";
-        const c1 = candles[candles.length-2];
-        const c2 = candles[candles.length-1];
-        
-        const isBullishEngulfing = (c2.close > c1.open) && (c2.open < c1.close);
-        const isBearishEngulfing = (c2.close < c1.open) && (c2.open > c1.close);
-        
-        if (isBullishEngulfing) pattern = "BULLISH ENG.";
-        if (isBearishEngulfing) pattern = "BEARISH ENG.";
+        if (candles.length >= 2) {
+            const c1 = candles[candles.length-2];
+            const c2 = candles[candles.length-1];
+            
+            const isBullishEngulfing = (c2.close > c1.open) && (c2.open < c1.close);
+            const isBearishEngulfing = (c2.close < c1.open) && (c2.open > c1.close);
+            
+            if (isBullishEngulfing) pattern = "BULLISH ENG.";
+            if (isBearishEngulfing) pattern = "BEARISH ENG.";
+        }
 
+        // Calculate Signal Score
         let score = 0;
         if (currentTrend === 'UP' && trendM5 === 'UP' && trendM15 === 'UP') score += 30;
         if (currentTrend === 'DOWN' && trendM5 === 'DOWN' && trendM15 === 'DOWN') score += 30;
@@ -653,8 +777,8 @@
         if (pattern !== "NONE") score += 20;
         score = Math.min(score, 100);
 
+        // Display Signal
         const sigEl = document.getElementById('signalText');
-        // --- FIXED THRESHOLD FROM 20 TO 60 ---
         if (currentTrend === 'UP' && zone === 'DISCOUNT' && score >= 60) { 
             sigEl.innerText = "CALL (BUY) 2-3 MIN"; 
             sigEl.style.color = "var(--green)"; 
@@ -674,8 +798,16 @@
         document.getElementById('accuracyText').innerText = `ACCURACY: ${score}%`;
         document.getElementById('accuracyFill').style.width = `${score}%`;
         document.getElementById('accuracyFill').style.background = score > 80 ? 'var(--green)' : (score > 50 ? 'var(--yellow)' : 'var(--red)');
+        
         updateUI(currentTrend, trendM5, trendM15, zone, eq, minPrice, maxPrice, pattern);
-        candleSeries.setMarkers(markers);
+        
+        // Only update markers if they changed (prevent chart shake)
+        const markersHash = JSON.stringify(markers);
+        if (markersHash !== lastMarkersHash || currentTrend !== lastTrend) {
+            candleSeries.setMarkers(markers);
+            lastMarkersHash = markersHash;
+            lastTrend = currentTrend;
+        }
     }
 
     function updateUI(t1, t5, t15, zone, eq, sup, res, pat) {
@@ -696,8 +828,18 @@
 
     document.getElementById('accThreshold').oninput = (e) => document.getElementById('accVal').innerText = e.target.value + '%';
     document.getElementById('volSlider').oninput = (e) => document.getElementById('volVal').innerText = Math.round(e.target.value * 100) + '%';
-    document.getElementById('market').addEventListener('change', (e) => { currentMarket = e.target.value; connect(); });
-    document.getElementById('timeframe').addEventListener('change', (e) => { currentTimeframe = e.target.value; connect(); });
+    document.getElementById('market').addEventListener('change', (e) => { 
+        currentMarket = e.target.value; 
+        lastMarkersHash = "";
+        lastTrend = "";
+        connect(); 
+    });
+    document.getElementById('timeframe').addEventListener('change', (e) => { 
+        currentTimeframe = e.target.value; 
+        lastMarkersHash = "";
+        lastTrend = "";
+        connect(); 
+    });
 
     window.onload = () => { 
         initChart(); 
