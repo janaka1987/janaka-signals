@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JANAKA SMC DASHBOARD V5 PRO</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightweight-charts/4.2.2/lightweight-charts.standalone.production.js"></script>
+    <!-- Lightweight Charts Library CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         :root {
             --bg-color: #05070a;
@@ -70,11 +71,28 @@
         input[type="range"] { flex: 1; accent-color: var(--green); cursor: pointer; }
         .slider-val { font-size: 10px; color: var(--green); min-width: 25px; font-weight: bold; }
 
-        #chart { 
+        #chart-container {
+            position: relative;
             height: 400px; 
+            width: 100%;
+        }
+
+        #chart { 
+            height: 100%; 
             width: 100%; 
             border-radius: 8px; 
             overflow: hidden; 
+        }
+
+        #loading-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--yellow);
+            font-weight: bold;
+            font-size: 14px;
+            pointer-events: none;
         }
 
         .info-row-container { display: flex; justify-content: space-around; gap: 10px; }
@@ -224,7 +242,10 @@
 </div>
 
 <div class="card" style="padding: 5px;">
-    <div id="chart"></div>
+    <div id="chart-container">
+        <div id="chart"></div>
+        <div id="loading-text">CONNECTING TO MARKET DATA...</div>
+    </div>
 </div>
 
 <div class="stats-grid">
@@ -316,7 +337,7 @@
 
 <script>
     const APP_ID = "1089";
-    let chart, candleSeries, obSeries, resLineSeries, supLineSeries, ws;
+    let chart, candleSeries, resLineSeries, supLineSeries, ws;
     let candles = [];
     let currentMarket = "R_100";
     let currentTimeframe = 60;
@@ -340,7 +361,7 @@
     function addToHistory(type, accuracy, price) {
         const now = new Date();
         const timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-        const expiryTime = Date.now() + (3 * 60 * 1000); // 3-Min Expiry
+        const expiryTime = Date.now() + (3 * 60 * 1000);
 
         const newSignal = {
             id: Date.now(),
@@ -391,90 +412,95 @@
         const totalDone = wins + losses;
         const wr = totalDone > 0 ? Math.round((wins / totalDone) * 100) : 0;
         document.getElementById('avgAcc').innerText = wr + "%";
-        
-        const wrDisplay = document.getElementById('winRateDisplay');
-        if (wrDisplay) wrDisplay.innerText = wr > 0 ? wr + "%" : "88%";
-    }
-
-    function updateSignalResults() {
-        if (signalHistory.length === 0) return;
-        const now = Date.now();
-
-        signalHistory.forEach(sig => {
-            if (sig.status === 'PENDING' && now >= sig.expiry && !sig.checked) {
-                sig.checked = true;
-                if (sig.rawMarket === currentMarket && candles.length > 0) {
-                    const currentPrice = candles[candles.length - 1].close;
-                    processResult(sig, currentPrice);
-                } else {
-                    if (ws && ws.readyState === WebSocket.OPEN) {
-                        ws.send(JSON.stringify({
-                            ticks_history: sig.rawMarket,
-                            end: "latest",
-                            count: 1,
-                            subscribe: 0,
-                            passthrough: { "signal_id": sig.id }
-                        }));
-                    }
-                }
-            }
-        });
-    }
-
-    function processResult(sig, currentPrice) {
-        if (sig.type === 'BUY') {
-            sig.status = currentPrice > sig.entryPrice ? 'WIN' : 'LOSS';
-        } else {
-            sig.status = currentPrice < sig.entryPrice ? 'WIN' : 'LOSS';
-        }
-        localStorage.setItem('janaka_signal_history', JSON.stringify(signalHistory));
-        renderHistory();
     }
 
     function initChart() {
-        chart = LightweightCharts.createChart(document.getElementById('chart'), {
+        if (typeof LightweightCharts === 'undefined') {
+            document.getElementById('loading-text').innerText = "ERROR: CHART LIBRARY FAILED TO LOAD. CHECK INTERNET CONNECTION.";
+            document.getElementById('loading-text').style.color = "var(--red)";
+            return false;
+        }
+
+        const container = document.getElementById('chart');
+        container.innerHTML = ''; // Clear container
+
+        chart = LightweightCharts.createChart(container, {
+            width: container.clientWidth,
+            height: 400,
             layout: { background: { color: '#0d1117' }, textColor: '#cbd5e1' },
             grid: { vertLines: { color: '#161b22' }, horzLines: { color: '#161b22' } },
             rightPriceScale: { borderColor: '#30363d' },
             timeScale: { borderColor: '#30363d', timeVisible: true }
         });
-        candleSeries = chart.addCandlestickSeries({ upColor: '#00ff88', downColor: '#ff4d4d', borderUpColor: '#00ff88', borderDownColor: '#ff4d4d', wickUpColor: '#00ff88', wickDownColor: '#ff4d4d' });
+
+        candleSeries = chart.addCandlestickSeries({ 
+            upColor: '#00ff88', downColor: '#ff4d4d', 
+            borderUpColor: '#00ff88', borderDownColor: '#ff4d4d', 
+            wickUpColor: '#00ff88', wickDownColor: '#ff4d4d' 
+        });
+
         resLineSeries = chart.addLineSeries({ color: '#ff4d4d', lineWidth: 1, priceLineVisible: false });
         supLineSeries = chart.addLineSeries({ color: '#00ff88', lineWidth: 1, priceLineVisible: false });
+
+        window.addEventListener('resize', () => {
+            if (chart) chart.applyOptions({ width: container.clientWidth });
+        });
+
+        return true;
     }
 
     function connect() {
-        if (ws) ws.close();
+        if (ws) {
+            ws.onclose = null;
+            ws.close();
+        }
+
+        document.getElementById('loading-text').style.display = 'block';
+        document.getElementById('loading-text').innerText = "CONNECTING TO MARKET DATA...";
+
+        // Primary Websocket Endpoint
         ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
+
         ws.onopen = () => {
-            candles = []; candleSeries.setData([]);
-            ws.send(JSON.stringify({ ticks_history: currentMarket, end: "latest", style: "candles", granularity: parseInt(currentTimeframe), count: 500, subscribe: 1 }));
+            candles = [];
+            if (candleSeries) candleSeries.setData([]);
+            ws.send(JSON.stringify({ 
+                ticks_history: currentMarket, 
+                end: "latest", 
+                style: "candles", 
+                granularity: parseInt(currentTimeframe), 
+                count: 500, 
+                subscribe: 1 
+            }));
         };
+
         ws.onmessage = (msg) => {
             const data = JSON.parse(msg.data);
-            
-            if (data.history && data.passthrough && data.passthrough.signal_id) {
-                const sig = signalHistory.find(s => s.id === data.passthrough.signal_id);
-                if (sig && sig.status === 'PENDING') {
-                    const lastPrice = data.history.prices[0];
-                    processResult(sig, lastPrice);
-                }
-                return;
-            }
 
             if (data.candles) {
+                document.getElementById('loading-text').style.display = 'none';
                 candles = data.candles.map(c => ({ time: c.epoch, open: c.open, high: c.high, low: c.low, close: c.close }));
-                candleSeries.setData(candles);
+                if (candleSeries) candleSeries.setData(candles);
                 analyzeSMC();
             }
+
             if (data.ohlc) {
+                document.getElementById('loading-text').style.display = 'none';
                 const o = data.ohlc;
                 const newCandle = { time: o.open_time, open: o.open, high: o.high, low: o.low, close: o.close };
-                if (candles.length > 0 && candles[candles.length - 1].time === newCandle.time) candles[candles.length - 1] = newCandle;
-                else candles.push(newCandle);
-                candleSeries.update(newCandle);
+                if (candles.length > 0 && candles[candles.length - 1].time === newCandle.time) {
+                    candles[candles.length - 1] = newCandle;
+                } else {
+                    candles.push(newCandle);
+                }
+                if (candleSeries) candleSeries.update(newCandle);
                 analyzeSMC();
             }
+        };
+
+        ws.onerror = (err) => {
+            document.getElementById('loading-text').innerText = "WEBSOCKET ERROR. CHECK NETWORK OR VPN.";
+            document.getElementById('loading-text').style.color = "var(--red)";
         };
     }
 
@@ -549,8 +575,8 @@
 
         const finalH = pivots.filter(p => p.type.includes('H')).pop();
         const finalL = pivots.filter(p => p.type.includes('L')).pop();
-        if (finalH) resLineSeries.setData([{time: candles[candles.length-50].time, value: finalH.price}, {time: candles[candles.length-1].time, value: finalH.price}]);
-        if (finalL) supLineSeries.setData([{time: candles[candles.length-50].time, value: finalL.price}, {time: candles[candles.length-1].time, value: finalL.price}]);
+        if (finalH && resLineSeries) resLineSeries.setData([{time: candles[candles.length-50].time, value: finalH.price}, {time: candles[candles.length-1].time, value: finalH.price}]);
+        if (finalL && supLineSeries) supLineSeries.setData([{time: candles[candles.length-50].time, value: finalL.price}, {time: candles[candles.length-1].time, value: finalL.price}]);
 
         const trendM5 = candles[candles.length-1].close > candles[candles.length-50].close ? 'UP' : 'DOWN';
         const trendM15 = candles[candles.length-1].close > candles[candles.length-100].close ? 'UP' : 'DOWN';
@@ -559,11 +585,7 @@
         const eq = (maxPrice + minPrice) / 2;
         const currentPrice = candles[candles.length-1].close;
 
-        // -------------------------------------------------------------
-        // STRATEGY LOGIC IMPLEMENTATION (CHECKING TREND DIRECTION)
-        // -------------------------------------------------------------
-
-        // KEY LEVEL (ROUND NUMBER)
+        // KEY LEVEL
         const decimals = currentMarket.startsWith("frx") ? 5 : 0;
         const roundLevel = Number(currentPrice.toFixed(decimals));
         let keyLevelActive = false;
@@ -573,7 +595,7 @@
             keyLevelActive = Math.abs(currentPrice - roundLevel) <= 0.20;
         }
 
-        // ONE COLOUR (Trend Direction Filtered)
+        // ONE COLOUR
         const oc0 = candles[candles.length - 4];
         const oc1 = candles[candles.length - 3];
         const oc2 = candles[candles.length - 2];
@@ -584,7 +606,7 @@
             oneColourActive = true;
         }
 
-        // ENGULFING (Trend Direction Filtered)
+        // ENGULFING
         let pattern = "NONE";
         const prev = candles[candles.length - 3];
         const last = candles[candles.length - 2];
@@ -598,7 +620,7 @@
             pattern = "BEARISH ENG.";
         }
 
-        // HIDDEN OPEN (Trend Direction Filtered)
+        // HIDDEN OPEN
         const h1 = candles[candles.length - 3];
         const h2 = candles[candles.length - 2];
         const h3 = candles[candles.length - 1];
@@ -610,7 +632,7 @@
             hiddenOpenActive = true;
         }
 
-        // FVG (Trend Direction Filtered)
+        // FVG
         const fv1 = candles[candles.length - 4];
         const fv2 = candles[candles.length - 3];
         const fv3 = candles[candles.length - 2];
@@ -622,10 +644,8 @@
             fvgActive = true;
         }
 
-        // TRENDLINE (Active when Trend is clear UP or DOWN)
         let trendlineActive = (currentTrend === "UP" || currentTrend === "DOWN");
 
-        // UI DISPLAY UPDATES FOR INDICATORS
         document.getElementById("keyLevel").innerHTML = keyLevelActive ? "🔵 ON" : "⚪ OFF";
         document.getElementById("oneColour").innerHTML = oneColourActive ? "🔵 ON" : "⚪ OFF";
         document.getElementById("engulfing").innerHTML = engulfingActive ? "🔵 ON" : "⚪ OFF";
@@ -635,25 +655,18 @@
         document.getElementById("chochSignal").innerHTML = chochActive ? "🔵 ON" : "⚪ OFF";
         document.getElementById("trendlineSignal").innerHTML = trendlineActive ? "🔵 ON" : "⚪ OFF";
 
-        // -------------------------------------------------------------
-        // STRICT SIGNAL VALIDATION RULES
-        // -------------------------------------------------------------
-        
-        // Group 1: 5 Main Indicators
         const primaryCount = (keyLevelActive ? 1 : 0) + 
                              (oneColourActive ? 1 : 0) + 
                              (hiddenOpenActive ? 1 : 0) + 
                              (fvgActive ? 1 : 0) + 
                              (engulfingActive ? 1 : 0);
 
-        // Group 2: 3 Secondary Indicators
         const secondaryCount = (bosActive ? 1 : 0) + 
                                (chochActive ? 1 : 0) + 
                                (trendlineActive ? 1 : 0);
 
         let finalDecElem = document.getElementById("finalDecision");
 
-        // Must have AT LEAST 1 from Primary AND AT LEAST 1 from Secondary AND Trend must NOT be Neutral
         if (primaryCount >= 1 && secondaryCount >= 1 && currentTrend !== "Neutral") {
             const totalActive = primaryCount + secondaryCount;
             let score = Math.min(100, Math.round((totalActive / 8) * 100));
@@ -671,7 +684,7 @@
 
         const zone = currentPrice > eq ? 'PREMIUM' : 'DISCOUNT';
         updateUI(currentTrend, trendM5, trendM15, zone, eq, minPrice, maxPrice, pattern);
-        candleSeries.setMarkers(markers);
+        if (candleSeries) candleSeries.setMarkers(markers);
     }
 
     function updateUI(t1, t5, t15, zone, eq, sup, res, pat) {
@@ -710,21 +723,17 @@
     });
 
     window.onload = () => { 
-        initChart(); 
-        checkAndResetHistory(); 
-        
-        const sM = localStorage.getItem('janaka_market');
-        const sT = localStorage.getItem('janaka_timeframe');
-        if (sM) { currentMarket = sM; document.getElementById('market').value = sM; }
-        if (sT) { currentTimeframe = sT; document.getElementById('timeframe').value = sT; }
-        
-        connect(); 
-        setInterval(updateSignalResults, 1000); 
+        if (initChart()) {
+            checkAndResetHistory(); 
+            
+            const sM = localStorage.getItem('janaka_market');
+            const sT = localStorage.getItem('janaka_timeframe');
+            if (sM) { currentMarket = sM; document.getElementById('market').value = sM; }
+            if (sT) { currentTimeframe = sT; document.getElementById('timeframe').value = sT; }
+            
+            connect(); 
+        }
     };
-
-    document.addEventListener('click', () => { 
-        if (window.speechSynthesis && window.speechSynthesis.speaking) return; 
-    });
 </script>
 </body>
 </html>
