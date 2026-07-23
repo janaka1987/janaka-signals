@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JANAKA SMC DASHBOARD V5 PRO</title>
-    <!-- TradingView Widget Script -->
+    <title>JANAKA SMC DASHBOARD V5 PRO - ADVANCED SMC</title>
+    <!-- TradingView Advanced Chart Library Script -->
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
         :root {
@@ -14,8 +14,6 @@
             --green: #00ff88;
             --red: #ff4d4d;
             --blue: #3b82f6;
-            --orange: #f39c12;
-            --purple: #a855f7;
             --yellow: #eab308;
             --text-main: #e6edf3;
         }
@@ -65,11 +63,11 @@
             font-size: 11px;
         }
 
-        /* Chart Area */
+        /* Chart Wrapper optimized for Mobile & Full Features */
         #chart-wrapper {
             position: relative;
             width: 100%;
-            height: 380px;
+            height: 480px;
             background: #0d1117;
             border-radius: 8px;
             border: 1px solid var(--border-color);
@@ -81,42 +79,43 @@
             height: 100%;
         }
 
-        /* Signal Analysis Section */
-        .signal-section {
-            margin-top: 10px;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 8px;
-        }
-
-        .technical-widget-container {
-            width: 100%;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-            background: var(--card-bg);
-        }
-
-        .info-box {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+        .info-card {
+            margin-top: 8px;
             padding: 10px;
+            border-radius: 8px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             color: var(--yellow);
+        }
+
+        .smc-tags {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 5px;
+        }
+
+        .tag {
+            background: #161b22;
+            padding: 3px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-size: 10px;
             font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-<div class="header-title">JANAKA SMC DASHBOARD V5 PRO</div>
+<div class="header-title">JANAKA SMC DASHBOARD - AUTOMATIC STRUCTURE</div>
 
 <div class="top-bar">
     <div class="card">
-        <label>SELECT MARKET</label>
-        <select id="market" onchange="updateDashboard()">
+        <label>MARKET</label>
+        <select id="market" onchange="loadAdvancedSMCChart()">
             <optgroup label="Forex Majors">
                 <option value="FX:EURUSD" selected>EUR/USD</option>
                 <option value="FX:GBPUSD">GBP/USD</option>
@@ -134,7 +133,7 @@
 
     <div class="card">
         <label>TIMEFRAME</label>
-        <select id="timeframe" onchange="updateDashboard()">
+        <select id="timeframe" onchange="loadAdvancedSMCChart()">
             <option value="1">1M (Scalping)</option>
             <option value="5" selected>5M (Intraday)</option>
             <option value="15">15M</option>
@@ -148,21 +147,23 @@
     <div id="tv_chart_container"></div>
 </div>
 
-<!-- Technical Signals Section -->
-<div class="signal-section">
-    <div class="info-box">
-        TECHNICAL ANALYSIS & SIGNALS
-    </div>
-    
-    <div class="technical-widget-container" id="technical_widget">
-        <!-- TradingView Technical Analysis Widget dynamic insert -->
+<div class="info-card">
+    <b>AUTO DETECTED SMC STRUCTURES:</b>
+    <div class="smc-tags">
+        <span class="tag" style="color:var(--green)">BOS (Break of Structure)</span>
+        <span class="tag" style="color:var(--yellow)">CHoCH (Change of Character)</span>
+        <span class="tag" style="color:var(--blue)">HH / HL / LH / LL</span>
+        <span class="tag" style="color:var(--red)">S/R & Order Blocks</span>
     </div>
 </div>
 
 <script>
-    function loadChart(symbol, timeframe) {
+    function loadAdvancedSMCChart() {
+        const symbol = document.getElementById('market').value;
+        const timeframe = document.getElementById('timeframe').value;
+
         document.getElementById('tv_chart_container').innerHTML = '';
-        
+
         new TradingView.widget({
             "autosize": true,
             "symbol": symbol,
@@ -173,53 +174,20 @@
             "locale": "en",
             "toolbar_bg": "#0d1117",
             "enable_publishing": false,
-            "hide_top_toolbar": false,
             "allow_symbol_change": false,
-            "container_id": "tv_chart_container"
+            "container_id": "tv_chart_container",
+            "hide_side_toolbar": false, /* Technical indicator access enabled */
+            "studies": [
+                /* Auto SMC Structure Identification Studies */
+                "STD;Pivot%1Points%1High%1Low", 
+                "STD;Zig_Zag"
+            ]
         });
-    }
-
-    function loadSignals(symbol, timeframe) {
-        const widgetContainer = document.getElementById('technical_widget');
-        widgetContainer.innerHTML = ''; 
-
-        // Timeframe mapping for TradingView Technical Analysis Widget
-        let tfMap = "5m";
-        if (timeframe === "1") tfMap = "1m";
-        if (timeframe === "5") tfMap = "5m";
-        if (timeframe === "15") tfMap = "15m";
-        if (timeframe === "60") tfMap = "1h";
-
-        const script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js';
-        script.async = true;
-        script.innerHTML = JSON.stringify({
-            "interval": tfMap,
-            "width": "100%",
-            "isTransparent": true,
-            "height": 380,
-            "symbol": symbol,
-            "showIntervalTabs": false,
-            "displayMode": "single",
-            "locale": "en",
-            "colorTheme": "dark"
-        });
-
-        widgetContainer.appendChild(script);
-    }
-
-    function updateDashboard() {
-        const symbol = document.getElementById('market').value;
-        const timeframe = document.getElementById('timeframe').value;
-
-        loadChart(symbol, timeframe);
-        loadSignals(symbol, timeframe);
     }
 
     // Initial Load
     window.onload = function() {
-        updateDashboard();
+        loadAdvancedSMCChart();
     };
 </script>
 </body>
