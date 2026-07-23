@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JANAKA SMC DASHBOARD V5 PRO - ADVANCED SMC</title>
-    <!-- TradingView Advanced Chart Library Script -->
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <title>JANAKA SMC AUTO LABELS DASHBOARD</title>
+    <!-- Lightweight Charts Script -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         :root {
             --bg-color: #05070a;
@@ -14,6 +14,8 @@
             --green: #00ff88;
             --red: #ff4d4d;
             --blue: #3b82f6;
+            --orange: #f39c12;
+            --purple: #a855f7;
             --yellow: #eab308;
             --text-main: #e6edf3;
         }
@@ -31,7 +33,7 @@
         .header-title {
             text-align: center;
             color: var(--green);
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             margin-bottom: 8px;
         }
@@ -63,131 +65,192 @@
             font-size: 11px;
         }
 
-        /* Chart Wrapper optimized for Mobile & Full Features */
-        #chart-wrapper {
-            position: relative;
+        #chart-container {
             width: 100%;
-            height: 480px;
+            height: 450px;
             background: #0d1117;
             border-radius: 8px;
             border: 1px solid var(--border-color);
-            overflow: hidden;
+            position: relative;
         }
 
-        #tv_chart_container {
-            width: 100%;
-            height: 100%;
-        }
-
-        .info-card {
-            margin-top: 8px;
-            padding: 10px;
-            border-radius: 8px;
+        .legend {
+            display: flex;
+            justify-content: space-around;
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            text-align: center;
-            font-size: 11px;
-            color: var(--yellow);
-        }
-
-        .smc-tags {
-            display: flex;
-            justify-content: center;
-            gap: 6px;
-            flex-wrap: wrap;
-            margin-top: 5px;
-        }
-
-        .tag {
-            background: #161b22;
-            padding: 3px 6px;
-            border-radius: 4px;
-            border: 1px solid var(--border-color);
+            padding: 8px;
+            border-radius: 8px;
+            margin-top: 8px;
             font-size: 10px;
             font-weight: bold;
         }
+
+        .leg-item { display: flex; align-items: center; gap: 4px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
     </style>
 </head>
 <body>
 
-<div class="header-title">JANAKA SMC DASHBOARD - AUTOMATIC STRUCTURE</div>
+<div class="header-title">SMC REAL-TIME AUTO LABELS CHART</div>
 
 <div class="top-bar">
     <div class="card">
-        <label>MARKET</label>
-        <select id="market" onchange="loadAdvancedSMCChart()">
-            <optgroup label="Forex Majors">
-                <option value="FX:EURUSD" selected>EUR/USD</option>
-                <option value="FX:GBPUSD">GBP/USD</option>
-                <option value="FX:USDJPY">USD/JPY</option>
-                <option value="FX:AUDUSD">AUD/USD</option>
-                <option value="FX:USDCAD">USD/CAD</option>
-            </optgroup>
-            <optgroup label="Commodities & Crypto">
-                <option value="OANDA:XAUUSD">Gold (XAU/USD)</option>
-                <option value="BINANCE:BTCUSDT">Bitcoin (BTC/USDT)</option>
-                <option value="BINANCE:ETHUSDT">Ethereum (ETH/USDT)</option>
-            </optgroup>
+        <label>SYMBOL</label>
+        <select id="market" onchange="fetchAndDrawChart()">
+            <option value="EURUSD" selected>EUR/USD</option>
+            <option value="GBPUSD">GBP/USD</option>
+            <option value="USDJPY">USD/JPY</option>
+            <option value="BTCUSDT">BTC/USDT</option>
         </select>
     </div>
 
     <div class="card">
         <label>TIMEFRAME</label>
-        <select id="timeframe" onchange="loadAdvancedSMCChart()">
-            <option value="1">1M (Scalping)</option>
-            <option value="5" selected>5M (Intraday)</option>
-            <option value="15">15M</option>
-            <option value="60">1H</option>
+        <select id="timeframe" onchange="fetchAndDrawChart()">
+            <option value="1m">1M</option>
+            <option value="5m" selected>5M</option>
+            <option value="15m">15M</option>
+            <option value="1h">1H</option>
         </select>
     </div>
 </div>
 
-<!-- Chart Container -->
-<div id="chart-wrapper">
-    <div id="tv_chart_container"></div>
-</div>
+<div id="chart-container"></div>
 
-<div class="info-card">
-    <b>AUTO DETECTED SMC STRUCTURES:</b>
-    <div class="smc-tags">
-        <span class="tag" style="color:var(--green)">BOS (Break of Structure)</span>
-        <span class="tag" style="color:var(--yellow)">CHoCH (Change of Character)</span>
-        <span class="tag" style="color:var(--blue)">HH / HL / LH / LL</span>
-        <span class="tag" style="color:var(--red)">S/R & Order Blocks</span>
-    </div>
+<div class="legend">
+    <div class="leg-item"><div class="dot" style="background:var(--green)"></div> HH (Higher High)</div>
+    <div class="leg-item"><div class="dot" style="background:var(--orange)"></div> HL (Higher Low)</div>
+    <div class="leg-item"><div class="dot" style="background:var(--red)"></div> LH (Lower High)</div>
+    <div class="leg-item"><div class="dot" style="background:var(--blue)"></div> LL (Lower Low)</div>
+    <div class="leg-item"><div class="dot" style="background:var(--yellow)"></div> BOS / CHoCH</div>
 </div>
 
 <script>
-    function loadAdvancedSMCChart() {
-        const symbol = document.getElementById('market').value;
-        const timeframe = document.getElementById('timeframe').value;
+    let chart, candleSeries;
 
-        document.getElementById('tv_chart_container').innerHTML = '';
+    function initChart() {
+        const container = document.getElementById('chart-container');
+        container.innerHTML = '';
 
-        new TradingView.widget({
-            "autosize": true,
-            "symbol": symbol,
-            "interval": timeframe,
-            "timezone": "Asia/Colombo",
-            "theme": "dark",
-            "style": "1",
-            "locale": "en",
-            "toolbar_bg": "#0d1117",
-            "enable_publishing": false,
-            "allow_symbol_change": false,
-            "container_id": "tv_chart_container",
-            "hide_side_toolbar": false, /* Technical indicator access enabled */
-            "studies": [
-                /* Auto SMC Structure Identification Studies */
-                "STD;Pivot%1Points%1High%1Low", 
-                "STD;Zig_Zag"
-            ]
+        chart = LightweightCharts.createChart(container, {
+            layout: {
+                backgroundColor: '#0d1117',
+                textColor: '#e6edf3',
+            },
+            grid: {
+                vertLines: { color: '#161b22' },
+                horzLines: { color: '#161b22' },
+            },
+            crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+            priceScale: { borderColor: '#30363d' },
+            timeScale: { borderColor: '#30363d', timeVisible: true },
+        });
+
+        candleSeries = chart.addCandlestickSeries({
+            upColor: '#00ff88',
+            downColor: '#ff4d4d',
+            borderVisible: false,
+            wickUpColor: '#00ff88',
+            wickDownColor: '#ff4d4d',
         });
     }
 
-    // Initial Load
+    async function fetchAndDrawChart() {
+        if(!chart) initChart();
+
+        const symbol = document.getElementById('market').value;
+        const timeframe = document.getElementById('timeframe').value;
+
+        // Fetching Public Binance Data for accurate calculation & zero blocking
+        const binanceSymbol = symbol.includes("USD") && !symbol.includes("USDT") ? symbol + "T" : symbol;
+        const url = `https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${timeframe}&limit=120`;
+
+        try {
+            const res = await fetch(url);
+            const rawData = await res.json();
+            
+            let candles = rawData.map(d => ({
+                time: d[0] / 1000,
+                open: parseFloat(d[1]),
+                high: parseFloat(d[2]),
+                low: parseFloat(d[3]),
+                close: parseFloat(d[4])
+            }));
+
+            candleSeries.setData(candles);
+            
+            // Calculate and Overlay SMC Structure Labels (HH, HL, LH, LL, BOS, CHoCH)
+            applySMCLabels(candles);
+
+        } catch (e) {
+            console.error("Data Fetch Error:", e);
+        }
+    }
+
+    function applySMCLabels(candles) {
+        let markers = [];
+        let lastHigh = -Infinity;
+        let lastLow = Infinity;
+        let currentTrend = 0; // 1: Bullish, -1: Bearish
+
+        // Pivot detection logic for Swing Structure
+        for (let i = 5; i < candles.length - 5; i++) {
+            let isHigh = true;
+            let isLow = true;
+
+            for (let j = 1; j <= 4; j++) {
+                if (candles[i].high <= candles[i - j].high || candles[i].high <= candles[i + j].high) isHigh = false;
+                if (candles[i].low >= candles[i - j].low || candles[i].low >= candles[i + j].low) isLow = false;
+            }
+
+            // High Structure Logic (HH vs LH)
+            if (isHigh) {
+                let textLabel = "LH";
+                let color = "#ff4d4d"; // Red for LH
+                if (candles[i].high > lastHigh) {
+                    textLabel = "HH";
+                    color = "#00ff88"; // Green for HH
+                    
+                    // Check CHoCH or BOS
+                    if (currentTrend === -1) {
+                        markers.push({ time: candles[i].time, position: 'aboveBar', color: '#eab308', shape: 'arrowDown', text: 'CHoCH' });
+                        currentTrend = 1;
+                    } else if (currentTrend === 1) {
+                        markers.push({ time: candles[i].time, position: 'aboveBar', color: '#a855f7', shape: 'arrowDown', text: 'BOS' });
+                    }
+                }
+                lastHigh = candles[i].high;
+                markers.push({ time: candles[i].time, position: 'aboveBar', color: color, shape: 'circle', text: textLabel });
+            }
+
+            // Low Structure Logic (HL vs LL)
+            if (isLow) {
+                let textLabel = "HL";
+                let color = "#f39c12"; // Orange for HL
+                if (candles[i].low < lastLow) {
+                    textLabel = "LL";
+                    color = "#3b82f6"; // Blue for LL
+
+                    // Check CHoCH or BOS
+                    if (currentTrend === 1) {
+                        markers.push({ time: candles[i].time, position: 'belowBar', color: '#eab308', shape: 'arrowUp', text: 'CHoCH' });
+                        currentTrend = -1;
+                    } else if (currentTrend === -1) {
+                        markers.push({ time: candles[i].time, position: 'belowBar', color: '#a855f7', shape: 'arrowUp', text: 'BOS' });
+                    }
+                }
+                lastLow = candles[i].low;
+                markers.push({ time: candles[i].time, position: 'belowBar', color: color, shape: 'circle', text: textLabel });
+            }
+        }
+
+        candleSeries.setMarkers(markers);
+    }
+
     window.onload = function() {
-        loadAdvancedSMCChart();
+        initChart();
+        fetchAndDrawChart();
     };
 </script>
 </body>
