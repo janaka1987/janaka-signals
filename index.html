@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JANAKA SMC DASHBOARD - AUTO SYMBOLS</title>
+<title>SMC DASHBOARD - FIXED SYMBOLS</title>
 
 <!-- Lightweight Charts CDN -->
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
@@ -21,7 +21,7 @@ h1 {
   text-align: center;
   color: #00ff88;
   margin-top: 0;
-  font-size: 22px;
+  font-size: 20px;
 }
 
 .card {
@@ -72,12 +72,18 @@ select {
 
 <body>
 
-<h1>JANAKA SMC DASHBOARD (AUTO-FETCH)</h1>
+<h1>JANAKA SMC DASHBOARD</h1>
 
 <div class="card">
-  <label for="market"><b>Select Active Market:</b></label><br><br>
+  <label for="market"><b>Select Market:</b></label><br><br>
   <select id="market">
-    <option value="">Fetching active symbols from Deriv...</option>
+    <option value="1HZ100V" selected>Volatility 100 (1s) Index</option>
+    <option value="R_100">Volatility 100 Index</option>
+    <option value="1HZ75V">Volatility 75 (1s) Index</option>
+    <option value="R_75">Volatility 75 Index</option>
+    <option value="1HZ50V">Volatility 50 (1s) Index</option>
+    <option value="R_50">Volatility 50 Index</option>
+    <option value="frxEURUSD">EUR / USD</option>
   </select>
 </div>
 
@@ -124,13 +130,11 @@ let ws = null;
 let chart = null;
 let candleSeries = null;
 let candles = [];
-let activeSymbolsList = [];
-let currentSymbol = "";
 const PIVOT = 2;
 
 function initChart() {
   if (typeof LightweightCharts === 'undefined') {
-    log("ERROR: LightweightCharts library failed to load!", true);
+    log("ERROR: LightweightCharts CDN blocked! Check internet connection.", true);
     statusEl.innerText = "CDN Error 🔴";
     return false;
   }
@@ -156,20 +160,31 @@ function initChart() {
   }
 }
 
-function connectWebSocket() {
+function connect() {
+  const symbol = marketSelect.value;
+  
+  if (ws) {
+    ws.close();
+    ws = null;
+  }
+
   statusEl.innerText = "Connecting... 🟡";
-  log("Connecting to Deriv WebSocket...");
+  log(`Connecting WebSocket for ${symbol}...`);
 
   ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
 
   ws.onopen = () => {
     statusEl.innerText = "Connected 🟢";
-    log("WebSocket Connected. Requesting Active Symbols list...");
-    
-    // Step 1: Get all active symbols live from Deriv
+    log(`WebSocket Connected. Fetching candles for ${symbol}...`);
+
     ws.send(JSON.stringify({
-      active_symbols: "brief",
-      product_type: "basic"
+      ticks_history: symbol,
+      adjust_start_time: 1,
+      count: 150,
+      end: "latest",
+      style: "candles",
+      granularity: 60,
+      subscribe: 1
     }));
   };
 
@@ -183,15 +198,7 @@ function connectWebSocket() {
         return;
       }
 
-      // Handle Active Symbols list from Deriv
-      if (data.msg_type === "active_symbols") {
-        activeSymbolsList = data.active_symbols;
-        log(`Fetched ${activeSymbolsList.length} active symbols dynamically!`);
-        populateSymbolDropdown();
-        return;
-      }
-
-      // History candles payload
+      // Candle History
       if (data.msg_type === "candles") {
         candles = data.candles.map(c => ({
           time: Number(c.epoch),
@@ -203,12 +210,12 @@ function connectWebSocket() {
 
         candleSeries.setData(candles);
         chart.timeScale().fitContent();
-        infoTextEl.innerText = `Loaded ${candles.length} candles for ${currentSymbol}`;
-        log(`Loaded ${candles.length} candles successfully.`);
+        infoTextEl.innerText = `Loaded ${candles.length} candles for ${symbol}`;
+        log(`Successfully loaded ${candles.length} candles!`);
         calculateSMC();
       }
 
-      // Live tick candle update
+      // Live Update
       if (data.msg_type === "ohlc") {
         const c = data.ohlc;
         const newCandle = {
@@ -236,7 +243,7 @@ function connectWebSocket() {
     }
   };
 
-  ws.onerror = (e) => {
+  ws.onerror = () => {
     statusEl.innerText = "WS Error 🔴";
     log("WebSocket Connection Error!", true);
   };
@@ -244,66 +251,6 @@ function connectWebSocket() {
   ws.onclose = () => {
     statusEl.innerText = "Disconnected 🔴";
   };
-}
-
-function populateSymbolDropdown() {
-  marketSelect.innerHTML = "";
-
-  // Filter & sort symbols (Prioritize Synthetic Indices)
-  const synthetics = activeSymbolsList.filter(s => s.market === "synthetic_index");
-  const forex = activeSymbolsList.filter(s => s.market === "forex");
-
-  const addGroup = (title, items) => {
-    if (items.length === 0) return;
-    const group = document.createElement("optgroup");
-    group.label = title;
-    items.forEach(s => {
-      const opt = document.createElement("option");
-      opt.value = s.symbol;
-      opt.textContent = `${s.display_name} (${s.symbol})`;
-      group.appendChild(opt);
-    });
-    marketSelect.appendChild(group);
-  };
-
-  addGroup("Synthetic Indices", synthetics);
-  addGroup("Forex Pairs", forex);
-
-  // Auto-select first symbol and load candles
-  if (marketSelect.options.length > 0) {
-    currentSymbol = marketSelect.options[0].value;
-    marketSelect.value = currentSymbol;
-    log(`Selected active market: ${currentSymbol}`);
-    requestCandles(currentSymbol);
-  }
-}
-
-marketSelect.addEventListener("change", () => {
-  currentSymbol = marketSelect.value;
-  if (currentSymbol) {
-    log(`Changing market to: ${currentSymbol}...`);
-    requestCandles(currentSymbol);
-  }
-});
-
-function requestCandles(symbol) {
-  if (!ws || ws.readyState !== WebSocket.OPEN) return;
-
-  log(`Requesting candles for ${symbol}...`);
-  
-  // Clear existing candle data on chart
-  candles = [];
-  candleSeries.setData([]);
-
-  ws.send(JSON.stringify({
-    ticks_history: symbol,
-    adjust_start_time: 1,
-    count: 150,
-    end: "latest",
-    style: "candles",
-    granularity: 60,
-    subscribe: 1
-  }));
 }
 
 function calculateSMC() {
@@ -342,9 +289,10 @@ function calculateSMC() {
   document.getElementById("trend").innerText = trend;
 }
 
-// Start
+marketSelect.addEventListener("change", connect);
+
 if (initChart()) {
-  connectWebSocket();
+  connect();
 }
 </script>
 
