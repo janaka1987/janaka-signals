@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JANAKA SMC DASHBOARD V3</title>
+<title>JANAKA SMC DASHBOARD - AUTO SYMBOLS</title>
 
 <!-- Lightweight Charts CDN -->
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
@@ -21,6 +21,7 @@ h1 {
   text-align: center;
   color: #00ff88;
   margin-top: 0;
+  font-size: 22px;
 }
 
 .card {
@@ -33,8 +34,8 @@ h1 {
 
 select {
   width: 100%;
-  padding: 10px;
-  font-size: 16px;
+  padding: 12px;
+  font-size: 15px;
   border-radius: 8px;
   background: #0f172a;
   color: white;
@@ -51,7 +52,7 @@ select {
 
 .status-badge {
   font-weight: bold;
-  padding: 3px 8px;
+  padding: 4px 8px;
   border-radius: 4px;
   background: #334155;
 }
@@ -71,23 +72,17 @@ select {
 
 <body>
 
-<h1>JANAKA SMC DASHBOARD V3</h1>
+<h1>JANAKA SMC DASHBOARD (AUTO-FETCH)</h1>
 
 <div class="card">
-  <label for="market"><b>Select Market:</b></label><br><br>
+  <label for="market"><b>Select Active Market:</b></label><br><br>
   <select id="market">
-    <option value="R_100" selected>Volatility 100</option>
-    <option value="R_75">Volatility 75</option>
-    <option value="R_50">Volatility 50</option>
-    <option value="R_25">Volatility 25</option>
-    <option value="R_10">Volatility 10</option>
-    <option value="frxEURUSD">EUR/USD</option>
-    <option value="frxGBPUSD">GBP/USD</option>
+    <option value="">Fetching active symbols from Deriv...</option>
   </select>
 </div>
 
 <div class="card">
-  <div>Status: <span id="status" class="status-badge">Initializing...</span></div>
+  <div>Status: <span id="status" class="status-badge">Connecting...</span></div>
   <div style="margin-top:8px; font-size:14px; color:#94a3b8;" id="infoText">Starting system...</div>
 </div>
 
@@ -129,6 +124,8 @@ let ws = null;
 let chart = null;
 let candleSeries = null;
 let candles = [];
+let activeSymbolsList = [];
+let currentSymbol = "";
 const PIVOT = 2;
 
 function initChart() {
@@ -159,23 +156,21 @@ function initChart() {
   }
 }
 
-function connect() {
-  const symbol = marketSelect.value;
-  
-  if (ws) {
-    ws.close();
-    ws = null;
-  }
-
+function connectWebSocket() {
   statusEl.innerText = "Connecting... 🟡";
-  log(`Connecting WebSocket for ${symbol}...`);
+  log("Connecting to Deriv WebSocket...");
 
   ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
 
   ws.onopen = () => {
     statusEl.innerText = "Connected 🟢";
-    log("WebSocket Connected. Requesting Candle Data...");
-    requestCandles(symbol);
+    log("WebSocket Connected. Requesting Active Symbols list...");
+    
+    // Step 1: Get all active symbols live from Deriv
+    ws.send(JSON.stringify({
+      active_symbols: "brief",
+      product_type: "basic"
+    }));
   };
 
   ws.onmessage = (evt) => {
@@ -185,6 +180,14 @@ function connect() {
       if (data.error) {
         statusEl.innerText = "Error 🔴";
         log(`API ERROR: ${data.error.message}`, true);
+        return;
+      }
+
+      // Handle Active Symbols list from Deriv
+      if (data.msg_type === "active_symbols") {
+        activeSymbolsList = data.active_symbols;
+        log(`Fetched ${activeSymbolsList.length} active symbols dynamically!`);
+        populateSymbolDropdown();
         return;
       }
 
@@ -200,8 +203,8 @@ function connect() {
 
         candleSeries.setData(candles);
         chart.timeScale().fitContent();
-        infoTextEl.innerText = `Loaded ${candles.length} candles for ${symbol}`;
-        log(`Successfully loaded ${candles.length} candles!`);
+        infoTextEl.innerText = `Loaded ${candles.length} candles for ${currentSymbol}`;
+        log(`Loaded ${candles.length} candles successfully.`);
         calculateSMC();
       }
 
@@ -243,8 +246,55 @@ function connect() {
   };
 }
 
-// Correct API Request (Fixed 'start: 1' bug)
+function populateSymbolDropdown() {
+  marketSelect.innerHTML = "";
+
+  // Filter & sort symbols (Prioritize Synthetic Indices)
+  const synthetics = activeSymbolsList.filter(s => s.market === "synthetic_index");
+  const forex = activeSymbolsList.filter(s => s.market === "forex");
+
+  const addGroup = (title, items) => {
+    if (items.length === 0) return;
+    const group = document.createElement("optgroup");
+    group.label = title;
+    items.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s.symbol;
+      opt.textContent = `${s.display_name} (${s.symbol})`;
+      group.appendChild(opt);
+    });
+    marketSelect.appendChild(group);
+  };
+
+  addGroup("Synthetic Indices", synthetics);
+  addGroup("Forex Pairs", forex);
+
+  // Auto-select first symbol and load candles
+  if (marketSelect.options.length > 0) {
+    currentSymbol = marketSelect.options[0].value;
+    marketSelect.value = currentSymbol;
+    log(`Selected active market: ${currentSymbol}`);
+    requestCandles(currentSymbol);
+  }
+}
+
+marketSelect.addEventListener("change", () => {
+  currentSymbol = marketSelect.value;
+  if (currentSymbol) {
+    log(`Changing market to: ${currentSymbol}...`);
+    requestCandles(currentSymbol);
+  }
+});
+
 function requestCandles(symbol) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+  log(`Requesting candles for ${symbol}...`);
+  
+  // Clear existing candle data on chart
+  candles = [];
+  candleSeries.setData([]);
+
   ws.send(JSON.stringify({
     ticks_history: symbol,
     adjust_start_time: 1,
@@ -292,10 +342,9 @@ function calculateSMC() {
   document.getElementById("trend").innerText = trend;
 }
 
-marketSelect.addEventListener("change", connect);
-
+// Start
 if (initChart()) {
-  connect();
+  connectWebSocket();
 }
 </script>
 
