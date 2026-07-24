@@ -345,6 +345,10 @@ ws.send(JSON.stringify({
   ws.onmessage = (event) => {
     console.log(JSON.parse(event.data));
     const data = JSON.parse(event.data);
+    if (data.msg_type === "active_symbols") {
+    alert(JSON.stringify(data.active_symbols.slice(0, 10), null, 2));
+    return;
+}
 if (data.msg_type === "tick") {
 
     const price = Number(data.tick.quote);
