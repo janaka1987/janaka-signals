@@ -324,7 +324,9 @@ function connect(){
 
   ws.onopen = () => {
     statusEl.innerText = "Connected 🟢";
-
+ws.send(JSON.stringify({
+    active_symbols: "brief"
+}));
     ws.send(JSON.stringify({
       ticks_history: "R_50",
       end: "latest",
