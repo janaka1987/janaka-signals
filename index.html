@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JANAKA SMC DASHBOARD V3</title>
 
-<!-- Reliable CDN for Lightweight Charts -->
+<!-- Lightweight Charts CDN -->
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 
 <style>
@@ -39,6 +39,7 @@ select {
   background: #0f172a;
   color: white;
   border: 1px solid #334155;
+  box-sizing: border-box;
 }
 
 #chart {
@@ -57,7 +58,7 @@ select {
 
 #debug-log {
   background: #000;
-  color: #ff5555;
+  color: #00ff88;
   font-family: monospace;
   padding: 10px;
   border-radius: 6px;
@@ -132,7 +133,7 @@ const PIVOT = 2;
 
 function initChart() {
   if (typeof LightweightCharts === 'undefined') {
-    log("ERROR: LightweightCharts library failed to load! Check internet/CDN.", true);
+    log("ERROR: LightweightCharts library failed to load!", true);
     statusEl.innerText = "CDN Error 🔴";
     return false;
   }
@@ -169,23 +170,12 @@ function connect() {
   statusEl.innerText = "Connecting... 🟡";
   log(`Connecting WebSocket for ${symbol}...`);
 
-  // Direct public Deriv WebSocket URL
   ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
 
   ws.onopen = () => {
     statusEl.innerText = "Connected 🟢";
     log("WebSocket Connected. Requesting Candle Data...");
-
-    ws.send(JSON.stringify({
-      ticks_history: symbol,
-      adjust_start_time: 1,
-      count: 150,
-      end: "latest",
-      start: 1,
-      style: "candles",
-      granularity: 60,
-      subscribe: 1
-    }));
+    requestCandles(symbol);
   };
 
   ws.onmessage = (evt) => {
@@ -193,12 +183,12 @@ function connect() {
       const data = JSON.parse(evt.data);
 
       if (data.error) {
-        statusEl.innerText = "Deriv Error 🔴";
+        statusEl.innerText = "Error 🔴";
         log(`API ERROR: ${data.error.message}`, true);
         return;
       }
 
-      // History candles
+      // History candles payload
       if (data.msg_type === "candles") {
         candles = data.candles.map(c => ({
           time: Number(c.epoch),
@@ -211,7 +201,7 @@ function connect() {
         candleSeries.setData(candles);
         chart.timeScale().fitContent();
         infoTextEl.innerText = `Loaded ${candles.length} candles for ${symbol}`;
-        log(`Loaded ${candles.length} candles.`);
+        log(`Successfully loaded ${candles.length} candles!`);
         calculateSMC();
       }
 
@@ -250,8 +240,20 @@ function connect() {
 
   ws.onclose = () => {
     statusEl.innerText = "Disconnected 🔴";
-    log("WebSocket Disconnected.");
   };
+}
+
+// Correct API Request (Fixed 'start: 1' bug)
+function requestCandles(symbol) {
+  ws.send(JSON.stringify({
+    ticks_history: symbol,
+    adjust_start_time: 1,
+    count: 150,
+    end: "latest",
+    style: "candles",
+    granularity: 60,
+    subscribe: 1
+  }));
 }
 
 function calculateSMC() {
@@ -292,7 +294,6 @@ function calculateSMC() {
 
 marketSelect.addEventListener("change", connect);
 
-// Start System
 if (initChart()) {
   connect();
 }
