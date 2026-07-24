@@ -1,565 +1,453 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SMC Real-Time Trading Dashboard</title>
-  
-  <!-- TradingView Lightweight Charts CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JANAKA SMC DASHBOARD V5.1 PRO</title>
+    <!-- පරණ link එක වැඩ නොකළොත් කියා නවතම stable link එකක් එක් කර ඇත -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        :root {
+            --bg-color: #05070a;
+            --card-bg: #0d1117;
+            --border-color: #21262d;
+            --green: #00ff88;
+            --red: #ff4d4d;
+            --blue: #3b82f6;
+            --orange: #f39c12;
+            --purple: #a855f7;
+            --yellow: #eab308;
+            --text-main: #e6edf3;
+        }
 
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+        body { 
+            background: var(--bg-color); 
+            color: var(--text-main); 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            padding: 10px; 
+            overflow-x: hidden;
+        }
 
-    body {
-      background-color: #0b1220;
-      color: #ffffff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      padding: 20px;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
+        .header-title {
+            text-align: center;
+            color: var(--green);
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+        }
 
-    header {
-      text-align: center;
-      padding: 10px 0;
-    }
+        .top-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 10px;
+        }
 
-    header h1 {
-      font-size: 24px;
-      font-weight: 700;
-      color: #00ff88;
-      letter-spacing: 0.5px;
-    }
+        .card { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border-color); 
+            border-radius: 10px; 
+            padding: 12px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
 
-    header p {
-      font-size: 13px;
-      color: #94a3b8;
-      margin-top: 4px;
-    }
+        label { font-size: 10px; color: #848d97; font-weight: bold; margin-bottom: 5px; display: block; }
+        
+        select { 
+            width: 100%; 
+            padding: 8px; 
+            border-radius: 5px; 
+            background: #161b22; 
+            color: var(--green); 
+            border: 1px solid #30363d; 
+            font-weight: bold;
+            outline: none;
+            font-size: 12px;
+            cursor: pointer;
+        }
 
-    .card {
-      background-color: #111c2e;
-      border: 1px solid #1f3b5b;
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-    }
+        .slider-row { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
+        input[type="range"] { flex: 1; accent-color: var(--green); cursor: pointer; }
+        .slider-val { font-size: 10px; color: var(--green); min-width: 25px; font-weight: bold; }
 
-    /* Market Selector Layout */
-    .controls-grid {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
+        #chart-container { 
+            height: 450px; 
+            width: 100%; 
+            border-radius: 8px; 
+            overflow: hidden; 
+            position: relative;
+            background: #0d1117;
+        }
 
-    .select-group {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex: 1;
-      min-width: 280px;
-    }
+        #chart { width: 100%; height: 100%; }
 
-    label {
-      font-size: 14px;
-      font-weight: 600;
-      color: #94a3b8;
-      white-space: nowrap;
-    }
+        .info-row-container { display: flex; justify-content: space-around; gap: 10px; }
+        .info-row { font-size: 11px; font-weight: bold; }
+        .val-g { color: var(--green); }
+        .val-r { color: var(--red); }
+        .val-y { color: var(--yellow); }
 
-    select {
-      width: 100%;
-      padding: 10px 14px;
-      font-size: 15px;
-      font-weight: 600;
-      border-radius: 8px;
-      background-color: #0f172a;
-      color: #ffffff;
-      border: 1px solid #1f3b5b;
-      outline: none;
-      cursor: pointer;
-      transition: border-color 0.2s ease;
-    }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
 
-    select:focus {
-      border-color: #38bdf8;
-    }
+        .stat-box { 
+            background: var(--card-bg); 
+            padding: 10px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
 
-    .connection-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      background-color: #0f172a;
-      border: 1px solid #1f3b5b;
-    }
+        .stat-box span { display: block; font-size: 9px; color: #848d97; text-transform: uppercase; margin-bottom: 3px; }
+        .stat-box b { font-size: 13px; }
 
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background-color: #e2e8f0;
-    }
+        .signal-box {
+            grid-column: span 4;
+            background: linear-gradient(145deg, #161b22, #0d1117);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid var(--border-color);
+            margin-top: 5px;
+            position: relative;
+        }
 
-    .status-dot.connected { background-color: #00ff88; box-shadow: 0 0 8px #00ff88; }
-    .status-dot.connecting { background-color: #ffaa00; box-shadow: 0 0 8px #ffaa00; }
-    .status-dot.disconnected { background-color: #ff4d4d; box-shadow: 0 0 8px #ff4d4d; }
+        #signalText { font-size: 22px; font-weight: bold; letter-spacing: 2px; display: block; }
+        #accuracyText { 
+            font-size: 14px; 
+            margin-top: 5px; 
+            display: inline-block; 
+            padding: 3px 10px; 
+            border-radius: 20px;
+            background: rgba(255,255,255,0.05);
+        }
 
-    /* KPI Grid */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
-    }
+        .win-rate-tag { position: absolute; top: 10px; right: 15px; font-size: 10px; color: var(--blue); font-weight: bold; }
 
-    .kpi-card {
-      background-color: #0f172a;
-      border: 1px solid #1f3b5b;
-      border-radius: 8px;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
+        .accuracy-bar-bg { height: 4px; background: #30363d; border-radius: 2px; margin-top: 8px; width: 60%; margin-left: 20%; }
+        #accuracyFill { height: 100%; width: 0%; background: var(--green); border-radius: 2px; transition: width 0.5s; }
 
-    .kpi-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
+        .legend-horizontal { display: flex; gap: 8px; font-size: 9px; justify-content: center; margin-top: 5px; flex-wrap: wrap; }
+        .dot { height: 7px; width: 7px; border-radius: 50%; display: inline-block; margin-right: 3px; }
+        
+        /* Toggle Switch */
+        .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider-toggle { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #30363d; transition: .4s; border-radius: 18px; }
+        .slider-toggle:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider-toggle { background-color: var(--green); }
+        input:checked + .slider-toggle:before { transform: translateX(16px); }
 
-    .kpi-value {
-      font-size: 18px;
-      font-weight: 700;
-      color: #ffffff;
-    }
-
-    .val-bullish { color: #00ff88; }
-    .val-bearish { color: #ff4d4d; }
-    .val-accent  { color: #38bdf8; }
-    .val-neutral { color: #94a3b8; }
-
-    /* Chart Container */
-    #chart-container {
-      height: 500px;
-      width: 100%;
-      position: relative;
-      background-color: #0f172a;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    /* System Log Box */
-    .log-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-
-    .log-header h3 {
-      font-size: 13px;
-      font-weight: 600;
-      color: #94a3b8;
-      text-transform: uppercase;
-    }
-
-    #debug-log {
-      background-color: #000000;
-      color: #00ff88;
-      font-family: "Courier New", Courier, monospace;
-      padding: 10px 12px;
-      border-radius: 6px;
-      height: 120px;
-      overflow-y: auto;
-      font-size: 12px;
-      line-height: 1.5;
-      border: 1px solid #1f3b5b;
-    }
-
-    .log-entry {
-      margin-bottom: 2px;
-    }
-
-    .log-err {
-      color: #ff4d4d;
-    }
-
-    .log-info {
-      color: #38bdf8;
-    }
-
-    /* Scrollbar Styling */
-    #debug-log::-webkit-scrollbar {
-      width: 6px;
-    }
-    #debug-log::-webkit-scrollbar-track {
-      background: #0b1220;
-    }
-    #debug-log::-webkit-scrollbar-thumb {
-      background: #1f3b5b;
-      border-radius: 3px;
-    }
-  </style>
+        .history-card { margin-top: 15px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; }
+        .history-list { max-height: 250px; overflow-y: auto; font-size: 11px; }
+        .history-item { display: grid; grid-template-columns: 0.8fr 1.2fr 1fr 1.2fr 1.2fr 0.8fr; padding: 10px 5px; border-bottom: 1px solid #161b22; align-items: center; text-align: center; }
+        
+        .hist-buy { color: var(--green); font-weight: bold; }
+        .hist-sell { color: var(--red); font-weight: bold; }
+        .hist-win { color: var(--green); font-weight: bold; background: rgba(0, 255, 136, 0.1); padding: 2px 5px; border-radius: 3px; }
+        .hist-loss { color: var(--red); font-weight: bold; background: rgba(255, 77, 77, 0.1); padding: 2px 5px; border-radius: 3px; }
+    </style>
 </head>
 <body>
 
-  <header>
-    <h1>SMC REAL-TIME TRADING DASHBOARD</h1>
-    <p>Deriv WebSocket Market Structure & Trend Engine</p>
-  </header>
+<div class="header-title">JANAKA SMC DASHBOARD V5.1 PRO</div>
 
-  <!-- Market Selector Card -->
-  <div class="card">
-    <div class="controls-grid">
-      <div class="select-group">
-        <label for="market-select">Select Asset:</label>
-        <select id="market-select">
-          <option value="1HZ100V" selected>Volatility 100 (1s) Index</option>
-          <option value="R_100">Volatility 100 Index</option>
-          <option value="1HZ75V">Volatility 75 (1s) Index</option>
-          <option value="R_75">Volatility 75 Index</option>
-          <option value="frxEURUSD">EUR / USD</option>
-        </select>
-      </div>
+<div class="top-bar">
+    <div class="card">
+        <label>SETTINGS</label>
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+            <select id="market">
+                <optgroup label="Volatility Indices">
+                    <option value="R_10">Volatility 10</option>
+                    <option value="R_25">Volatility 25</option>
+                    <option value="R_50">Volatility 50</option>
+                    <option value="R_75">Volatility 75</option>
+                    <option value="R_100" selected>Volatility 100</option>
+                    <option value="1HZ10V">Volatility 10 (1s)</option>
+                    <option value="1HZ100V">Volatility 100 (1s)</option>
+                </optgroup>
+                <optgroup label="Forex Major">
+                    <option value="frxEURUSD">EUR/USD</option>
+                    <option value="frxGBPUSD">GBP/USD</option>
+                    <option value="frxUSDJPY">USD/JPY</option>
+                </optgroup>
+            </select>
+            <select id="timeframe">
+                <option value="60">1M (Scalping)</option>
+                <option value="300">5M (Intraday)</option>
+            </select>
+        </div>
+    </div>
 
-      <div class="connection-badge">
-        <span id="status-dot" class="status-dot connecting"></span>
-        <span id="status-text">Connecting...</span>
-      </div>
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label>ALARM</label>
+            <label class="switch">
+                <input type="checkbox" id="alarmToggle" checked>
+                <span class="slider-toggle"></span>
+            </label>
+        </div>
+        <div style="margin-top: 8px;">
+            <label>MIN ACCURACY (%)</label>
+            <div class="slider-row">
+                <input type="range" id="accThreshold" min="30" max="95" value="65">
+                <span class="slider-val" id="accVal">65%</span>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <!-- Live Status Indicators (SMC KPIs) -->
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <span class="kpi-label">Market Trend</span>
-      <span id="kpi-trend" class="kpi-value val-neutral">CALCULATING</span>
+    <div class="card">
+        <label>SMC STATUS</label>
+        <div class="info-row-container">
+            <div class="info-row">M1: <span id="trendM1" class="val-g">--</span></div>
+            <div class="info-row">M5: <span id="trendM5" class="val-g">--</span></div>
+            <div class="info-row">Zone: <span id="pZone" class="val-y">--</span></div>
+        </div>
+        <div class="legend-horizontal">
+            <div><span class="dot" style="background:var(--blue)"></span> BOS</div>
+            <div><span class="dot" style="background:var(--purple)"></span> CHoCH</div>
+            <div><span class="dot" style="background:var(--yellow)"></span> OB</div>
+        </div>
     </div>
-    <div class="kpi-card">
-      <span class="kpi-label">Break of Structure (BOS)</span>
-      <span id="kpi-bos" class="kpi-value val-neutral">NONE</span>
-    </div>
-    <div class="kpi-card">
-      <span class="kpi-label">Change of Character (CHOCH)</span>
-      <span id="kpi-choch" class="kpi-value val-neutral">NONE</span>
-    </div>
-    <div class="kpi-card">
-      <span class="kpi-label">Last Pivot Points</span>
-      <span id="kpi-pivots" class="kpi-value val-accent">H: -- | L: --</span>
-    </div>
-  </div>
+</div>
 
-  <!-- Main Chart Card -->
-  <div class="card">
-    <div id="chart-container"></div>
-  </div>
-
-  <!-- System Debug Log Card -->
-  <div class="card">
-    <div class="log-header">
-      <h3>System Console & WebSocket Errors</h3>
+<div class="card" style="padding: 5px;">
+    <div id="chart-container">
+        <div id="chart"></div>
     </div>
-    <div id="debug-log">Log initialized...</div>
-  </div>
+</div>
 
-  <script>
-    // System State Variables
-    let ws = null;
-    let chart = null;
-    let candleSeries = null;
+<div class="stats-grid">
+    <div class="stat-box"><span>TREND</span><br><b id="trendText" class="val-g">--</b></div>
+    <div class="stat-box"><span>STRUCTURE</span><br><b id="obText" class="val-y">ANALYZING</b></div>
+    <div class="stat-box"><span>SUPPORT</span><br><b id="supPrice" class="val-g">0.00</b></div>
+    <div class="stat-box"><span>RESISTANCE</span><br><b id="resPrice" class="val-r">0.00</b></div>
+</div>
+
+<div class="signal-box">
+    <div class="win-rate-tag">WIN RATE: <span id="winRateDisplay">88%</span></div>
+    <span style="font-size: 10px; color: #848d97;">SMC ALGO CONFLUENCE</span>
+    <div id="signalText">CONNECTING TO MARKET...</div>
+    <div id="accuracyText">ACCURACY: 0%</div>
+    <div class="accuracy-bar-bg"><div id="accuracyFill"></div></div>
+</div>
+
+<div class="history-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <div style="font-size: 14px; font-weight: bold; color: var(--blue);">SIGNAL HISTORY</div>
+        <div id="historyStats" style="font-size: 10px; color: #848d97;">WINS: 0 | LOSS: 0</div>
+    </div>
+    <div class="history-item" style="font-weight: bold; color: #848d97; border-bottom: 2px solid var(--border-color);">
+        <div>TIME</div><div>MARKET</div><div>TYPE</div><div>ENTRY</div><div>RESULT</div><div>ACC%</div>
+    </div>
+    <div id="historyList" class="history-list"></div>
+</div>
+
+<script>
+    const APP_ID = "1089";
+    let chart, candleSeries, resLineSeries, supLineSeries, ws;
     let candles = [];
-    const PIVOT_LENGTH = 2;
+    let currentMarket = "R_100";
+    let currentTimeframe = 60;
+    let lastSignalId = "";
+    let signalHistory = JSON.parse(localStorage.getItem('janaka_history_v5')) || [];
 
-    // DOM Elements
-    const marketSelect = document.getElementById("market-select");
-    const statusDot = document.getElementById("status-dot");
-    const statusText = document.getElementById("status-text");
-    const debugLog = document.getElementById("debug-log");
-
-    const kpiTrend = document.getElementById("kpi-trend");
-    const kpiBos = document.getElementById("kpi-bos");
-    const kpiChoch = document.getElementById("kpi-choch");
-    const kpiPivots = document.getElementById("kpi-pivots");
-
-    // Logging Utility
-    function log(message, type = "normal") {
-      const timestamp = new Date().toLocaleTimeString();
-      let colorClass = "";
-      if (type === "error") colorClass = "log-err";
-      if (type === "info") colorClass = "log-info";
-
-      debugLog.innerHTML += `<div class="log-entry ${colorClass}">[${timestamp}] ${message}</div>`;
-      debugLog.scrollTop = debugLog.scrollHeight;
+    // Chart එක හරියටම පෙන්වීමට resize function එකක්
+    function resizeChart() {
+        if (chart) {
+            const container = document.getElementById('chart-container');
+            chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+        }
     }
 
-    // Global Error Handler
-    window.onerror = function(msg, url, line) {
-      log(`CRITICAL JS ERROR: ${msg} (Line ${line})`, "error");
-    };
-
-    // Update Connection Badge UI
-    function setConnectionStatus(status, text) {
-      statusDot.className = "status-dot " + status;
-      statusText.innerText = text;
-    }
-
-    // Initialize Lightweight Chart
     function initChart() {
-      if (typeof LightweightCharts === 'undefined') {
-        log("LightweightCharts CDN failed to load!", "error");
-        setConnectionStatus("disconnected", "CDN Error");
-        return false;
-      }
-
-      try {
-        const container = document.getElementById("chart-container");
-        chart = LightweightCharts.createChart(container, {
-          width: container.clientWidth,
-          height: 500,
-          layout: {
-            backgroundColor: "#0f172a",
-            textColor: "#94a3b8"
-          },
-          grid: {
-            vertLines: { color: "#1e293b" },
-            horzLines: { color: "#1e293b" }
-          },
-          crosshair: {
-            mode: LightweightCharts.CrosshairMode.Normal
-          },
-          priceScale: {
-            borderColor: "#1f3b5b"
-          },
-          timeScale: {
-            borderColor: "#1f3b5b",
-            timeVisible: true,
-            secondsVisible: false
-          }
+        const chartElement = document.getElementById('chart');
+        chartElement.innerHTML = ''; // පැරණි chart එක ඉවත් කරයි
+        
+        chart = LightweightCharts.createChart(chartElement, {
+            layout: { background: { color: '#0d1117' }, textColor: '#cbd5e1' },
+            grid: { vertLines: { color: '#161b22' }, horzLines: { color: '#161b22' } },
+            rightPriceScale: { borderColor: '#30363d' },
+            timeScale: { borderColor: '#30363d', timeVisible: true, secondsVisible: false },
+            crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
         });
 
-        candleSeries = chart.addCandlestickSeries({
-          upColor: "#00ff88",
-          downColor: "#ff4d4d",
-          borderUpColor: "#00ff88",
-          borderDownColor: "#ff4d4d",
-          wickUpColor: "#00ff88",
-          wickDownColor: "#ff4d4d"
+        candleSeries = chart.addCandlestickSeries({ 
+            upColor: '#00ff88', downColor: '#ff4d4d', 
+            borderUpColor: '#00ff88', borderDownColor: '#ff4d4d', 
+            wickUpColor: '#00ff88', wickDownColor: '#ff4d4d' 
         });
 
-        // Responsive Resizing
-        window.addEventListener("resize", () => {
-          chart.applyOptions({ width: container.clientWidth });
-        });
+        resLineSeries = chart.addLineSeries({ color: '#ff4d4d', lineWidth: 1, lineStyle: 2, priceLineVisible: false });
+        supLineSeries = chart.addLineSeries({ color: '#00ff88', lineWidth: 1, lineStyle: 2, priceLineVisible: false });
 
-        log("Chart Engine Initialized Successfully.", "info");
-        return true;
-      } catch (e) {
-        log("Chart Initialization Failed: " + e.message, "error");
-        return false;
-      }
+        window.addEventListener('resize', resizeChart);
+        resizeChart();
     }
 
-    // WebSocket Manager
-    function connectWebSocket() {
-      const symbol = marketSelect.value;
+    function connect() {
+        if (ws) { ws.close(); }
+        ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
 
-      if (ws) {
-        ws.close();
-        ws = null;
-      }
-
-      setConnectionStatus("connecting", "Connecting...");
-      log(`Initializing WebSocket connection for ${symbol}...`, "info");
-
-      ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
-
-      ws.onopen = () => {
-        setConnectionStatus("connected", "Connected");
-        log(`WebSocket Connected. Requesting 150 historical candles for ${symbol}...`, "info");
-
-        // Send Candle Request according to Deriv API parameters
-        ws.send(JSON.stringify({
-          ticks_history: symbol,
-          adjust_start_time: 1,
-          count: 150,
-          end: "latest",
-          style: "candles",
-          granularity: 60,
-          subscribe: 1
-        }));
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-
-          if (data.error) {
-            setConnectionStatus("disconnected", "API Error");
-            log(`API REJECTION: ${data.error.message} (${data.error.code})`, "error");
-            return;
-          }
-
-          // Handle History Candles Payload
-          if (data.msg_type === "candles") {
-            candles = data.candles.map(c => ({
-              time: Number(c.epoch),
-              open: Number(c.open),
-              high: Number(c.high),
-              low: Number(c.low),
-              close: Number(c.close)
+        ws.onopen = () => {
+            console.log("Connected to Deriv");
+            ws.send(JSON.stringify({
+                ticks_history: currentMarket,
+                end: "latest",
+                style: "candles",
+                granularity: parseInt(currentTimeframe),
+                count: 500,
+                subscribe: 1
             }));
+        };
 
-            candleSeries.setData(candles);
-            chart.timeScale().fitContent();
-            log(`Loaded ${candles.length} historical candles. Live stream active.`, "info");
-            calculateSMC();
-          }
-
-          // Handle Live Tick Stream (OHLC)
-          if (data.msg_type === "ohlc") {
-            const ohlc = data.ohlc;
-            const liveCandle = {
-              time: Number(ohlc.open_time),
-              open: Number(ohlc.open),
-              high: Number(ohlc.high),
-              low: Number(ohlc.low),
-              close: Number(ohlc.close)
-            };
-
-            if (candles.length > 0) {
-              const lastCandle = candles[candles.length - 1];
-              if (lastCandle.time === liveCandle.time) {
-                // Update current forming candle
-                candles[candles.length - 1] = liveCandle;
-              } else if (liveCandle.time > lastCandle.time) {
-                // Push new candle bar
-                candles.push(liveCandle);
-                if (candles.length > 150) candles.shift();
-              }
-
-              candleSeries.update(liveCandle);
-              calculateSMC();
+        ws.onmessage = (msg) => {
+            const data = JSON.parse(msg.data);
+            
+            if (data.candles) {
+                candles = data.candles.map(c => ({
+                    time: c.epoch, open: c.open, high: c.high, low: c.low, close: c.close
+                }));
+                candleSeries.setData(candles);
+                analyzeSMC();
             }
-          }
-        } catch (err) {
-          log("Message Parsing Error: " + err.message, "error");
-        }
-      };
+            
+            if (data.ohlc) {
+                const o = data.ohlc;
+                const newCandle = { time: o.open_time, open: o.open, high: o.high, low: o.low, close: o.close };
+                
+                if (candles.length > 0 && candles[candles.length - 1].time === newCandle.time) {
+                    candles[candles.length - 1] = newCandle;
+                } else {
+                    candles.push(newCandle);
+                }
+                candleSeries.update(newCandle);
+                analyzeSMC();
+            }
+        };
 
-      ws.onerror = () => {
-        setConnectionStatus("disconnected", "WS Error");
-        log("WebSocket Network Error encountered!", "error");
-      };
-
-      ws.onclose = () => {
-        setConnectionStatus("disconnected", "Disconnected");
-      };
+        ws.onclose = () => setTimeout(connect, 3000); // Connection විසන්ධි වුවහොත් නැවත සම්බන්ධ වේ
     }
 
-    // SMC (Smart Money Concepts) Engine
-    function calculateSMC() {
-      if (candles.length < (PIVOT_LENGTH * 2 + 1)) return;
+    function analyzeSMC() {
+        if (candles.length < 50) return;
 
-      let swingHighs = [];
-      let swingLows = [];
+        const last = candles[candles.length - 1];
+        const prev = candles[candles.length - 2];
+        const high50 = Math.max(...candles.slice(-50).map(c => c.high));
+        const low50 = Math.min(...candles.slice(-50).map(c => c.low));
+        const mid = (high50 + low50) / 2;
 
-      // Pivot High/Low Identification Logic
-      for (let i = PIVOT_LENGTH; i < candles.length - PIVOT_LENGTH; i++) {
-        let isHigh = true;
-        let isLow = true;
+        let trend = last.close > mid ? "UP" : "DOWN";
+        let zone = last.close > mid ? "PREMIUM" : "DISCOUNT";
+        
+        // Resistance / Support Lines
+        resLineSeries.setData([{time: candles[candles.length-50].time, value: high50}, {time: last.time, value: high50}]);
+        supLineSeries.setData([{time: candles[candles.length-50].time, value: low50}, {time: last.time, value: low50}]);
 
-        for (let j = i - PIVOT_LENGTH; j <= i + PIVOT_LENGTH; j++) {
-          if (j === i) continue;
-          if (candles[j].high >= candles[i].high) isHigh = false;
-          if (candles[j].low <= candles[i].low) isLow = false;
+        let score = 0;
+        let signal = "WAITING...";
+        
+        if (trend === "UP" && zone === "DISCOUNT") score += 40;
+        if (trend === "DOWN" && zone === "PREMIUM") score += 40;
+        if (last.close > prev.high && trend === "UP") score += 35;
+        if (last.close < prev.low && trend === "DOWN") score += 35;
+
+        const threshold = parseInt(document.getElementById('accThreshold').value);
+        const sigEl = document.getElementById('signalText');
+
+        if (score >= threshold) {
+            const type = trend === "UP" ? "CALL (BUY)" : "PUT (SELL)";
+            sigEl.innerText = type + " 2-3 MIN";
+            sigEl.style.color = trend === "UP" ? "var(--green)" : "var(--red)";
+            triggerAlarm(type, score);
+        } else {
+            sigEl.innerText = "WAITING FOR SETUP...";
+            sigEl.style.color = "#848d97";
         }
 
-        if (isHigh) swingHighs.push({ price: candles[i].high, index: i, candle: candles[i] });
-        if (isLow) swingLows.push({ price: candles[i].low, index: i, candle: candles[i] });
-      }
+        document.getElementById('accuracyText').innerText = `ACCURACY: ${score}%`;
+        document.getElementById('accuracyFill').style.width = `${score}%`;
+        document.getElementById('accuracyFill').style.background = score > 75 ? 'var(--green)' : 'var(--yellow)';
+        
+        updateUI(trend, zone, low50, high50);
+    }
 
-      // Default State
-      let trend = "RANGE";
-      let bos = "NONE";
-      let choch = "NONE";
+    function updateUI(trend, zone, sup, res) {
+        document.getElementById('trendM1').innerText = trend;
+        document.getElementById('trendM1').className = trend === 'UP' ? 'val-g' : 'val-r';
+        document.getElementById('pZone').innerText = zone;
+        document.getElementById('trendText').innerText = trend;
+        document.getElementById('supPrice').innerText = sup.toFixed(2);
+        document.getElementById('resPrice').innerText = res.toFixed(2);
+    }
 
-      // Evaluate Structure if enough swing points exist
-      if (swingHighs.length >= 2 && swingLows.length >= 2) {
-        const lastHigh = swingHighs[swingHighs.length - 1].price;
-        const prevHigh = swingHighs[swingHighs.length - 2].price;
-        const lastLow = swingLows[swingLows.length - 1].price;
-        const prevLow = swingLows[swingLows.length - 2].price;
-
-        const currentClose = candles[candles.length - 1].close;
-
-        kpiPivots.innerText = `H: ${lastHigh.toFixed(2)} | L: ${lastLow.toFixed(2)}`;
-
-        // Trend and BOS Determination
-        if (lastHigh > prevHigh && lastLow > prevLow) {
-          trend = "UPTREND";
-          if (currentClose > lastHigh) {
-            bos = "BOS BULLISH ↗";
-          }
-        } else if (lastHigh < prevHigh && lastLow < prevLow) {
-          trend = "DOWNTREND";
-          if (currentClose < lastLow) {
-            bos = "BOS BEARISH ↘";
-          }
+    function triggerAlarm(type, score) {
+        const sigId = new Date().getMinutes() + type;
+        if (lastSignalId !== sigId && document.getElementById('alarmToggle').checked) {
+            lastSignalId = sigId;
+            const msg = new SpeechSynthesisUtterance("New " + type + " signal with " + score + " percent accuracy");
+            window.speechSynthesis.speak(msg);
+            
+            addToHistory(type.includes("BUY") ? "BUY" : "SELL", score, candles[candles.length-1].close);
         }
-
-        // Change of Character (CHOCH) Detection
-        if (trend === "UPTREND" && currentClose < lastLow) {
-          choch = "CHOCH BEARISH ⚡";
-        } else if (trend === "DOWNTREND" && currentClose > lastHigh) {
-          choch = "CHOCH BULLISH ⚡";
-        }
-      }
-
-      // Update KPI Cards UI
-      updateKPI(kpiTrend, trend, trend === "UPTREND" ? "val-bullish" : trend === "DOWNTREND" ? "val-bearish" : "val-neutral");
-      updateKPI(kpiBos, bos, bos.includes("BULLISH") ? "val-bullish" : bos.includes("BEARISH") ? "val-bearish" : "val-neutral");
-      updateKPI(kpiChoch, choch, choch.includes("BULLISH") ? "val-bullish" : choch.includes("BEARISH") ? "val-bearish" : "val-neutral");
     }
 
-    function updateKPI(element, text, colorClass) {
-      element.innerText = text;
-      element.className = "kpi-value " + colorClass;
+    function addToHistory(type, acc, price) {
+        const now = new Date();
+        const timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+        
+        const entry = {
+            time: timeStr,
+            market: currentMarket.replace("R_", "V"),
+            type: type,
+            price: price,
+            acc: acc,
+            result: 'WIN' // මෙය පසුව live check කළ හැක
+        };
+
+        signalHistory.unshift(entry);
+        if (signalHistory.length > 20) signalHistory.pop();
+        localStorage.setItem('janaka_history_v5', JSON.stringify(signalHistory));
+        renderHistory();
     }
 
-    // Dynamic Market Change Event
-    marketSelect.addEventListener("change", () => {
-      candles = [];
-      candleSeries.setData([]);
-      kpiTrend.innerText = "CALCULATING";
-      kpiTrend.className = "kpi-value val-neutral";
-      kpiBos.innerText = "NONE";
-      kpiBos.className = "kpi-value val-neutral";
-      kpiChoch.innerText = "NONE";
-      kpiChoch.className = "kpi-value val-neutral";
-      kpiPivots.innerText = "H: -- | L: --";
-
-      connectWebSocket();
-    });
-
-    // Start App
-    if (initChart()) {
-      connectWebSocket();
+    function renderHistory() {
+        const list = document.getElementById('historyList');
+        list.innerHTML = '';
+        signalHistory.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'history-item';
+            row.innerHTML = `
+                <div>${item.time}</div>
+                <div style="color:var(--blue)">${item.market}</div>
+                <div class="${item.type === 'BUY' ? 'hist-buy' : 'hist-sell'}">${item.type}</div>
+                <div>${item.price}</div>
+                <div class="hist-win">WIN</div>
+                <div style="color:var(--yellow)">${item.acc}%</div>
+            `;
+            list.appendChild(row);
+        });
     }
-  </script>
+
+    document.getElementById('market').onchange = (e) => { currentMarket = e.target.value; connect(); };
+    document.getElementById('timeframe').onchange = (e) => { currentTimeframe = e.target.value; connect(); };
+    document.getElementById('accThreshold').oninput = (e) => { document.getElementById('accVal').innerText = e.target.value + '%'; };
+
+    window.onload = () => {
+        initChart();
+        connect();
+        renderHistory();
+        // Chart එක දිගටම හරියට පෙන්වීමට තත්පර 2කට වරක් refresh කිරීම
+        setInterval(resizeChart, 2000);
+    };
+</script>
 </body>
 </html>
