@@ -387,7 +387,9 @@ if (data.msg_type === "tick") {
     return;
 }
     if (data.error) {
+        alert(JSON.stringify(data, null, 2));
       statusEl.innerText = "Error 🔴";
+
       infoTextEl.innerText = data.error.message || "API error";
       return;
     }
