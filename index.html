@@ -324,7 +324,7 @@ function connect(){
 
   ws.onopen = () => {
     statusEl.innerText = "Connected 🟢";
-
+alert(currentMarket);
     ws.send(JSON.stringify({
       ticks_history: currentMarket,
       end: "latest",
