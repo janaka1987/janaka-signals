@@ -9,9 +9,7 @@
 content="width=device-width, initial-scale=1.0">
 
 <title>JANAKA SMC DASHBOARD V6 PRO</title>
-<h2 style="color:red;text-align:center">
-TEST 123
-</h2>
+
 <link rel="preconnect"
 href="https://fonts.googleapis.com">
 
@@ -625,38 +623,90 @@ function connectDeriv(){
 
     try{
 
+        if(ws){
+            ws.close();
+        }
+
         ws = new WebSocket(
             "wss://ws.derivws.com/websockets/v3?app_id=1089"
         );
 
         ws.onopen = () => {
+
             status.innerHTML = "ONLINE";
             systemStatus.innerHTML = "CONNECTED";
-            alert("DERIV CONNECTED");
+
+            ws.send(JSON.stringify({
+                ticks_history: currentMarket,
+                adjust_start_time: 1,
+                count: 300,
+                end: "latest",
+                granularity: 60,
+                style: "candles"
+            }));
+
+        };
+
+        ws.onmessage = (msg) => {
+
+            const data = JSON.parse(msg.data);
+
+            if(data.candles){
+
+                const chartData = data.candles.map(c => ({
+
+                    time: c.epoch,
+                    open: Number(c.open),
+                    high: Number(c.high),
+                    low: Number(c.low),
+                    close: Number(c.close)
+
+                }));
+
+                candleSeries.setData(chartData);
+
+                systemStatus.innerHTML =
+                "CHART LOADED";
+
+            }
+
         };
 
         ws.onerror = (err) => {
+
             status.innerHTML = "ERROR";
             systemStatus.innerHTML = "FAILED";
-            alert("WEBSOCKET ERROR");
+
             console.log(err);
+
         };
 
         ws.onclose = () => {
+
             status.innerHTML = "OFFLINE";
             systemStatus.innerHTML = "DISCONNECTED";
-            alert("CONNECTION CLOSED");
+
         };
 
     }catch(e){
 
-        alert("ERROR : " + e.message);
+        console.log(e);
+
+        status.innerHTML = "ERROR";
+        systemStatus.innerHTML = "FAILED";
 
     }
 
 }
+            
 
-        alert("OK");
+        
+
+        
+
+    
+
+    
         connectDeriv();
 </script>
     
