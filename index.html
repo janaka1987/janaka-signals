@@ -359,3 +359,110 @@ height:520px;
 </style>
 
 </head>
+<body>
+
+<div class="container">
+
+    <div class="title">
+        JANAKA SMC DASHBOARD V6 PRO
+    </div>
+
+    <div class="grid-top">
+
+        <div class="card">
+
+            <h3>📊 SELECT MARKET</h3>
+
+            <select id="market">
+
+                <option value="R_10">Volatility 10</option>
+                <option value="R_25">Volatility 25</option>
+                <option value="R_50" selected>Volatility 50</option>
+                <option value="R_75">Volatility 75</option>
+                <option value="R_100">Volatility 100</option>
+
+                <option value="JD10">Jump 10</option>
+                <option value="JD25">Jump 25</option>
+                <option value="JD50">Jump 50</option>
+                <option value="JD75">Jump 75</option>
+                <option value="JD100">Jump 100</option>
+
+                <option value="RDBEAR">Bear Market</option>
+                <option value="RDBULL">Bull Market</option>
+
+                <option value="frxEURUSD">EUR / USD</option>
+                <option value="frxGBPUSD">GBP / USD</option>
+                <option value="frxUSDJPY">USD / JPY</option>
+                <option value="frxAUDUSD">AUD / USD</option>
+
+            </select>
+
+        </div>
+
+        <div class="card">
+
+            <h3>🌐 CONNECTION STATUS</h3>
+
+            <div class="status">
+
+                Status :
+                <span id="status">
+                    Connecting...
+                </span>
+
+                <br><br>
+
+                Market :
+                <span id="marketName">
+                    Volatility 50
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card chart-card">
+
+        <div class="chart-title">
+            📈 LIVE MARKET CHART
+        </div>
+
+        <div id="chart"></div>
+
+    </div>
+
+    <div class="bottom-grid">
+
+        <div class="info-box">
+
+            <div class="info-title">
+                📈 MARKET TREND
+            </div>
+
+            <div class="info-value green" id="trend">
+                WAIT
+            </div>
+
+        </div>
+
+        <div class="info-box">
+
+            <div class="info-title">
+                ⚡ SYSTEM STATUS
+            </div>
+
+            <div class="info-value cyan" id="systemStatus">
+                READY
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>
