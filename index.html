@@ -670,53 +670,25 @@ function connectDeriv(){
             systemStatus.innerHTML = "LIVE";
         }
 
-        if(data.tick){
+        if(data.ohlc){
 
-            let price = Number(data.tick.quote);
-            let epoch = data.tick.epoch;
+    candleSeries.update({
 
-            let candleTime =
-            Math.floor(epoch / TIMEFRAME) * TIMEFRAME;
+        time: data.ohlc.open_time,
+        open: Number(data.ohlc.open),
+        high: Number(data.ohlc.high),
+        low: Number(data.ohlc.low),
+        close: Number(data.ohlc.close)
 
-            let last =
-            candles[candles.length - 1];
+    });
 
-            if(!last) return;
+}
 
-            if(last.time === candleTime){
+            
+            
 
-                last.close = price;
-
-                if(price > last.high)
-                    last.high = price;
-
-                if(price < last.low)
-                    last.low = price;
-
-                candleSeries.update(last);
-
-            }else{
-
-                let newCandle = {
-
-                    time: candleTime,
-                    open: last.close,
-                    high: price,
-                    low: price,
-                    close: price
-
-                };
-
-                candles.push(newCandle);
-
-                if(candles.length > 300)
-                    candles.shift();
-
-                candleSeries.update(newCandle);
-
-            }
-
-        }
+                
+                
 
     };
 
