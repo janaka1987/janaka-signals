@@ -1,174 +1,426 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMC V5 PRO - FINAL FIXED</title>
-    <!-- Lightweight Charts Library -->
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
-    <style>
-        body { background: #05070a; color: white; font-family: Arial; margin: 0; padding: 10px; }
-        #status { font-size: 12px; padding: 5px; text-align: center; background: #161b22; border-radius: 5px; margin-bottom: 5px; color: #ff9800; }
-        #chart { height: 300px; width: 100%; border: 1px solid #30363d; border-radius: 8px; margin-top: 10px; }
-        .controls { background: #0d1117; padding: 15px; border-radius: 10px; border: 1px solid #21262d; }
-        select { width: 100%; padding: 12px; background: #161b22; color: #00ff88; border: 1px solid #30363d; border-radius: 5px; font-weight: bold; }
-        .signal-display { margin-top: 15px; text-align: center; padding: 20px; border-radius: 10px; background: #161b22; border: 2px solid #30363d; }
-        #signalText { font-size: 24px; font-weight: bold; color: #848d97; }
-        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; font-size: 12px; }
-        .stat-item { background: #0d1117; padding: 10px; border-radius: 5px; border: 1px solid #21262d; text-align: center; }
-    </style>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>JANAKA SMC DASHBOARD V6 PRO</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+
+background:#05070A;
+
+font-family:'Inter',sans-serif;
+
+color:white;
+
+padding:16px;
+
+}
+
+.container{
+
+max-width:1600px;
+
+margin:auto;
+
+}
+
+.title{
+
+text-align:center;
+
+font-size:34px;
+
+font-weight:800;
+
+color:#00ff88;
+
+letter-spacing:2px;
+
+margin-bottom:20px;
+
+text-shadow:
+0 0 10px #00ff88,
+0 0 20px #00ff88;
+
+}
+
+.card{
+
+background:#111827;
+
+border:1px solid #1f2937;
+
+border-radius:18px;
+
+padding:16px;
+
+margin-bottom:16px;
+
+box-shadow:
+
+0 8px 25px rgba(0,0,0,.45);
+
+}
+
+.card h3{
+
+font-size:18px;
+
+margin-bottom:12px;
+
+color:#60a5fa;
+
+}
+
+.top-grid{
+
+display:grid;
+
+grid-template-columns:1fr 1fr;
+
+gap:16px;
+
+margin-bottom:16px;
+
+}
+
+select{
+
+width:100%;
+
+height:54px;
+
+background:#0F172A;
+
+color:white;
+
+border:1px solid #334155;
+
+border-radius:12px;
+
+padding:0 14px;
+
+font-size:17px;
+
+outline:none;
+
+}
+
+select:focus{
+
+border-color:#00ff88;
+
+}
+
+.status{
+
+font-size:17px;
+
+line-height:32px;
+
+}
+
+.status span{
+
+font-weight:bold;
+
+color:#00ff88;
+
+}
+
+#chart{
+
+width:100%;
+
+height:560px;
+
+border-radius:16px;
+
+overflow:hidden;
+
+}
+
+.bottom-grid{
+
+display:grid;
+
+grid-template-columns:repeat(2,1fr);
+
+gap:14px;
+
+margin-top:16px;
+
+}
+
+.info-box{
+
+background:#0F172A;
+
+border:1px solid #1f2937;
+
+border-radius:16px;
+
+padding:16px;
+
+text-align:center;
+
+}
+
+.info-title{
+
+font-size:15px;
+
+color:#94A3B8;
+
+margin-bottom:10px;
+
+}
+
+.info-value{
+
+font-size:24px;
+
+font-weight:700;
+
+font-family:'JetBrains Mono',monospace;
+
+}
+
+.green{
+
+color:#00ff88;
+
+}
+
+.red{
+
+color:#ff4d4d;
+
+}
+
+.blue{
+
+color:#60a5fa;
+
+}
+
+.yellow{
+
+color:#facc15;
+
+}
+
+@media(max-width:768px){
+
+.title{
+
+font-size:26px;
+
+}
+
+.top-grid{
+
+grid-template-columns:1fr;
+
+}
+
+.bottom-grid{
+
+grid-template-columns:1fr 1fr;
+
+}
+
+#chart{
+
+height:520px;
+
+}
+
+}
+
+</style>
+
 </head>
+
 <body>
 
-    <div id="status">INITIALIZING...</div>
+<div class="container">
 
-    <div class="controls">
-        <select id="marketSelect">
-            <option value="R_100">Volatility 100 Index</option>
-            <option value="R_10">Volatility 10 Index</option>
-            <option value="R_25">Volatility 25 Index</option>
-            <option value="R_50">Volatility 50 Index</option>
-            <option value="R_75">Volatility 75 Index</option>
-            <option value="1HZ10V">Volatility 10 (1s) Index</option>
-            <option value="1HZ100V">Volatility 100 (1s) Index</option>
-        </select>
-    </div>
+<div class="title">
 
-    <div id="chart"></div>
+JANAKA SMC DASHBOARD V6 PRO
 
-    <div class="stats">
-        <div class="stat-item">TREND: <span id="trend">--</span></div>
-        <div class="stat-item">ZONE: <span id="zone">--</span></div>
-    </div>
+</div>
 
-    <div class="signal-display" id="sigBox">
-        <div id="signalText">WAITING FOR DATA...</div>
-        <div id="accuracy" style="color: #eab308; margin-top: 5px;">Accuracy: 0%</div>
-    </div>
+<div class="top-grid">
 
-<script>
-    let chart, candleSeries, ws;
-    const statusEl = document.getElementById('status');
-    const signalText = document.getElementById('signalText');
-    const sigBox = document.getElementById('sigBox');
+<div class="card">
 
-    // 1. Chart එක සකස් කිරීම
-    function initChart() {
-        chart = LightweightCharts.createChart(document.getElementById('chart'), {
-            layout: { background: { color: '#0d1117' }, textColor: '#d1d4dc' },
-            grid: { vertLines: { color: '#161b22' }, horzLines: { color: '#161b22' } },
-            timeScale: { timeVisible: true, secondsVisible: true },
-        });
-        candleSeries = chart.addCandlestickSeries({
-            upColor: '#00ff88', downColor: '#ff4d4d',
-            borderUpColor: '#00ff88', borderDownColor: '#ff4d4d',
-            wickUpColor: '#00ff88', wickDownColor: '#ff4d4d'
-        });
-    }
+<h3>Market</h3>
 
-    // 2. දත්ත ලබා ගැනීම (WebSocket)
-    function connect() {
-        const market = document.getElementById('marketSelect').value;
-        statusEl.innerText = "CONNECTING TO " + market + "...";
-        statusEl.style.color = "#ff9800";
+<select id="market">
 
-        if (ws) ws.close();
+<option value="R_10">Volatility 10</option>
 
-        // Deriv Default App ID 1089 පාවිච්චි කරමු
-        ws = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=1089');
+<option value="R_25">Volatility 25</option>
 
-        ws.onopen = () => {
-            statusEl.innerText = "CONNECTED - RECEIVING DATA";
-            statusEl.style.color = "#00ff88";
-            
-            // ඉතිහාස දත්ත සහ Live දත්ත ඉල්ලීම
-            ws.send(JSON.stringify({
-                ticks_history: market,
-                adjust_start_time: 1,
-                count: 100,
-                end: "latest",
-                granularity: 60,
-                style: "candles",
-                subscribe: 1
-            }));
-        };
+<option value="R_50" selected>Volatility 50</option>
 
-        ws.onmessage = (msg) => {
-            const data = JSON.parse(msg.data);
+<option value="R_75">Volatility 75</option>
 
-            // ඉතිහාස දත්ත ලැබුණු විට
-            if (data.candles) {
-                const history = data.candles.map(c => ({
-                    time: c.epoch,
-                    open: c.open,
-                    high: c.high,
-                    low: c.low,
-                    close: c.close
-                }));
-                candleSeries.setData(history);
-            }
+<option value="R_100">Volatility 100</option>
 
-            // අලුත් Candle එකක් ලැබුණු විට
-            if (data.ohlc) {
-                const c = data.ohlc;
-                candleSeries.update({
-                    time: c.open_time,
-                    open: parseFloat(c.open),
-                    high: parseFloat(c.high),
-                    low: parseFloat(c.low),
-                    close: parseFloat(c.close)
-                });
-                runSMCStrategy(data.ohlc);
-            }
-        };
+<option value="JD10">Jump 10</option>
 
-        ws.onerror = (e) => {
-            statusEl.innerText = "CONNECTION ERROR! PLEASE RELOAD.";
-            statusEl.style.color = "#ff4d4d";
-        };
+<option value="JD25">Jump 25</option>
 
-        ws.onclose = () => {
-            statusEl.innerText = "CONNECTION CLOSED. RECONNECTING...";
-            setTimeout(connect, 3000);
-        };
-    }
+<option value="JD50">Jump 50</option>
 
-    // 3. SMC Strategy (Logic)
-    function runSMCStrategy(ohlc) {
-        const close = parseFloat(ohlc.close);
-        const open = parseFloat(ohlc.open);
-        
-        // සරල SMC Logic එකක් (Trend සහ RSI වෙනුවට Price Action)
-        let trend = close > open ? "UP" : "DOWN";
-        document.getElementById('trend').innerText = trend;
-        document.getElementById('trend').style.color = trend === "UP" ? "#00ff88" : "#ff4d4d";
+<option value="JD75">Jump 75</option>
 
-        // Signal එකක් දීම
-        if (trend === "UP") {
-            showSignal("CALL (BUY)", "#00ff88");
-        } else {
-            showSignal("PUT (SELL)", "#ff4d4d");
-        }
-    }
+<option value="JD100">Jump 100</option>
 
-    function showSignal(msg, color) {
-        signalText.innerText = msg;
-        signalText.style.color = color;
-        sigBox.style.borderColor = color;
-        document.getElementById('accuracy').innerText = "Accuracy: 85%";
-    }
+<option value="RDBEAR">Bear Market</option>
 
-    // ආරම්භ කිරීම
-    window.onload = () => {
-        initChart();
-        connect();
-    };
+<option value="RDBULL">Bull Market</option>
 
-    // Market එක වෙනස් කරන විට
-    document.getElementById('marketSelect').onchange = () => {
-        connect();
-    };
+<option value="frxEURUSD">EUR/USD</option>
 
-</script>
+<option value="frxGBPUSD">GBP/USD</option>
+
+<option value="frxUSDJPY">USD/JPY</option>
+
+<option value="frxAUDUSD">AUD/USD</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h3>Connection</h3>
+
+<div class="status">
+
+Status :
+<span id="status">
+
+Disconnected
+
+</span>
+
+<br><br>
+
+Market :
+
+<span id="marketName">
+
+Volatility 50
+
+</span>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>Live Market</h3>
+
+<div id="chart"></div>
+
+</div>
+
+<div class="bottom-grid">
+
+<div class="info-box">
+
+<div class="info-title">
+
+Trend
+
+</div>
+
+<div class="info-value green" id="trend">
+
+WAIT
+
+</div>
+
+</div>
+
+<div class="info-box">
+
+<div class="info-title">
+
+Signal
+
+</div>
+
+<div class="info-value yellow" id="signal">
+
+NONE
+
+</div>
+
+</div>
+
+<div class="info-box">
+
+<div class="info-title">
+
+BOS
+
+</div>
+
+<div class="info-value blue" id="bos">
+
+NONE
+
+</div>
+
+</div>
+
+<div class="info-box">
+
+<div class="info-title">
+
+CHOCH
+
+</div>
+
+<div class="info-value red" id="choch">
+
+NONE
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
 </body>
+
 </html>
