@@ -463,6 +463,156 @@ height:520px;
 
 </div>
 
+    <script>
+
+/*=========================================
+            CONFIG
+=========================================*/
+
+const APP_ID = "1089";
+
+const TIMEFRAME = 60;
+
+const MAX_CANDLES = 300;
+
+
+/*=========================================
+        GLOBAL VARIABLES
+=========================================*/
+
+let ws = null;
+
+let chart = null;
+
+let candleSeries = null;
+
+let candles = [];
+
+let currentMarket = "R_50";
+
+
+/*=========================================
+            DOM
+=========================================*/
+
+const marketSelect = document.getElementById("market");
+
+const marketName = document.getElementById("marketName");
+
+const status = document.getElementById("status");
+
+const trend = document.getElementById("trend");
+
+const systemStatus =
+document.getElementById("systemStatus");
+
+const chartContainer =
+document.getElementById("chart");
+
+
+/*=========================================
+        CREATE CHART
+=========================================*/
+
+function createChart(){
+
+chart = LightweightCharts.createChart(chartContainer,{
+
+layout:{
+
+background:{
+color:"#05070A"
+},
+
+textColor:"#E5E7EB"
+
+},
+
+grid:{
+
+vertLines:{
+color:"#162033"
+},
+
+horzLines:{
+color:"#162033"
+}
+
+},
+
+rightPriceScale:{
+
+borderColor:"#253244"
+
+},
+
+timeScale:{
+
+borderColor:"#253244",
+
+timeVisible:true,
+
+secondsVisible:false
+
+},
+
+crosshair:{
+
+mode:1
+
+},
+
+width:chartContainer.clientWidth,
+
+height:560
+
+});
+
+
+candleSeries = chart.addCandlestickSeries({
+
+upColor:"#00FF88",
+
+downColor:"#FF4D4D",
+
+borderUpColor:"#00FF88",
+
+borderDownColor:"#FF4D4D",
+
+wickUpColor:"#00FF88",
+
+wickDownColor:"#FF4D4D"
+
+});
+
+
+window.addEventListener("resize",()=>{
+
+chart.applyOptions({
+
+width:chartContainer.clientWidth
+
+});
+
+});
+
+}
+
+
+/*=========================================
+        START APP
+=========================================*/
+
+createChart();
+
+status.innerHTML="READY";
+
+systemStatus.innerHTML="INITIALIZED";
+
+marketName.innerHTML="Volatility 50";
+
+</script>
+    
 </body>
 
 </html>
