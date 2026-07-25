@@ -1,42 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
 <title>JANAKA SMC DASHBOARD V6 PRO</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect"
+href="https://fonts.googleapis.com">
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="preconnect"
+href="https://fonts.gstatic.com"
+crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap"
+rel="stylesheet">
 
 <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
 <style>
 
 *{
+
 margin:0;
+
 padding:0;
+
 box-sizing:border-box;
+
+}
+
+:root{
+
+--bg:#05070A;
+
+--card:#111827;
+
+--card2:#0F172A;
+
+--border:#233044;
+
+--green:#00FF88;
+
+--red:#FF4D4D;
+
+--blue:#38BDF8;
+
+--text:#FFFFFF;
+
+--muted:#94A3B8;
+
 }
 
 body{
 
-background:#05070A;
+background:var(--bg);
 
 font-family:'Inter',sans-serif;
 
-color:white;
+color:var(--text);
 
 padding:16px;
+
+overflow-x:hidden;
 
 }
 
 .container{
 
-max-width:1600px;
+width:100%;
+
+max-width:1700px;
 
 margin:auto;
 
@@ -44,61 +82,75 @@ margin:auto;
 
 .title{
 
-text-align:center;
-
-font-size:34px;
+font-size:32px;
 
 font-weight:800;
 
-color:#00ff88;
+text-align:center;
 
 letter-spacing:2px;
 
 margin-bottom:20px;
 
+color:var(--green);
+
 text-shadow:
-0 0 10px #00ff88,
-0 0 20px #00ff88;
+
+0 0 8px rgba(0,255,136,.6),
+
+0 0 25px rgba(0,255,136,.25);
 
 }
 
-.card{
-
-background:#111827;
-
-border:1px solid #1f2937;
-
-border-radius:18px;
-
-padding:16px;
-
-margin-bottom:16px;
-
-box-shadow:
-
-0 8px 25px rgba(0,0,0,.45);
-
-}
-
-.card h3{
-
-font-size:18px;
-
-margin-bottom:12px;
-
-color:#60a5fa;
-
-}
-
-.top-grid{
+.grid-top{
 
 display:grid;
 
 grid-template-columns:1fr 1fr;
 
-gap:16px;
+gap:18px;
 
-margin-bottom:16px;
+margin-bottom:18px;
+
+}
+
+.card{
+
+background:linear-gradient(
+
+180deg,
+
+#111827,
+
+#0B1220
+
+);
+
+border:1px solid var(--border);
+
+border-radius:20px;
+
+padding:18px;
+
+box-shadow:
+
+0 12px 25px
+
+rgba(0,0,0,.35);
+
+}
+
+.card h3{
+
+font-size:17px;
+
+font-weight:700;
+
+color:var(--blue);
+
+margin-bottom:14px;
+
+letter-spacing:.5px;
 
 }
 
@@ -106,27 +158,35 @@ select{
 
 width:100%;
 
-height:54px;
+height:56px;
 
-background:#0F172A;
+background:#08111F;
 
 color:white;
 
 border:1px solid #334155;
 
-border-radius:12px;
+border-radius:14px;
 
-padding:0 14px;
+padding:0 16px;
 
 font-size:17px;
 
 outline:none;
 
+transition:.25s;
+
 }
 
 select:focus{
 
-border-color:#00ff88;
+border-color:var(--green);
+
+box-shadow:
+
+0 0 12px
+
+rgba(0,255,136,.3);
 
 }
 
@@ -134,15 +194,33 @@ border-color:#00ff88;
 
 font-size:17px;
 
-line-height:32px;
+line-height:34px;
 
 }
 
 .status span{
 
-font-weight:bold;
+font-weight:700;
 
-color:#00ff88;
+color:var(--green);
+
+}
+
+.chart-card{
+
+padding:14px;
+
+}
+
+.chart-title{
+
+font-size:18px;
+
+font-weight:700;
+
+color:var(--blue);
+
+margin-bottom:12px;
 
 }
 
@@ -156,6 +234,10 @@ border-radius:16px;
 
 overflow:hidden;
 
+background:#0A1322;
+
+border:1px solid var(--border);
+
 }
 
 .bottom-grid{
@@ -164,71 +246,89 @@ display:grid;
 
 grid-template-columns:repeat(2,1fr);
 
-gap:14px;
+gap:18px;
 
-margin-top:16px;
+margin-top:18px;
 
 }
 
 .info-box{
 
-background:#0F172A;
+background:
 
-border:1px solid #1f2937;
+linear-gradient(
 
-border-radius:16px;
+180deg,
 
-padding:16px;
+#111827,
+
+#0A1322
+
+);
+
+border:1px solid var(--border);
+
+border-radius:18px;
+
+padding:22px;
 
 text-align:center;
+
+box-shadow:
+
+0 8px 20px
+
+rgba(0,0,0,.35);
 
 }
 
 .info-title{
 
-font-size:15px;
+font-size:14px;
 
-color:#94A3B8;
+font-weight:600;
 
-margin-bottom:10px;
+letter-spacing:1px;
+
+color:var(--muted);
+
+margin-bottom:12px;
 
 }
 
 .info-value{
 
-font-size:24px;
+font-size:30px;
 
 font-weight:700;
 
-font-family:'JetBrains Mono',monospace;
+font-family:
+
+'JetBrains Mono',
+
+monospace;
 
 }
 
 .green{
 
-color:#00ff88;
+color:var(--green);
+
+}
+
+.cyan{
+
+color:var(--blue);
 
 }
 
 .red{
 
-color:#ff4d4d;
+color:var(--red);
 
 }
 
-.blue{
-
-color:#60a5fa;
-
-}
-
-.yellow{
-
-color:#facc15;
-
-}
-
-@media(max-width:768px){
+@media(max-width:900px){
 
 .title{
 
@@ -236,7 +336,7 @@ font-size:26px;
 
 }
 
-.top-grid{
+.grid-top{
 
 grid-template-columns:1fr;
 
@@ -259,168 +359,3 @@ height:520px;
 </style>
 
 </head>
-
-<body>
-
-<div class="container">
-
-<div class="title">
-
-JANAKA SMC DASHBOARD V6 PRO
-
-</div>
-
-<div class="top-grid">
-
-<div class="card">
-
-<h3>Market</h3>
-
-<select id="market">
-
-<option value="R_10">Volatility 10</option>
-
-<option value="R_25">Volatility 25</option>
-
-<option value="R_50" selected>Volatility 50</option>
-
-<option value="R_75">Volatility 75</option>
-
-<option value="R_100">Volatility 100</option>
-
-<option value="JD10">Jump 10</option>
-
-<option value="JD25">Jump 25</option>
-
-<option value="JD50">Jump 50</option>
-
-<option value="JD75">Jump 75</option>
-
-<option value="JD100">Jump 100</option>
-
-<option value="RDBEAR">Bear Market</option>
-
-<option value="RDBULL">Bull Market</option>
-
-<option value="frxEURUSD">EUR/USD</option>
-
-<option value="frxGBPUSD">GBP/USD</option>
-
-<option value="frxUSDJPY">USD/JPY</option>
-
-<option value="frxAUDUSD">AUD/USD</option>
-
-</select>
-
-</div>
-
-<div class="card">
-
-<h3>Connection</h3>
-
-<div class="status">
-
-Status :
-<span id="status">
-
-Disconnected
-
-</span>
-
-<br><br>
-
-Market :
-
-<span id="marketName">
-
-Volatility 50
-
-</span>
-
-</div>
-
-</div>
-
-</div>
-
-<div class="card">
-
-<h3>Live Market</h3>
-
-<div id="chart"></div>
-
-</div>
-
-<div class="bottom-grid">
-
-<div class="info-box">
-
-<div class="info-title">
-
-Trend
-
-</div>
-
-<div class="info-value green" id="trend">
-
-WAIT
-
-</div>
-
-</div>
-
-<div class="info-box">
-
-<div class="info-title">
-
-Signal
-
-</div>
-
-<div class="info-value yellow" id="signal">
-
-NONE
-
-</div>
-
-</div>
-
-<div class="info-box">
-
-<div class="info-title">
-
-BOS
-
-</div>
-
-<div class="info-value blue" id="bos">
-
-NONE
-
-</div>
-
-</div>
-
-<div class="info-box">
-
-<div class="info-title">
-
-CHOCH
-
-</div>
-
-<div class="info-value red" id="choch">
-
-NONE
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</body>
-
-</html>
