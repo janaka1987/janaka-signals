@@ -620,38 +620,42 @@ marketName.innerHTML="Volatility 50";
 
 function connectDeriv(){
 
-    console.log("connectDeriv started");
-
     status.innerHTML = "CONNECTING...";
-
     systemStatus.innerHTML = "LOADING";
 
-    if(ws){
-        ws.close();
+    try{
+
+        ws = new WebSocket(
+            "wss://ws.derivws.com/websockets/v3?app_id=1089"
+        );
+
+        ws.onopen = () => {
+            status.innerHTML = "ONLINE";
+            systemStatus.innerHTML = "CONNECTED";
+            alert("DERIV CONNECTED");
+        };
+
+        ws.onerror = (err) => {
+            status.innerHTML = "ERROR";
+            systemStatus.innerHTML = "FAILED";
+            alert("WEBSOCKET ERROR");
+            console.log(err);
+        };
+
+        ws.onclose = () => {
+            status.innerHTML = "OFFLINE";
+            systemStatus.innerHTML = "DISCONNECTED";
+            alert("CONNECTION CLOSED");
+        };
+
+    }catch(e){
+
+        alert("ERROR : " + e.message);
+
     }
 
-    ws = new WebSocket(
-        `wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`
-    );
-
-    console.log(ws);
-
-    ws.onopen = () => {
-        status.innerHTML = "ONLINE";
-        systemStatus.innerHTML = "CONNECTED";
-    };
-
-    ws.onerror = () => {
-        status.innerHTML = "ERROR";
-        systemStatus.innerHTML = "FAILED";
-    };
-
-    ws.onclose = () => {
-        status.innerHTML = "OFFLINE";
-        systemStatus.innerHTML = "DISCONNECTED";
-    };
-
 }
+
         alert("OK");
         connectDeriv();
 </script>
