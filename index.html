@@ -621,83 +621,128 @@ function connectDeriv(){
     status.innerHTML = "CONNECTING...";
     systemStatus.innerHTML = "LOADING";
 
-    try{
+    if(ws){
+        ws.close();
+    }
 
-        if(ws){
-            ws.close();
-        }
+    ws = new WebSocket(
+        "wss://ws.derivws.com/websockets/v3?app_id=1089"
+    );
 
-        ws = new WebSocket(
-            "wss://ws.derivws.com/websockets/v3?app_id=1089"
-        );
+    ws.onopen = () => {
 
-        ws.onopen = () => {
+        status.innerHTML = "ONLINE";
+        systemStatus.innerHTML = "CONNECTED";
 
-            status.innerHTML = "ONLINE";
-            systemStatus.innerHTML = "CONNECTED";
+        ws.send(JSON.stringify({
+            ticks_history: currentMarket,
+            adjust_start_time: 1,
+            count: 300,
+            end: "latest",
+            granularity: 60,
+            style: "candles"
+        }));
 
-            ws.send(JSON.stringify({
-                ticks_history: currentMarket,
-                adjust_start_time: 1,
-                count: 300,
-                end: "latest",
-                granularity: 60,
-                style: "candles"
+    };
+
+    ws.onmessage = (msg) => {
+
+        const data = JSON.parse(msg.data);
+
+        if(data.candles){
+
+            candles = data.candles.map(c => ({
+                time: c.epoch,
+                open: Number(c.open),
+                high: Number(c.high),
+                low: Number(c.low),
+                close: Number(c.close)
             }));
 
-        };
+            candleSeries.setData(candles);
 
-        ws.onmessage = (msg) => {
+            ws.send(JSON.stringify({
+                ticks: currentMarket,
+                subscribe: 1
+            }));
 
-            const data = JSON.parse(msg.data);
+            systemStatus.innerHTML = "LIVE";
+        }
 
-            if(data.candles){
+        if(data.tick){
 
-                const chartData = data.candles.map(c => ({
+            let price = Number(data.tick.quote);
+            let epoch = data.tick.epoch;
 
-                    time: c.epoch,
-                    open: Number(c.open),
-                    high: Number(c.high),
-                    low: Number(c.low),
-                    close: Number(c.close)
+            let candleTime =
+            Math.floor(epoch / TIMEFRAME) * TIMEFRAME;
 
-                }));
+            let last =
+            candles[candles.length - 1];
 
-                candleSeries.setData(chartData);
+            if(!last) return;
 
-                systemStatus.innerHTML =
-                "CHART LOADED";
+            if(last.time === candleTime){
+
+                last.close = price;
+
+                if(price > last.high)
+                    last.high = price;
+
+                if(price < last.low)
+                    last.low = price;
+
+                candleSeries.update(last);
+
+            }else{
+
+                let newCandle = {
+
+                    time: candleTime,
+                    open: last.close,
+                    high: price,
+                    low: price,
+                    close: price
+
+                };
+
+                candles.push(newCandle);
+
+                if(candles.length > 300)
+                    candles.shift();
+
+                candleSeries.update(newCandle);
 
             }
 
-        };
+        }
 
-        ws.onerror = (err) => {
+    };
 
-            status.innerHTML = "ERROR";
-            systemStatus.innerHTML = "FAILED";
-
-            console.log(err);
-
-        };
-
-        ws.onclose = () => {
-
-            status.innerHTML = "OFFLINE";
-            systemStatus.innerHTML = "DISCONNECTED";
-
-        };
-
-    }catch(e){
-
-        console.log(e);
+    ws.onerror = () => {
 
         status.innerHTML = "ERROR";
         systemStatus.innerHTML = "FAILED";
 
-    }
+    };
+
+    ws.onclose = () => {
+
+        status.innerHTML = "OFFLINE";
+        systemStatus.innerHTML = "DISCONNECTED";
+
+    };
 
 }
+
+        
+            
+
+                
+
+            
+
+        
             
 
         
