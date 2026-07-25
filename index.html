@@ -622,6 +622,42 @@ function connectDeriv(){
 
     systemStatus.innerHTML = "LOADING";
 
+    if(ws){
+
+        ws.close();
+
+    }
+
+    ws = new WebSocket(
+
+        `wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`
+
+    );
+
+    ws.onopen = () => {
+
+        status.innerHTML = "ONLINE";
+
+        systemStatus.innerHTML = "CONNECTED";
+
+    };
+
+    ws.onerror = () => {
+
+        status.innerHTML = "ERROR";
+
+        systemStatus.innerHTML = "FAILED";
+
+    };
+
+    ws.onclose = () => {
+
+        status.innerHTML = "OFFLINE";
+
+        systemStatus.innerHTML = "DISCONNECTED";
+
+    };
+
 }
         
 </script>
