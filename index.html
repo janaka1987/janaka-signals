@@ -1,127 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deriv Live Chart</title>
+    <!-- Lightweight Charts Library එක මෙතනින් load වෙනවා -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        body {
+            background-color: #05070A;
+            color: #E5E7EB;
+            font-family: sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #111827;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .info-box { display: flex; gap: 20px; }
+        .info-item { text-align: center; }
+        .info-label { font-size: 12px; color: #9CA3AF; display: block; }
+        .info-value { font-size: 18px; font-weight: bold; }
+        .green { color: #00FF88; }
+        .red { color: #FF4D4D; }
+        #chart {
+            width: 100%;
+            height: 560px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        select {
+            background: #1F2937;
+            color: white;
+            border: 1px solid #374151;
+            padding: 5px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div>
+            <select id="market">
+                <option value="R_10">Volatility 10 Index</option>
+                <option value="R_25">Volatility 25 Index</option>
+                <option value="R_50" selected>Volatility 50 Index</option>
+                <option value="R_75">Volatility 75 Index</option>
+                <option value="R_100">Volatility 100 Index</option>
+                <option value="1HZ10V">Volatility 10 (1s) Index</option>
+                <option value="1HZ100V">Volatility 100 (1s) Index</option>
+            </select>
+            <h2 id="marketName" style="margin: 5px 0 0 0;">Volatility 50 Index</h2>
+        </div>
+        <div class="info-box">
+            <div class="info-item">
+                <span class="info-label">CONNECTION</span>
+                <span id="status" class="info-value">CONNECTING...</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">TREND</span>
+                <span id="trend" class="info-value">---</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">STATUS</span>
+                <span id="systemStatus" class="info-value">LOADING</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="chart"></div>
+</div>
+
 <script>
-        const APP_ID = "1089";
-        const TIMEFRAME = 60; // 1 Minute
-        const MAX_CANDLES = 300;
+    const APP_ID = "1089";
+    const TIMEFRAME = 60; // 1 Minute
+    const MAX_CANDLES = 300;
 
-        let ws = null;
-        let chart = null;
-        let candleSeries = null;
-        let currentMarket = "R_50";
-        let reconnectTimer = null;
+    let ws = null;
+    let chart = null;
+    let candleSeries = null;
+    let currentMarket = "R_50";
+    let reconnectTimer = null;
 
-        const marketSelect = document.getElementById("market");
-        const marketName = document.getElementById("marketName");
-        const status = document.getElementById("status");
-        const trend = document.getElementById("trend");
-        const systemStatus = document.getElementById("systemStatus");
-        const chartContainer = document.getElementById("chart");
+    const marketSelect = document.getElementById("market");
+    const marketName = document.getElementById("marketName");
+    const status = document.getElementById("status");
+    const trend = document.getElementById("trend");
+    const systemStatus = document.getElementById("systemStatus");
+    const chartContainer = document.getElementById("chart");
 
-        function createChart() {
-            chart = LightweightCharts.createChart(chartContainer, {
-                layout: { background: { color: "#05070A" }, textColor: "#E5E7EB" },
-                grid: { vertLines: { color: "#162033" }, horzLines: { color: "#162033" } },
-                rightPriceScale: { borderColor: "#253244" },
-                timeScale: { borderColor: "#253244", timeVisible: true, secondsVisible: false },
-                crosshair: { mode: 1 },
-                width: chartContainer.clientWidth,
-                height: 560
-            });
-
-            candleSeries = chart.addCandlestickSeries({
-                upColor: "#00FF88", downColor: "#FF4D4D",
-                borderUpColor: "#00FF88", borderDownColor: "#FF4D4D",
-                wickUpColor: "#00FF88", wickDownColor: "#FF4D4D"
-            });
-
-            window.addEventListener("resize", () => {
-                chart.applyOptions({ width: chartContainer.clientWidth });
-            });
-        }
-
-        createChart();
-
-        function connectDeriv() {
-            if (reconnectTimer) clearTimeout(reconnectTimer);
-
-            status.innerHTML = "CONNECTING...";
-            systemStatus.innerHTML = "LOADING";
-
-            if (ws) {
-                ws.onclose = null;
-                ws.close();
-            }
-
-            ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=" + APP_ID);
-
-            ws.onopen = () => {
-                status.innerHTML = "ONLINE";
-                // මෙහිදී ticks_history සමගම subscribe: 1 ලබා දීමෙන් Live OHLC දත්ත ලැබේ
-                ws.send(JSON.stringify({
-                    ticks_history: currentMarket,
-                    adjust_start_time: 1,
-                    count: MAX_CANDLES,
-                    end: "latest",
-                    granularity: TIMEFRAME,
-                    style: "candles",
-                    subscribe: 1
-                }));
-            };
-
-            ws.onmessage = (msg) => {
-                const data = JSON.parse(msg.data);
-
-                // ආරම්භයේදී ඉතිහාස දත්ත (Candles 300) ලබා ගැනීම
-                if (data.candles) {
-                    const history = data.candles.map(c => ({
-                        time: Number(c.epoch),
-                        open: Number(c.open),
-                        high: Number(c.high),
-                        low: Number(c.low),
-                        close: Number(c.close)
-                    }));
-                    candleSeries.setData(history);
-                    systemStatus.innerHTML = "LIVE";
-                }
-
-                // Live OHLC දත්ත ලැබෙන විට (මෙහිදී විනාඩිය අවසානයේ ඉබේම අලුත් කැන්ඩල් එක හැදේ)
-                if (data.ohlc) {
-                    const o = data.ohlc;
-                    const candleUpdate = {
-                        time: Number(o.open_time), 
-                        open: Number(o.open),
-                        high: Number(o.high),
-                        low: Number(o.low),
-                        close: Number(o.close)
-                    };
-                    
-                    candleSeries.update(candleUpdate);
-
-                    // Trend Logic
-                    if (candleUpdate.close > candleUpdate.open) {
-                        trend.innerHTML = "BULLISH";
-                        trend.className = "info-value green";
-                    } else {
-                        trend.innerHTML = "BEARISH";
-                        trend.className = "info-value red";
-                    }
-                }
-            };
-
-            ws.onclose = () => {
-                status.innerHTML = "OFFLINE";
-                reconnectTimer = setTimeout(connectDeriv, 3000);
-            };
-
-            ws.onerror = () => {
-                ws.close();
-            };
-        }
-
-        marketSelect.addEventListener("change", () => {
-            currentMarket = marketSelect.value;
-            marketName.innerHTML = marketSelect.options[marketSelect.selectedIndex].text;
-            connectDeriv();
+    function createChart() {
+        chart = LightweightCharts.createChart(chartContainer, {
+            layout: { background: { color: "#05070A" }, textColor: "#E5E7EB" },
+            grid: { vertLines: { color: "#162033" }, horzLines: { color: "#162033" } },
+            rightPriceScale: { borderColor: "#253244" },
+            timeScale: { borderColor: "#253244", timeVisible: true, secondsVisible: false },
+            crosshair: { mode: 1 },
+            width: chartContainer.clientWidth,
+            height: 560
         });
 
+        candleSeries = chart.addCandlestickSeries({
+            upColor: "#00FF88", downColor: "#FF4D4D",
+            borderUpColor: "#00FF88", borderDownColor: "#FF4D4D",
+            wickUpColor: "#00FF88", wickDownColor: "#FF4D4D"
+        });
+
+        window.addEventListener("resize", () => {
+            chart.applyOptions({ width: chartContainer.clientWidth });
+        });
+    }
+
+    createChart();
+
+    function connectDeriv() {
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+
+        status.innerHTML = "CONNECTING...";
+        systemStatus.innerHTML = "LOADING";
+
+        if (ws) {
+            ws.onclose = null;
+            ws.close();
+        }
+
+        ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=" + APP_ID);
+
+        ws.onopen = () => {
+            status.innerHTML = "ONLINE";
+            ws.send(JSON.stringify({
+                ticks_history: currentMarket,
+                adjust_start_time: 1,
+                count: MAX_CANDLES,
+                end: "latest",
+                granularity: TIMEFRAME,
+                style: "candles",
+                subscribe: 1
+            }));
+        };
+
+        ws.onmessage = (msg) => {
+            const data = JSON.parse(msg.data);
+
+            if (data.candles) {
+                const history = data.candles.map(c => ({
+                    time: Number(c.epoch),
+                    open: Number(c.open),
+                    high: Number(c.high),
+                    low: Number(c.low),
+                    close: Number(c.close)
+                }));
+                candleSeries.setData(history);
+                systemStatus.innerHTML = "LIVE";
+            }
+
+            if (data.ohlc) {
+                const o = data.ohlc;
+                const candleUpdate = {
+                    time: Number(o.open_time), 
+                    open: Number(o.open),
+                    high: Number(o.high),
+                    low: Number(o.low),
+                    close: Number(o.close)
+                };
+                
+                candleSeries.update(candleUpdate);
+
+                if (candleUpdate.close > candleUpdate.open) {
+                    trend.innerHTML = "BULLISH";
+                    trend.className = "info-value green";
+                } else {
+                    trend.innerHTML = "BEARISH";
+                    trend.className = "info-value red";
+                }
+            }
+        };
+
+        ws.onclose = () => {
+            status.innerHTML = "OFFLINE";
+            reconnectTimer = setTimeout(connectDeriv, 3000);
+        };
+
+        ws.onerror = () => {
+            ws.close();
+        };
+    }
+
+    marketSelect.addEventListener("change", () => {
+        currentMarket = marketSelect.value;
+        marketName.innerHTML = marketSelect.options[marketSelect.selectedIndex].text;
         connectDeriv();
-    </script>
+    });
+
+    connectDeriv();
+</script>
+
+</body>
+</html>
