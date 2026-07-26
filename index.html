@@ -3,209 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deriv Live Chart</title>
-    <!-- Lightweight Charts Library එක මෙතනින් load වෙනවා -->
+    <title>SMC Pro Advanced Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            background-color: #05070A;
-            color: #E5E7EB;
-            font-family: sans-serif;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1000px;
-            margin: auto;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #111827;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-        .info-box { display: flex; gap: 20px; }
-        .info-item { text-align: center; }
-        .info-label { font-size: 12px; color: #9CA3AF; display: block; }
-        .info-value { font-size: 18px; font-weight: bold; }
-        .green { color: #00FF88; }
-        .red { color: #FF4D4D; }
-        #chart {
-            width: 100%;
-            height: 560px;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        select {
-            background: #1F2937;
-            color: white;
-            border: 1px solid #374151;
-            padding: 5px;
-            border-radius: 4px;
-        }
+        :root { --bg: #05070a; --glass: rgba(255, 255, 255, 0.03); --border: rgba(255, 255, 255, 0.08); }
+        body { background-color: var(--bg); color: #e1e1e1; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .glass { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 12px; }
+        .neon-text { font-family: 'Orbitron', sans-serif; text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+        #chart-container { height: 600px; width: 100%; position: relative; }
+        select { background: #1a1e23; color: white; border: 1px solid var(--border); padding: 5px 10px; border-radius: 8px; outline: none; }
     </style>
 </head>
-<body>
+<body class="p-2 md:p-6">
 
-<div class="container">
-    <div class="header">
-        <div>
-            <select id="market">
-                <option value="R_10">Volatility 10 Index</option>
-                <option value="R_25">Volatility 25 Index</option>
-                <option value="R_50" selected>Volatility 50 Index</option>
-                <option value="R_75">Volatility 75 Index</option>
-                <option value="R_100">Volatility 100 Index</option>
-                <option value="1HZ10V">Volatility 10 (1s) Index</option>
-                <option value="1HZ100V">Volatility 100 (1s) Index</option>
-            </select>
-            <h2 id="marketName" style="margin: 5px 0 0 0;">Volatility 50 Index</h2>
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="glass p-5 mb-4 flex flex-wrap justify-between items-center">
+            <div class="flex items-center gap-4">
+                <h1 class="neon-text text-xl font-bold text-blue-500 tracking-widest">SMC-AI ENGINE</h1>
+                <select id="market-select" onchange="changeMarket()">
+                    <option value="1HZ10V">Volatility 10 (1s)</option>
+                    <option value="1HZ25V">Volatility 25 (1s)</option>
+                    <option value="1HZ50V">Volatility 50 (1s)</option>
+                    <option value="1HZ75V" selected>Volatility 75 (1s)</option>
+                    <option value="1HZ100V">Volatility 100 (1s)</option>
+                </select>
+            </div>
+            <div class="flex gap-8">
+                <div class="text-right"><p class="text-[10px] text-gray-500 uppercase">Live Price</p><p id="price" class="text-lg font-mono font-bold text-green-400">0.00</p></div>
+                <div class="text-right"><p class="text-[10px] text-gray-500 uppercase">Structure</p><p id="struct" class="text-lg font-bold text-blue-400">---</p></div>
+            </div>
         </div>
-        <div class="info-box">
-            <div class="info-item">
-                <span class="info-label">CONNECTION</span>
-                <span id="status" class="info-value">CONNECTING...</span>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            <!-- Sidebar Stats -->
+            <div class="lg:col-span-1 space-y-4">
+                <div class="glass p-4">
+                    <h3 class="text-xs text-gray-500 mb-2 uppercase">Market Trend</h3>
+                    <div id="trend-box" class="h-2 w-full bg-gray-800 rounded-full overflow-hidden">
+                        <div id="trend-bar" class="h-full bg-blue-500 transition-all duration-500" style="width: 50%"></div>
+                    </div>
+                    <p id="trend-text" class="mt-2 text-sm font-semibold">Neutral Range</p>
+                </div>
+                <div class="glass p-4">
+                    <h3 class="text-xs text-gray-500 mb-2 uppercase">Structure Log</h3>
+                    <div id="log" class="text-[11px] font-mono space-y-1 h-64 overflow-y-auto">
+                        <p class="text-gray-500">Waiting for data...</p>
+                    </div>
+                </div>
             </div>
-            <div class="info-item">
-                <span class="info-label">TREND</span>
-                <span id="trend" class="info-value">---</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">STATUS</span>
-                <span id="systemStatus" class="info-value">LOADING</span>
+
+            <!-- Chart -->
+            <div class="lg:col-span-3 glass relative overflow-hidden">
+                <div id="chart-container"></div>
+                <!-- Watermark -->
+                <div class="absolute bottom-10 right-10 text-white/5 text-4xl font-black pointer-events-none uppercase italic">SMC PRO AI</div>
             </div>
         </div>
     </div>
 
-    <div id="chart"></div>
-</div>
+    <script>
+        let currentSymbol = '1HZ75V';
+        let ws;
+        let candleData = [];
+        let markers = [];
+        let lastBOS = null;
 
-<script>
-    const APP_ID = "1089";
-    const TIMEFRAME = 60; // 1 Minute
-    const MAX_CANDLES = 300;
-
-    let ws = null;
-    let chart = null;
-    let candleSeries = null;
-    let currentMarket = "R_50";
-    let reconnectTimer = null;
-
-    const marketSelect = document.getElementById("market");
-    const marketName = document.getElementById("marketName");
-    const status = document.getElementById("status");
-    const trend = document.getElementById("trend");
-    const systemStatus = document.getElementById("systemStatus");
-    const chartContainer = document.getElementById("chart");
-
-    function createChart() {
-        chart = LightweightCharts.createChart(chartContainer, {
-            layout: { background: { color: "#05070A" }, textColor: "#E5E7EB" },
-            grid: { vertLines: { color: "#162033" }, horzLines: { color: "#162033" } },
-            rightPriceScale: { borderColor: "#253244" },
-            timeScale: { borderColor: "#253244", timeVisible: true, secondsVisible: false },
-            crosshair: { mode: 1 },
-            width: chartContainer.clientWidth,
-            height: 560
+        // --- CHART SETUP ---
+        const chart = LightweightCharts.createChart(document.getElementById('chart-container'), {
+            layout: { backgroundColor: 'transparent', textColor: '#848e9c', fontSize: 11 },
+            grid: { vertLines: { color: '#161a1e' }, horzLines: { color: '#161a1e' } },
+            crosshair: { mode: 0, vertLine: { labelBackgroundColor: '#2b3139' }, horzLine: { labelBackgroundColor: '#2b3139' } },
+            timeScale: { borderColor: '#2b3139', timeVisible: true, secondsVisible: true },
         });
 
-        candleSeries = chart.addCandlestickSeries({
-            upColor: "#00FF88", downColor: "#FF4D4D",
-            borderUpColor: "#00FF88", borderDownColor: "#FF4D4D",
-            wickUpColor: "#00FF88", wickDownColor: "#FF4D4D"
+        const candleSeries = chart.addCandlestickSeries({
+            upColor: '#089981', downColor: '#f23645', borderVisible: false,
+            wickUpColor: '#089981', wickDownColor: '#f23645',
         });
 
-        window.addEventListener("resize", () => {
-            chart.applyOptions({ width: chartContainer.clientWidth });
-        });
-    }
+        function connect() {
+            if (ws) ws.close();
+            ws = new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id=1089');
 
-    createChart();
+            ws.onopen = () => {
+                ws.send(JSON.stringify({
+                    ticks_history: currentSymbol, adjust_start_time: 1, count: 200,
+                    end: "latest", granularity: 60, style: "candles", subscribe: 1
+                }));
+                addLog(`Connected to ${currentSymbol}`, 'text-blue-400');
+            };
 
-    function connectDeriv() {
-        if (reconnectTimer) clearTimeout(reconnectTimer);
-
-        status.innerHTML = "CONNECTING...";
-        systemStatus.innerHTML = "LOADING";
-
-        if (ws) {
-            ws.onclose = null;
-            ws.close();
+            ws.onmessage = (msg) => {
+                const res = JSON.parse(msg.data);
+                if (res.candles) {
+                    candleData = res.candles.map(c => ({ time: c.epoch, open: c.open, high: c.high, low: c.low, close: c.close }));
+                    candleSeries.setData(candleData);
+                    processSMC();
+                }
+                if (res.ohlc) {
+                    const o = res.ohlc;
+                    const update = { time: o.open_time, open: o.open, high: o.high, low: o.low, close: o.close };
+                    candleSeries.update(update);
+                    document.getElementById('price').innerText = o.close;
+                    // Real-time analysis for every tick
+                    candleData[candleData.length - 1] = update;
+                    processSMC();
+                }
+            };
         }
 
-        ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=" + APP_ID);
+        function processSMC() {
+            if (candleData.length < 20) return;
+            markers = [];
+            let swings = [];
+            const lookback = 3; // Window to find peaks/troughs
 
-        ws.onopen = () => {
-            status.innerHTML = "ONLINE";
-            ws.send(JSON.stringify({
-                ticks_history: currentMarket,
-                adjust_start_time: 1,
-                count: MAX_CANDLES,
-                end: "latest",
-                granularity: TIMEFRAME,
-                style: "candles",
-                subscribe: 1
-            }));
-        };
+            // 1. Identify Swing Highs/Lows
+            for (let i = lookback; i < candleData.length - lookback; i++) {
+                let isHigh = true, isLow = true;
+                for (let j = 1; j <= lookback; j++) {
+                    if (candleData[i].high < candleData[i-j].high || candleData[i].high < candleData[i+j].high) isHigh = false;
+                    if (candleData[i].low > candleData[i-j].low || candleData[i].low > candleData[i+j].low) isLow = false;
+                }
 
-        ws.onmessage = (msg) => {
-            const data = JSON.parse(msg.data);
-
-            if (data.candles) {
-                const history = data.candles.map(c => ({
-                    time: Number(c.epoch),
-                    open: Number(c.open),
-                    high: Number(c.high),
-                    low: Number(c.low),
-                    close: Number(c.close)
-                }));
-                candleSeries.setData(history);
-                systemStatus.innerHTML = "LIVE";
+                if (isHigh) swings.push({ type: 'H', val: candleData[i].high, time: candleData[i].time });
+                if (isLow) swings.push({ type: 'L', val: candleData[i].low, time: candleData[i].time });
             }
 
-            if (data.ohlc) {
-                const o = data.ohlc;
-                const candleUpdate = {
-                    time: Number(o.open_time), 
-                    open: Number(o.open),
-                    high: Number(o.high),
-                    low: Number(o.low),
-                    close: Number(o.close)
-                };
+            // 2. Label HH, HL, LH, LL
+            for (let i = 2; i < swings.length; i++) {
+                let label = "";
+                let color = "#fff";
                 
-                candleSeries.update(candleUpdate);
-
-                if (candleUpdate.close > candleUpdate.open) {
-                    trend.innerHTML = "BULLISH";
-                    trend.className = "info-value green";
+                if (swings[i].type === 'H') {
+                    label = (swings[i].val > swings[i-2].val) ? "HH" : "LH";
+                    color = "#00ffcc";
                 } else {
-                    trend.innerHTML = "BEARISH";
-                    trend.className = "info-value red";
+                    label = (swings[i].val < swings[i-2].val) ? "LL" : "HL";
+                    color = "#ff4d4d";
+                }
+
+                markers.push({ time: swings[i].time, position: swings[i].type === 'H' ? 'aboveBar' : 'belowBar', color: color, shape: 'arrowDown', text: label });
+
+                // 3. Simple BOS/CHOCH logic
+                const lastPrice = candleData[candleData.length - 1].close;
+                if (swings[i].type === 'H' && lastPrice > swings[i].val) {
+                    addLog(`BOS Detected @ ${swings[i].val}`, 'text-green-400');
+                    document.getElementById('struct').innerText = "Bullish BOS";
+                }
+                if (swings[i].type === 'L' && lastPrice < swings[i].val) {
+                    addLog(`CHOCH Detected @ ${swings[i].val}`, 'text-red-400');
+                    document.getElementById('struct').innerText = "Bearish CHOCH";
                 }
             }
-        };
+            candleSeries.setMarkers(markers);
+        }
 
-        ws.onclose = () => {
-            status.innerHTML = "OFFLINE";
-            reconnectTimer = setTimeout(connectDeriv, 3000);
-        };
+        function changeMarket() {
+            currentSymbol = document.getElementById('market-select').value;
+            candleData = [];
+            addLog(`Switching to ${currentSymbol}...`, 'text-yellow-500');
+            connect();
+        }
 
-        ws.onerror = () => {
-            ws.close();
-        };
-    }
-
-    marketSelect.addEventListener("change", () => {
-        currentMarket = marketSelect.value;
-        marketName.innerHTML = marketSelect.options[marketSelect.selectedIndex].text;
-        connectDeriv();
-    });
-
-    connectDeriv();
-</script>
-
-</body>
-</html>
+        function addLog(txt, color) {
+            const log = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
