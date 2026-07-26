@@ -488,8 +488,7 @@ let currentMarket = "R_50";
 // --- New Global Variables for S/R and Trendlines ---
 let resistanceLine = null;
 let supportLine = null;
-let upperTrendLine = null;
-let lowerTrendLine = null;
+
 
 
 /*=========================================
@@ -602,11 +601,7 @@ function calculateSMC() {
             title: 'RESISTANCE',
         });
 
-        // Add Diagonal Trendline (Highs)
-        upperTrendLine.setData([
-            { time: prevHigh.time, value: prevHigh.price },
-            { time: lastHigh.time, value: lastHigh.price }
-        ]);
+        
     }
 
     if (lowSwings.length >= 2) {
@@ -623,11 +618,7 @@ function calculateSMC() {
             title: 'SUPPORT',
         });
 
-        // Add Diagonal Trendline (Lows)
-        lowerTrendLine.setData([
-            { time: prevLow.time, value: prevLow.price },
-            { time: lastLow.time, value: lastLow.price }
-        ]);
+        
     }
 }
 
@@ -670,18 +661,7 @@ trendSeries = chart.addLineSeries({
     lineStyle: 2,
 });
 
-// --- New Series for Diagonal Trendlines ---
-upperTrendLine = chart.addLineSeries({
-    color: '#FFD700',
-    lineWidth: 2,
-    lineStyle: 0,
-});
 
-lowerTrendLine = chart.addLineSeries({
-    color: '#FFD700',
-    lineWidth: 2,
-    lineStyle: 0,
-});
 
 window.addEventListener("resize",()=>{
 chart.applyOptions({ width:chartContainer.clientWidth });
