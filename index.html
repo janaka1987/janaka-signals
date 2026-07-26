@@ -758,7 +758,7 @@ function connectDeriv() {
     };
 
     ws.onclose = () => {
-        status.innerHTML = "OFFLINE";
+        status.innerHTML = "LIVE";
        setTimeout(connectDeriv, 2000);
     };
 }
