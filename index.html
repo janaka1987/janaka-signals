@@ -757,7 +757,20 @@ function connectDeriv(){
         
 
     
+marketSelect.addEventListener("change", () => {
 
+    currentMarket = marketSelect.value;
+
+    marketName.innerHTML =
+    marketSelect.options[
+        marketSelect.selectedIndex
+    ].text;
+
+    candles = [];
+
+    connectDeriv();
+
+});
     
         connectDeriv();
 </script>
