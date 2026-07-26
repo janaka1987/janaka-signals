@@ -1,186 +1,727 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMC Pro AI Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root { --bg: #05070a; --glass: rgba(255, 255, 255, 0.03); --border: rgba(255, 255, 255, 0.08); }
-        body { background-color: var(--bg); color: #e1e1e1; font-family: 'Inter', sans-serif; overflow-x: hidden; margin: 0; }
-        .glass { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 12px; }
-        .neon-text { font-family: 'Orbitron', sans-serif; text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
-        #chart-container { height: 500px; width: 100%; position: relative; }
-        select { background: #1a1e23; color: white; border: 1px solid var(--border); padding: 5px 10px; border-radius: 8px; outline: none; }
-    </style>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>JANAKA SMC DASHBOARD V6 PRO</title>
+
+<link rel="preconnect"
+href="https://fonts.googleapis.com">
+
+<link rel="preconnect"
+href="https://fonts.gstatic.com"
+crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap"
+rel="stylesheet">
+
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+
+<style>
+
+*{
+
+margin:0;
+
+padding:0;
+
+box-sizing:border-box;
+
+}
+
+:root{
+
+--bg:#05070A;
+
+--card:#111827;
+
+--card2:#0F172A;
+
+--border:#233044;
+
+--green:#00FF88;
+
+--red:#FF4D4D;
+
+--blue:#38BDF8;
+
+--text:#FFFFFF;
+
+--muted:#94A3B8;
+
+}
+
+body{
+
+background:var(--bg);
+
+font-family:'Inter',sans-serif;
+
+color:var(--text);
+
+padding:16px;
+
+overflow-x:hidden;
+
+}
+
+.container{
+
+width:100%;
+
+max-width:1700px;
+
+margin:auto;
+
+}
+
+.title{
+
+font-size:32px;
+
+font-weight:800;
+
+text-align:center;
+
+letter-spacing:2px;
+
+margin-bottom:20px;
+
+color:var(--green);
+
+text-shadow:
+
+0 0 8px rgba(0,255,136,.6),
+
+0 0 25px rgba(0,255,136,.25);
+
+}
+
+.grid-top{
+
+display:grid;
+
+grid-template-columns:1fr 1fr;
+
+gap:18px;
+
+margin-bottom:18px;
+
+}
+
+.card{
+
+background:linear-gradient(
+
+180deg,
+
+#111827,
+
+#0B1220
+
+);
+
+border:1px solid var(--border);
+
+border-radius:20px;
+
+padding:18px;
+
+box-shadow:
+
+0 12px 25px
+
+rgba(0,0,0,.35);
+
+}
+
+.card h3{
+
+font-size:17px;
+
+font-weight:700;
+
+color:var(--blue);
+
+margin-bottom:14px;
+
+letter-spacing:.5px;
+
+}
+
+select{
+
+width:100%;
+
+height:56px;
+
+background:#08111F;
+
+color:white;
+
+border:1px solid #334155;
+
+border-radius:14px;
+
+padding:0 16px;
+
+font-size:17px;
+
+outline:none;
+
+transition:.25s;
+
+}
+
+select:focus{
+
+border-color:var(--green);
+
+box-shadow:
+
+0 0 12px
+
+rgba(0,255,136,.3);
+
+}
+
+.status{
+
+font-size:17px;
+
+line-height:34px;
+
+}
+
+.status span{
+
+font-weight:700;
+
+color:var(--green);
+
+}
+
+.chart-card{
+
+padding:14px;
+
+}
+
+.chart-title{
+
+font-size:18px;
+
+font-weight:700;
+
+color:var(--blue);
+
+margin-bottom:12px;
+
+}
+
+#chart{
+
+width:100%;
+
+height:560px;
+
+border-radius:16px;
+
+overflow:hidden;
+
+background:#0A1322;
+
+border:1px solid var(--border);
+
+}
+
+.bottom-grid{
+
+display:grid;
+
+grid-template-columns:repeat(2,1fr);
+
+gap:18px;
+
+margin-top:18px;
+
+}
+
+.info-box{
+
+background:
+
+linear-gradient(
+
+180deg,
+
+#111827,
+
+#0A1322
+
+);
+
+border:1px solid var(--border);
+
+border-radius:18px;
+
+padding:22px;
+
+text-align:center;
+
+box-shadow:
+
+0 8px 20px
+
+rgba(0,0,0,.35);
+
+}
+
+.info-title{
+
+font-size:14px;
+
+font-weight:600;
+
+letter-spacing:1px;
+
+color:var(--muted);
+
+margin-bottom:12px;
+
+}
+
+.info-value{
+
+font-size:30px;
+
+font-weight:700;
+
+font-family:
+
+'JetBrains Mono',
+
+monospace;
+
+}
+
+.green{
+
+color:var(--green);
+
+}
+
+.cyan{
+
+color:var(--blue);
+
+}
+
+.red{
+
+color:var(--red);
+
+}
+
+@media(max-width:900px){
+
+.title{
+
+font-size:26px;
+
+}
+
+.grid-top{
+
+grid-template-columns:1fr;
+
+}
+
+.bottom-grid{
+
+grid-template-columns:1fr 1fr;
+
+}
+
+#chart{
+
+height:520px;
+
+}
+
+}
+
+</style>
+
 </head>
-<body class="p-2 md:p-6">
+<body>
 
-    <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="glass p-5 mb-4 flex flex-wrap justify-between items-center">
-            <div class="flex items-center gap-4">
-                <h1 class="neon-text text-xl font-bold text-blue-500 tracking-widest">SMC-AI ENGINE</h1>
-                <select id="market-select" onchange="changeMarket()">
-                    <option value="1HZ75V" selected>Volatility 75 (1s)</option>
-                    <option value="1HZ10V">Volatility 10 (1s)</option>
-                    <option value="1HZ100V">Volatility 100 (1s)</option>
-                    <option value="R_100">Volatility 100 Index</option>
-                </select>
-            </div>
-            <div class="flex gap-8">
-                <div class="text-right"><p class="text-[10px] text-gray-500 uppercase">Live Price</p><p id="price" class="text-lg font-mono font-bold text-green-400">0.00</p></div>
-                <div class="text-right"><p class="text-[10px] text-gray-500 uppercase">Structure</p><p id="struct" class="text-lg font-bold text-blue-400">CONNECTING...</p></div>
-            </div>
-        </div>
+<div class="container">
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            <!-- Sidebar -->
-            <div class="lg:col-span-1 space-y-4">
-                <div class="glass p-4">
-                    <h3 class="text-xs text-gray-500 mb-2 uppercase">Market Trend</h3>
-                    <div id="trend-box" class="h-2 w-full bg-gray-800 rounded-full overflow-hidden">
-                        <div id="trend-bar" class="h-full bg-blue-500 transition-all duration-500" style="width: 50%"></div>
-                    </div>
-                    <p id="trend-text" class="mt-2 text-sm font-semibold text-center">Analysing...</p>
-                </div>
-                <div class="glass p-4">
-                    <h3 class="text-xs text-gray-500 mb-2 uppercase">Structure Log</h3>
-                    <div id="log" class="text-[11px] font-mono space-y-2 h-80 overflow-y-auto">
-                        <p class="text-gray-500">System initialization...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Chart -->
-            <div class="lg:col-span-3 glass relative overflow-hidden">
-                <div id="chart-container"></div>
-                <div class="absolute bottom-5 right-5 text-white/5 text-3xl font-black pointer-events-none uppercase italic">SMC PRO AI</div>
-            </div>
-        </div>
+    <div class="title">
+        JANAKA SMC DASHBOARD V6 PRO
     </div>
 
+    <div class="grid-top">
+
+        <div class="card">
+
+            <h3>📊 SELECT MARKET</h3>
+
+            <select id="market">
+
+                <option value="R_10">Volatility 10</option>
+                <option value="R_25">Volatility 25</option>
+                <option value="R_50" selected>Volatility 50</option>
+                <option value="R_75">Volatility 75</option>
+                <option value="R_100">Volatility 100</option>
+
+                <option value="JD10">Jump 10</option>
+                <option value="JD25">Jump 25</option>
+                <option value="JD50">Jump 50</option>
+                <option value="JD75">Jump 75</option>
+                <option value="JD100">Jump 100</option>
+
+                <option value="RDBEAR">Bear Market</option>
+                <option value="RDBULL">Bull Market</option>
+
+                <option value="frxEURUSD">EUR / USD</option>
+                <option value="frxGBPUSD">GBP / USD</option>
+                <option value="frxUSDJPY">USD / JPY</option>
+                <option value="frxAUDUSD">AUD / USD</option>
+
+            </select>
+
+        </div>
+
+        <div class="card">
+
+            <h3>🌐 CONNECTION STATUS</h3>
+
+            <div class="status">
+
+                Status :
+                <span id="status">
+                    Connecting...
+                </span>
+
+                <br><br>
+
+                Market :
+                <span id="marketName">
+                    Volatility 50
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card chart-card">
+
+        <div class="chart-title">
+            📈 LIVE MARKET CHART
+        </div>
+
+        <div id="chart"></div>
+
+    </div>
+
+    <div class="bottom-grid">
+
+        <div class="info-box">
+
+            <div class="info-title">
+                📈 MARKET TREND
+            </div>
+
+            <div class="info-value green" id="trend">
+                WAIT
+            </div>
+
+        </div>
+
+        <div class="info-box">
+
+            <div class="info-title">
+                ⚡ SYSTEM STATUS
+            </div>
+
+            <div class="info-value cyan" id="systemStatus">
+                READY
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
     <script>
-        let currentSymbol = '1HZ75V';
-        let ws;
-        let candleData = [];
-        let markers = [];
 
-        // 1. Chart Setup
-        const chart = LightweightCharts.createChart(document.getElementById('chart-container'), {
-            layout: { background: { color: 'transparent' }, textColor: '#848e9c', fontSize: 11 },
-            grid: { vertLines: { color: '#161a1e' }, horzLines: { color: '#161a1e' } },
-            crosshair: { mode: 0 },
-            timeScale: { borderColor: '#2b3139', timeVisible: true, secondsVisible: true },
-        });
+/*=========================================
+            CONFIG
+=========================================*/
 
-        const candleSeries = chart.addCandlestickSeries({
-            upColor: '#089981', downColor: '#f23645', borderVisible: false,
-            wickUpColor: '#089981', wickDownColor: '#f23645',
-        });
+const APP_ID = "1089";
+const TIMEFRAME = 60;
+const MAX_CANDLES = 300;
 
-        // 2. WebSocket Connection
-        function connect() {
-            if (ws) ws.close();
-            ws = new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id=1089');
 
-            ws.onopen = () => {
-                addLog(`Connected to ${currentSymbol}`, 'text-blue-400');
-                ws.send(JSON.stringify({
-                    ticks_history: currentSymbol, adjust_start_time: 1, count: 100,
-                    end: "latest", granularity: 60, style: "candles", subscribe: 1
-                }));
-            };
+/*=========================================
+        GLOBAL VARIABLES
+=========================================*/
 
-            ws.onmessage = (msg) => {
-                const res = JSON.parse(msg.data);
-                
-                if (res.candles) {
-                    candleData = res.candles.map(c => ({ 
-                        time: c.epoch, open: c.open, high: c.high, low: c.low, close: c.close 
-                    }));
-                    candleSeries.setData(candleData);
-                    analyzeSMC();
-                }
+let ws = null;
+let chart = null;
+let candleSeries = null;
+let trendSeries = null; 
+let candles = [];
+let currentMarket = "R_50";
 
-                if (res.ohlc) {
-                    const o = res.ohlc;
-                    const update = { time: o.open_time, open: o.open, high: o.high, low: o.low, close: o.close };
-                    candleSeries.update(update);
-                    document.getElementById('price').innerText = o.close;
-                    
-                    // Update last candle in array
-                    if (candleData.length > 0) {
-                        candleData[candleData.length - 1] = update;
-                    }
-                    analyzeSMC();
-                }
-            };
 
-            ws.onerror = () => addLog("Connection Error!", "text-red-500");
+/*=========================================
+            DOM
+=========================================*/
+
+const marketSelect = document.getElementById("market");
+const marketName = document.getElementById("marketName");
+const status = document.getElementById("status");
+const trend = document.getElementById("trend");
+const systemStatus = document.getElementById("systemStatus");
+const chartContainer = document.getElementById("chart");
+
+
+/*=========================================
+        SMC LOGIC (AUTOMATIC)
+=========================================*/
+
+function calculateSMC() {
+    if (candles.length < 20) return;
+
+    let markers = [];
+    let swings = [];
+    const windowSize = 4; // To find major swings
+
+    // Find Swing Highs & Lows
+    for (let i = windowSize; i < candles.length - windowSize; i++) {
+        let isHigh = true;
+        let isLow = true;
+        for (let j = 1; j <= windowSize; j++) {
+            if (candles[i].high < candles[i-j].high || candles[i].high < candles[i+j].high) isHigh = false;
+            if (candles[i].low > candles[i-j].low || candles[i].low > candles[i+j].low) isLow = false;
         }
 
-        // 3. SMC Logic (BOS / CHOCH / HH-LL)
-        function analyzeSMC() {
-            if (candleData.length < 10) return;
-            
-            markers = [];
-            const lookback = 3; 
+        if (isHigh) swings.push({ type: 'H', price: candles[i].high, time: candles[i].time });
+        if (isLow) swings.push({ type: 'L', price: candles[i].low, time: candles[i].time });
+    }
 
-            for (let i = lookback; i < candleData.length - lookback; i++) {
-                let isHigh = true, isLow = true;
-                for (let j = 1; j <= lookback; j++) {
-                    if (candleData[i].high < candleData[i-j].high || candleData[i].high < candleData[i+j].high) isHigh = false;
-                    if (candleData[i].low > candleData[i-j].low || candleData[i].low > candleData[i+j].low) isLow = false;
-                }
+    if (swings.length < 3) return;
 
-                if (isHigh) {
-                    markers.push({ time: candleData[i].time, position: 'aboveBar', color: '#00ffcc', shape: 'arrowDown', text: 'H' });
-                }
-                if (isLow) {
-                    markers.push({ time: candleData[i].time, position: 'belowBar', color: '#ff4d4d', shape: 'arrowUp', text: 'L' });
-                }
+    let lastH = null, lastL = null;
+    let currentDir = ""; 
+    let lineData = [];
+
+    swings.forEach((s, idx) => {
+        let label = "";
+        let color = "#FFFFFF";
+
+        if (s.type === 'H') {
+            if (lastH && s.price > lastH.price) {
+                label = "HH"; color = "#00FF88";
+                // BOS
+                markers.push({ time: s.time, position: 'aboveBar', color: '#FFD700', shape: 'arrowDown', text: 'BOS' });
+                currentDir = "UPTREND";
+            } else if (lastH && s.price < lastH.price) {
+                label = "LH"; color = "#FF4D4D";
+                // Potential CHOCH if it was uptrend
+                if(currentDir === "UPTREND") markers.push({ time: s.time, position: 'aboveBar', color: '#FFD700', shape: 'arrowDown', text: 'CHOCH' });
+                currentDir = "DOWNTREND";
             }
-
-            // Simple Trend Logic
-            const last = candleData[candleData.length-1];
-            const prev = candleData[candleData.length-5];
-            if(last.close > prev.high) {
-                document.getElementById('struct').innerText = "Bullish BOS";
-                document.getElementById('trend-text').innerText = "Strong Buy";
-                document.getElementById('trend-bar').style.width = "90%";
-                document.getElementById('trend-bar').style.backgroundColor = "#089981";
-            } else if (last.close < prev.low) {
-                document.getElementById('struct').innerText = "Bearish CHOCH";
-                document.getElementById('trend-text').innerText = "Strong Sell";
-                document.getElementById('trend-bar').style.width = "10%";
-                document.getElementById('trend-bar').style.backgroundColor = "#f23645";
+            lastH = s;
+        } else {
+            if (lastL && s.price < lastL.price) {
+                label = "LL"; color = "#FF4D4D";
+                markers.push({ time: s.time, position: 'belowBar', color: '#FFD700', shape: 'arrowUp', text: 'BOS' });
+            } else if (lastL && s.price > lastL.price) {
+                label = "HL"; color = "#00FF88";
+                if(currentDir === "DOWNTREND") markers.push({ time: s.time, position: 'belowBar', color: '#FFD700', shape: 'arrowUp', text: 'CHOCH' });
             }
-
-            candleSeries.setMarkers(markers);
+            lastL = s;
         }
 
-        function changeMarket() {
-            currentSymbol = document.getElementById('market-select').value;
-            candleData = [];
-            addLog(`Switching to ${currentSymbol}...`, 'text-yellow-500');
-            connect();
+        if (label !== "") {
+            markers.push({
+                time: s.time,
+                position: s.type === 'H' ? 'aboveBar' : 'belowBar',
+                color: color,
+                shape: 'text',
+                text: label
+            });
+        }
+        lineData.push({ time: s.time, value: s.price });
+    });
+
+    candleSeries.setMarkers(markers);
+    trendSeries.setData(lineData);
+    trend.innerText = currentDir || "ANALYZING";
+    trend.style.color = currentDir === "UPTREND" ? "#00FF88" : "#FF4D4D";
+}
+
+
+/*=========================================
+        CREATE CHART
+=========================================*/
+
+function createChart(){
+
+chart = LightweightCharts.createChart(chartContainer,{
+layout:{
+background:{ color:"#05070A" },
+textColor:"#E5E7EB"
+},
+grid:{
+vertLines:{ color:"#162033" },
+horzLines:{ color:"#162033" }
+},
+rightPriceScale:{ borderColor:"#253244" },
+timeScale:{ borderColor:"#253244", timeVisible:true, secondsVisible:false },
+crosshair:{ mode:1 },
+width:chartContainer.clientWidth,
+height:560
+});
+
+candleSeries = chart.addCandlestickSeries({
+upColor:"#00FF88",
+downColor:"#FF4D4D",
+borderUpColor:"#00FF88",
+borderDownColor:"#FF4D4D",
+wickUpColor:"#00FF88",
+wickDownColor:"#FF4D4D"
+});
+
+// For Trendlines
+trendSeries = chart.addLineSeries({
+    color: 'rgba(56, 189, 248, 0.4)',
+    lineWidth: 1,
+    lineStyle: 2,
+});
+
+window.addEventListener("resize",()=>{
+chart.applyOptions({ width:chartContainer.clientWidth });
+});
+}
+
+
+/*=========================================
+        START APP
+=========================================*/
+
+createChart();
+status.innerHTML="READY";
+systemStatus.innerHTML="INITIALIZED";
+marketName.innerHTML="Volatility 50";
+    
+        
+/*=========================================
+        CONNECT TO DERIV
+=========================================*/
+
+function connectDeriv() {
+    status.innerHTML = "CONNECTING...";
+    systemStatus.innerHTML = "LOADING";
+
+    if (ws) {
+        ws.close();
+    }
+
+    ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
+
+    ws.onopen = () => {
+        status.innerHTML = "ONLINE";
+        ws.send(JSON.stringify({
+            ticks_history: currentMarket,
+            adjust_start_time: 1,
+            count: 300,
+            end: "latest",
+            granularity: TIMEFRAME,
+            style: "candles"
+        }));
+    };
+
+    ws.onmessage = (msg) => {
+        const data = JSON.parse(msg.data);
+
+        if (data.candles) {
+            candles = data.candles.map(c => ({
+                time: Number(c.epoch),
+                open: Number(c.open),
+                high: Number(c.high),
+                low: Number(c.low),
+                close: Number(c.close)
+            }));
+
+            candleSeries.setData(candles);
+            calculateSMC();
+            systemStatus.innerHTML = "LIVE";
+
+            ws.send(JSON.stringify({
+                ticks: currentMarket,
+                subscribe: 1
+            }));
         }
 
-        function addLog(txt, colorClass) {
-            const log = document.getElementById('log');
-            const time = new Date().toLocaleTimeString();
-            const entry = document.createElement('p');
-            entry.className = colorClass;
-            entry.innerHTML = `<span class="text-gray-600">[${time}]</span> ${txt}`;
-            log.prepend(entry);
+        if (data.tick) {
+            let price = Number(data.tick.quote);
+            let epoch = Number(data.tick.epoch);
+            let candleTime = Math.floor(epoch / TIMEFRAME) * TIMEFRAME;
+
+            if (candles.length === 0) return;
+
+            let lastCandle = candles[candles.length - 1];
+
+            if (candleTime === lastCandle.time) {
+                lastCandle.close = price;
+                if (price > lastCandle.high) lastCandle.high = price;
+                if (price < lastCandle.low) lastCandle.low = price;
+                candleSeries.update(lastCandle);
+            } else {
+                let newCandle = {
+                    time: candleTime,
+                    open: price,
+                    high: price,
+                    low: price,
+                    close: price
+                };
+                candles.push(newCandle);
+                if (candles.length > 300) candles.shift();
+                candleSeries.update(newCandle);
+                calculateSMC();
+            }
         }
+    };
 
-        // START
-        window.onload = connect;
+    ws.onclose = () => {
+        status.innerHTML = "OFFLINE";
+       setTimeout(connectDeriv, 2000);
+    };
+}
 
-    </script>
+marketSelect.addEventListener("change", () => {
+    currentMarket = marketSelect.value;
+    marketName.innerHTML = marketSelect.options[marketSelect.selectedIndex].text;
+    candles = [];
+    connectDeriv();
+});
+    
+connectDeriv();
+</script>
+    
 </body>
 </html>
