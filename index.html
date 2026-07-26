@@ -649,7 +649,7 @@ function connectDeriv(){
     ws.onmessage = (msg) => {
 
         const data = JSON.parse(msg.data);
-
+systemStatus.innerHTML = data.msg_type || "NONE";
         if(data.candles){
 
             candles = data.candles.map(c => ({
