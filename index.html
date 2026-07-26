@@ -617,7 +617,6 @@ marketName.innerHTML="Volatility 50";
 =========================================*/
 
 
-
 function connectDeriv() {
     // 1. කලින් තියෙන ඕනෑම Reconnect attempt එකක් නවත්වන්න
     if (reconnectTimeout) {
@@ -629,7 +628,7 @@ function connectDeriv() {
         console.log("Closing existing connection...");
         ws.onopen = null;
         ws.onmessage = null;
-        ws.onclose = null; // මේක ගොඩක් වැදගත් (loop එක නවත්වන්න)
+        ws.onclose = null; 
         ws.onerror = null;
         ws.close();
     }
@@ -649,21 +648,22 @@ function connectDeriv() {
         systemStatus.innerHTML = "LIVE";
         console.log("Successfully Connected!");
 
-        // Ping එක විනාඩියකට 4 පාරක් (තත්පර 15න් 15ට)
+        // Ping එක තත්පර 15න් 15ට
         pingInterval = setInterval(() => {
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ ping: 1 }));
             }
         }, 15000);
 
-        // History ලබාගැනීම
+        // History සහ Live Update දෙකම එකවර ලබාගැනීම (Subscribe: 1)
         ws.send(JSON.stringify({
             ticks_history: currentMarket,
             adjust_start_time: 1,
             count: 300,
             end: "latest",
             granularity: TIMEFRAME,
-            style: "candles"
+            style: "candles",
+            subscribe: 1 // මෙතන 1 දැම්මම automatic live updates එනවා
         }));
     };
 
@@ -672,6 +672,7 @@ function connectDeriv() {
 
         if (data.msg_type === 'ping') return;
 
+        // 1. මුලින්ම පරණ Candles (History) ටික load කරගැනීම
         if (data.candles) {
             candles = data.candles.map(c => ({
                 time: Number(c.epoch),
@@ -681,38 +682,29 @@ function connectDeriv() {
                 close: Number(c.close)
             }));
             candleSeries.setData(candles);
-
-            // Subscribe to ticks
-            ws.send(JSON.stringify({
-                ticks: currentMarket,
-                subscribe: 1
-            }));
         }
 
-        if (data.tick) {
-            let price = Number(data.tick.quote);
-            let epoch = Number(data.tick.epoch);
-            let candleTime = Math.floor(epoch / TIMEFRAME) * TIMEFRAME;
+        // 2. අලුතින් එන සජීවී දත්ත (OHLC) chart එකට එකතු කිරීම
+        // ඔයා කලින් ticks වලින් හදපු කෑල්ල වෙනුවට මේක පාවිච්චි කරන්න
+        if (data.ohlc) {
+            const o = data.ohlc;
+            const liveCandle = {
+                time: Number(o.open_time),
+                open: Number(o.open),
+                high: Number(o.high),
+                low: Number(o.low),
+                close: Number(o.close)
+            };
+            
+            candleSeries.update(liveCandle);
 
-            if (candles.length === 0) return;
-            let lastCandle = candles[candles.length - 1];
-
-            if (candleTime === lastCandle.time) {
-                lastCandle.close = price;
-                if (price > lastCandle.high) lastCandle.high = price;
-                if (price < lastCandle.low) lastCandle.low = price;
-                candleSeries.update(lastCandle);
+            // Local array එක update කිරීම (අවශ්‍ය නම් පමණක්)
+            const lastIdx = candles.findIndex(c => c.time === liveCandle.time);
+            if (lastIdx !== -1) {
+                candles[lastIdx] = liveCandle;
             } else {
-                let newCandle = {
-                    time: candleTime,
-                    open: price,
-                    high: price,
-                    low: price,
-                    close: price
-                };
-                candles.push(newCandle);
+                candles.push(liveCandle);
                 if (candles.length > 300) candles.shift();
-                candleSeries.update(newCandle);
             }
         }
     };
@@ -720,11 +712,10 @@ function connectDeriv() {
     ws.onclose = (e) => {
         status.innerHTML = "OFFLINE";
         systemStatus.innerHTML = "RECONNECTING...";
-        console.log("Connection closed. Reason: ", e.reason);
+        console.log("Connection closed. Reconnecting...");
 
         if (pingInterval) clearInterval(pingInterval);
 
-        // එකපාරටම reconnect නොවී තත්පර 3ක් ඉන්න (Loop නොවී තිබීමට)
         reconnectTimeout = setTimeout(() => {
             connectDeriv();
         }, 3000);
@@ -735,6 +726,13 @@ function connectDeriv() {
         ws.close(); 
     };
 }
+
+
+
+    
+
+
+    
 
             
                 
