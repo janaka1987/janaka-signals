@@ -142,67 +142,31 @@ rgba(0,0,0,.35);
 
 .card h3{
 
-font-size:17px;
-
-font-weight:700;
-
-color:var(--blue);
-
-margin-bottom:14px;
-
-letter-spacing:.5px;
+font-size:17px; font-weight:700; color:var(--blue); margin-bottom:14px; letter-spacing:.5px;
 
 }
 
 select{
 
-width:100%;
-
-height:56px;
-
-background:#08111F;
-
-color:white;
-
-border:1px solid #334155;
-
-border-radius:14px;
-
-padding:0 16px;
-
-font-size:17px;
-
-outline:none;
-
-transition:.25s;
+width:100%; height:56px; background:#08111F; color:white; border:1px solid #334155; border-radius:14px; padding:0 16px; font-size:17px; outline:none; transition:.25s;
 
 }
 
 select:focus{
 
-border-color:var(--green);
-
-box-shadow:
-
-0 0 12px
-
-rgba(0,255,136,.3);
+border-color:var(--green); box-shadow: 0 0 12px rgba(0,255,136,.3);
 
 }
 
 .status{
 
-font-size:17px;
-
-line-height:34px;
+font-size:17px; line-height:34px;
 
 }
 
 .status span{
 
-font-weight:700;
-
-color:var(--green);
+font-weight:700; color:var(--green);
 
 }
 
@@ -214,145 +178,55 @@ padding:14px;
 
 .chart-title{
 
-font-size:18px;
-
-font-weight:700;
-
-color:var(--blue);
-
-margin-bottom:12px;
+font-size:18px; font-weight:700; color:var(--blue); margin-bottom:12px;
 
 }
 
 #chart{
 
-width:100%;
-
-height:560px;
-
-border-radius:16px;
-
-overflow:hidden;
-
-background:#0A1322;
-
-border:1px solid var(--border);
+width:100%; height:560px; border-radius:166px; overflow:hidden; background:#0A1322; border:1px solid var(--border);
 
 }
 
 .bottom-grid{
 
-display:grid;
-
-grid-template-columns:repeat(2,1fr);
-
-gap:18px;
-
-margin-top:18px;
+display:grid; grid-template-columns:repeat(2,1fr); gap:18px; margin-top:18px;
 
 }
 
 .info-box{
 
-background:
-
-linear-gradient(
-
-180deg,
-
-#111827,
-
-#0A1322
-
-);
-
-border:1px solid var(--border);
-
-border-radius:18px;
-
-padding:22px;
-
-text-align:center;
-
-box-shadow:
-
-0 8px 20px
-
-rgba(0,0,0,.35);
+background: linear-gradient( 180deg, #111827, #0A1322 ); border:1px solid var(--border); border-radius:18px; padding:22px; text-align:center; box-shadow: 0 8px 20px rgba(0,0,0,.35);
 
 }
 
 .info-title{
 
-font-size:14px;
-
-font-weight:600;
-
-letter-spacing:1px;
-
-color:var(--muted);
-
-margin-bottom:12px;
+font-size:14px; font-weight:600; letter-spacing:1px; color:var(--muted); margin-bottom:12px;
 
 }
 
 .info-value{
 
-font-size:30px;
-
-font-weight:700;
-
-font-family:
-
-'JetBrains Mono',
-
-monospace;
+font-size:30px; font-weight:700; font-family: 'JetBrains Mono', monospace;
 
 }
 
-.green{
+.green{ color:var(--green); }
 
-color:var(--green);
+.cyan{ color:var(--blue); }
 
-}
-
-.cyan{
-
-color:var(--blue);
-
-}
-
-.red{
-
-color:var(--red);
-
-}
+.red{ color:var(--red); }
 
 @media(max-width:900px){
 
-.title{
+.title{ font-size:26px; }
 
-font-size:26px;
+.grid-top{ grid-template-columns:1fr; }
 
-}
+.bottom-grid{ grid-template-columns:1fr 1fr; }
 
-.grid-top{
-
-grid-template-columns:1fr;
-
-}
-
-.bottom-grid{
-
-grid-template-columns:1fr 1fr;
-
-}
-
-#chart{
-
-height:520px;
-
-}
+#chart{ height:520px; }
 
 }
 
@@ -485,7 +359,7 @@ let trendSeries = null;
 let candles = [];
 let currentMarket = "R_50";
 
-// --- New Global Variables for S/R and Trendlines ---
+// --- Global Variables for S/R and Trendlines ---
 let resistanceLine = null;
 let supportLine = null;
 let upperTrendLine = null;
@@ -513,7 +387,7 @@ function calculateSMC() {
 
     let markers = [];
     let swings = [];
-    const windowSize = 4; // To find major swings
+    const windowSize = 4; 
 
     // Find Swing Highs & Lows
     for (let i = windowSize; i < candles.length - windowSize; i++) {
@@ -541,12 +415,10 @@ function calculateSMC() {
         if (s.type === 'H') {
             if (lastH && s.price > lastH.price) {
                 label = "HH"; color = "#00FF88";
-                // BOS
                 markers.push({ time: s.time, position: 'aboveBar', color: '#FFD700', shape: 'arrowDown', text: 'BOS' });
                 currentDir = "UPTREND";
             } else if (lastH && s.price < lastH.price) {
                 label = "LH"; color = "#FF4D4D";
-                // Potential CHOCH if it was uptrend
                 if(currentDir === "UPTREND") markers.push({ time: s.time, position: 'aboveBar', color: '#FFD700', shape: 'arrowDown', text: 'CHOCH' });
                 currentDir = "DOWNTREND";
             }
@@ -579,54 +451,43 @@ function calculateSMC() {
     trend.innerText = currentDir || "ANALYZING";
     trend.style.color = currentDir === "UPTREND" ? "#00FF88" : "#FF4D4D";
 
-    // --- NEW AUTO S/R & TRENDLINE LOGIC (Added without changing original) ---
+    // --- UPDATED TRENDLINE LOGIC (ONE LINE, PROFESSIONAL) ---
     
-    // Clear old horizontal lines
     if (resistanceLine) candleSeries.removePriceLine(resistanceLine);
     if (supportLine) candleSeries.removePriceLine(supportLine);
 
     const highSwings = swings.filter(s => s.type === 'H');
     const lowSwings = swings.filter(s => s.type === 'L');
 
-    if (highSwings.length >= 2) {
-        const lastHigh = highSwings[highSwings.length - 1];
-        const prevHigh = highSwings[highSwings.length - 2];
-        
-        // Add Horizontal Resistance
-        resistanceLine = candleSeries.createPriceLine({
-            price: lastHigh.price,
-            color: '#FF4D4D',
-            lineWidth: 2,
-            lineStyle: 0, // Solid
-            axisLabelVisible: true,
-            title: 'RESISTANCE',
-        });
+    // Reset yellow lines data
+    upperTrendLine.setData([]);
+    lowerTrendLine.setData([]);
 
-        // Add Diagonal Trendline (Highs)
-        upperTrendLine.setData([
-            { time: prevHigh.time, value: prevHigh.price },
-            { time: lastHigh.time, value: lastHigh.price }
-        ]);
-    }
-
-    if (lowSwings.length >= 2) {
+    // Trend එක අනුව නිවැරදි එක රේඛාවක් පමණක් අඳී (ඉටිපන්දම් නොකැපෙන සේ)
+    if (currentDir === "UPTREND" && lowSwings.length >= 2) {
         const lastLow = lowSwings[lowSwings.length - 1];
         const prevLow = lowSwings[lowSwings.length - 2];
-
-        // Add Horizontal Support
+        
         supportLine = candleSeries.createPriceLine({
-            price: lastLow.price,
-            color: '#00FF88',
-            lineWidth: 2,
-            lineStyle: 0, // Solid
-            axisLabelVisible: true,
-            title: 'SUPPORT',
+            price: lastLow.price, color: '#00FF88', lineWidth: 2, lineStyle: 0, axisLabelVisible: true, title: 'SUPPORT',
         });
 
-        // Add Diagonal Trendline (Lows)
         lowerTrendLine.setData([
             { time: prevLow.time, value: prevLow.price },
             { time: lastLow.time, value: lastLow.price }
+        ]);
+    } 
+    else if (currentDir === "DOWNTREND" && highSwings.length >= 2) {
+        const lastHigh = highSwings[highSwings.length - 1];
+        const prevHigh = highSwings[highSwings.length - 2];
+
+        resistanceLine = candleSeries.createPriceLine({
+            price: lastHigh.price, color: '#FF4D4D', lineWidth: 2, lineStyle: 0, axisLabelVisible: true, title: 'RESISTANCE',
+        });
+
+        upperTrendLine.setData([
+            { time: prevHigh.time, value: prevHigh.price },
+            { time: lastHigh.time, value: lastHigh.price }
         ]);
     }
 }
@@ -663,14 +524,12 @@ wickUpColor:"#00FF88",
 wickDownColor:"#FF4D4D"
 });
 
-// For Trendlines (Original Zig-Zag)
 trendSeries = chart.addLineSeries({
     color: 'rgba(56, 189, 248, 0.4)',
     lineWidth: 1,
     lineStyle: 2,
 });
 
-// --- New Series for Diagonal Trendlines ---
 upperTrendLine = chart.addLineSeries({
     color: '#FFD700',
     lineWidth: 2,
