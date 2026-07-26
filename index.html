@@ -728,6 +728,7 @@ function connectDeriv() {
         }
 
         if (data.tick) {
+            systemStatus.innerHTML = "TICK";
             let price = Number(data.tick.quote);
             let epoch = Number(data.tick.epoch);
             let candleTime = Math.floor(epoch / TIMEFRAME) * TIMEFRAME;
