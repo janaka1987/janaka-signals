@@ -617,7 +617,6 @@ marketName.innerHTML="Volatility 50";
 =========================================*/
 
 
-
 function connectDeriv() {
     status.innerHTML = "CONNECTING...";
     systemStatus.innerHTML = "LOADING";
@@ -630,7 +629,16 @@ function connectDeriv() {
 
     ws.onopen = () => {
         status.innerHTML = "ONLINE";
-        // 1. මුලින්ම පරණ candles (History) ඉල්ලනවා
+
+        // --- මෙන්න මේ කොටස අලුතින් එකතු කරන්න (Heartbeat/Ping) ---
+        // සෑම තත්පර 15කට වරක්ම connection එක පණපිටින් තබා ගැනීමට ping එකක් යවයි
+        setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ ping: 1 }));
+            }
+        }, 15000);
+        // -------------------------------------------------------
+
         ws.send(JSON.stringify({
             ticks_history: currentMarket,
             adjust_start_time: 1,
@@ -644,7 +652,9 @@ function connectDeriv() {
     ws.onmessage = (msg) => {
         const data = JSON.parse(msg.data);
 
-        // 2. History Candles ලැබුණු විට
+        // Ping එකට ලැබෙන response එක ignore කරන්න
+        if (data.msg_type === 'ping') return;
+
         if (data.candles) {
             candles = data.candles.map(c => ({
                 time: Number(c.epoch),
@@ -657,35 +667,26 @@ function connectDeriv() {
             candleSeries.setData(candles);
             systemStatus.innerHTML = "LIVE";
 
-            // 3. History ලැබුණු පසු Live Ticks වලට Subscribe වෙනවා
             ws.send(JSON.stringify({
                 ticks: currentMarket,
                 subscribe: 1
             }));
         }
 
-        // 4. Live Tick එකක් එන විට
         if (data.tick) {
             let price = Number(data.tick.quote);
             let epoch = Number(data.tick.epoch);
-            
-            // වත්මන් tick එක අයිති විය යුතු candle time එක (මිනිත්තුවේ ආරම්භය)
             let candleTime = Math.floor(epoch / TIMEFRAME) * TIMEFRAME;
 
             if (candles.length === 0) return;
-
             let lastCandle = candles[candles.length - 1];
 
             if (candleTime === lastCandle.time) {
-                // දැනට තිබෙන Candle එක ඇතුළත මිල වෙනස් වීම (Updating current candle)
                 lastCandle.close = price;
                 if (price > lastCandle.high) lastCandle.high = price;
                 if (price < lastCandle.low) lastCandle.low = price;
-                
-                // Chart එකට update එක යවනවා
                 candleSeries.update(lastCandle);
             } else {
-                // විනාඩිය අවසන් වී අලුත් Candle එකක් පටන් ගැනීම (New candle)
                 let newCandle = {
                     time: candleTime,
                     open: price,
@@ -693,22 +694,22 @@ function connectDeriv() {
                     low: price,
                     close: price
                 };
-                
-                candles.push(newCandle); // Array එකට එකතු කරනවා
-                if (candles.length > 300) candles.shift(); // 300 ට වඩා වැඩි නම් පැරණි ඒවා අයින් කරනවා
-                
-                candleSeries.update(newCandle); // Chart එකට අලුත් candle එක දානවා
-                console.log("New Candle Started:", newCandle.time);
+                candles.push(newCandle);
+                if (candles.length > 300) candles.shift();
+                candleSeries.update(newCandle);
             }
         }
     };
 
     ws.onclose = () => {
         status.innerHTML = "OFFLINE";
-       setTimeout(connectDeriv, 2000);  // Connection ගියොත් තත්පර 2කින් නැවත සම්බන්ධ වේ
+        // වැදගත්: කලින් තිබුණ setInterval/timeout අයින් කර අලුතින් connect වෙන්න
+        setTimeout(connectDeriv, 2000);
     };
 }
 
+
+    
 
             
     
