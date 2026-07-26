@@ -617,14 +617,11 @@ marketName.innerHTML="Volatility 50";
 =========================================*/
 
 
-let ws;
-const APP_ID = 1089;
-
 function connectDeriv() {
-    status.innerHTML = "CONNECTING...";
-    systemStatus.innerHTML = "LOADING";
+    // HTML elements පවතිනවාදැයි පරීක්ෂා කිරීම (Errors වැළැක්වීමට)
+    if (typeof status !== 'undefined') status.innerHTML = "CONNECTING...";
+    if (typeof systemStatus !== 'undefined') systemStatus.innerHTML = "LOADING";
 
-    // කලින් තිබුණ connection එක සම්පූර්ණයෙන්ම අයින් කරනවා
     if (ws) {
         ws.onopen = null;
         ws.onmessage = null;
@@ -636,10 +633,9 @@ function connectDeriv() {
     ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
 
     ws.onopen = () => {
-        console.log("Connected!");
-        status.innerHTML = "ONLINE";
+        console.log("Connected to Deriv");
+        if (typeof status !== 'undefined') status.innerHTML = "ONLINE";
 
-        // History සහ Live Ticks දෙකම එකවර ඉල්ලීම (මෙය වඩාත් ස්ථාවරයි)
         ws.send(JSON.stringify({
             ticks_history: currentMarket,
             adjust_start_time: 1,
@@ -647,21 +643,20 @@ function connectDeriv() {
             end: "latest",
             granularity: TIMEFRAME,
             style: "candles",
-            subscribe: 1  // මෙතනදීම subscribe කරනවා
+            subscribe: 1
         }));
     };
 
     ws.onmessage = (msg) => {
         const data = JSON.parse(msg.data);
 
-        // වැරදීමක් වුණොත් console එකේ බලන්න
         if (data.error) {
             console.error("Deriv Error:", data.error.message);
             return;
         }
 
-        // History Candles ලැබෙන විට
-        if (data.candles) {
+        // 1. මුලින්ම එන ඉතිහාස දත්ත (History Candles)
+        if (data.msg_type === 'candles') {
             candles = data.candles.map(c => ({
                 time: Number(c.epoch),
                 open: Number(c.open),
@@ -669,17 +664,19 @@ function connectDeriv() {
                 low: Number(c.low),
                 close: Number(c.close)
             }));
-            candleSeries.setData(candles);
-            systemStatus.innerHTML = "LIVE";
+            
+            if (candleSeries) {
+                candleSeries.setData(candles);
+            }
+            if (typeof systemStatus !== 'undefined') systemStatus.innerHTML = "LIVE";
         }
 
-        // Live Tick එකක් එන විට (ohlc කියන object එක පාවිච්චි කිරීම වඩාත් නිවැරදියි subscribe කර ඇති විට)
-        if (data.ohlc) {
+        // 2. දිගටම ලැබෙන සජීවී දත්ත (Live OHLC Updates)
+        if (data.msg_type === 'ohlc') {
             const o = data.ohlc;
-            let candleTime = Number(o.open_time);
-            let lastCandle = candles[candles.length - 1];
+            const candleTime = Number(o.open_time);
 
-            let candleData = {
+            const candleData = {
                 time: candleTime,
                 open: Number(o.open),
                 high: Number(o.high),
@@ -687,27 +684,44 @@ function connectDeriv() {
                 close: Number(o.close)
             };
 
-            if (lastCandle && candleTime === lastCandle.time) {
-                candles[candles.length - 1] = candleData;
-            } else {
-                candles.push(candleData);
-                if (candles.length > 300) candles.shift();
+            // Chart එක update කිරීම (Lightweight charts මෙය ස්වයංක්‍රීයව හසුරුවයි)
+            if (candleSeries) {
+                candleSeries.update(candleData);
             }
-            candleSeries.update(candleData);
+
+            // Local array එක update කිරීම (අවශ්‍ය නම් පමණක්)
+            if (candles.length > 0) {
+                let lastCandle = candles[candles.length - 1];
+                if (candleTime === lastCandle.time) {
+                    candles[candles.length - 1] = candleData;
+                } else {
+                    candles.push(candleData);
+                    if (candles.length > 300) candles.shift();
+                }
+            }
         }
     };
 
     ws.onerror = (error) => {
-        console.log("WebSocket Error: ", error);
+        console.error("WebSocket Error: ", error);
     };
 
     ws.onclose = () => {
-        status.innerHTML = "OFFLINE";
-        systemStatus.innerHTML = "RECONNECTING";
-        // තත්පර 5ක් වැනි වැඩි කාලයක් දෙන්න reconnect වෙන්න (loop එක නතර කිරීමට)
-        setTimeout(connectDeriv, 5000); 
+        if (typeof status !== 'undefined') status.innerHTML = "OFFLINE";
+        if (typeof systemStatus !== 'undefined') systemStatus.innerHTML = "RECONNECTING";
+        // reconnect වීමට පෙර පරණ connection එක clear කිරීමට කාලයක් ලබා දෙන්න
+        setTimeout(() => {
+            console.log("Attempting to reconnect...");
+            connectDeriv();
+        }, 5000);
     };
 }
+        
+
+
+            
+    
+
 
     
 
