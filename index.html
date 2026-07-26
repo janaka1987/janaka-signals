@@ -617,28 +617,49 @@ marketName.innerHTML="Volatility 50";
 =========================================*/
 
 
-function connectDeriv() {
-    status.innerHTML = "CONNECTING...";
-    systemStatus.innerHTML = "LOADING";
+let ws;
+let pingInterval;
+let reconnectTimeout; // මේක අලුතින් එකතු කළා
 
+function connectDeriv() {
+    // 1. කලින් තියෙන ඕනෑම Reconnect attempt එකක් නවත්වන්න
+    if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+    }
+
+    // 2. කලින් connection එකක් තියෙනවා නම් ඒක පිරිසිදු කරන්න
     if (ws) {
+        console.log("Closing existing connection...");
+        ws.onopen = null;
+        ws.onmessage = null;
+        ws.onclose = null; // මේක ගොඩක් වැදගත් (loop එක නවත්වන්න)
+        ws.onerror = null;
         ws.close();
     }
+
+    // 3. කලින් තිබුණ Ping interval එක නවත්වන්න
+    if (pingInterval) {
+        clearInterval(pingInterval);
+    }
+
+    status.innerHTML = "CONNECTING...";
+    systemStatus.innerHTML = "LOADING";
 
     ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
 
     ws.onopen = () => {
         status.innerHTML = "ONLINE";
+        systemStatus.innerHTML = "LIVE";
+        console.log("Successfully Connected!");
 
-        // --- මෙන්න මේ කොටස අලුතින් එකතු කරන්න (Heartbeat/Ping) ---
-        // සෑම තත්පර 15කට වරක්ම connection එක පණපිටින් තබා ගැනීමට ping එකක් යවයි
-        setInterval(() => {
-            if (ws.readyState === WebSocket.OPEN) {
+        // Ping එක විනාඩියකට 4 පාරක් (තත්පර 15න් 15ට)
+        pingInterval = setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ ping: 1 }));
             }
         }, 15000);
-        // -------------------------------------------------------
 
+        // History ලබාගැනීම
         ws.send(JSON.stringify({
             ticks_history: currentMarket,
             adjust_start_time: 1,
@@ -652,7 +673,6 @@ function connectDeriv() {
     ws.onmessage = (msg) => {
         const data = JSON.parse(msg.data);
 
-        // Ping එකට ලැබෙන response එක ignore කරන්න
         if (data.msg_type === 'ping') return;
 
         if (data.candles) {
@@ -663,10 +683,9 @@ function connectDeriv() {
                 low: Number(c.low),
                 close: Number(c.close)
             }));
-
             candleSeries.setData(candles);
-            systemStatus.innerHTML = "LIVE";
 
+            // Subscribe to ticks
             ws.send(JSON.stringify({
                 ticks: currentMarket,
                 subscribe: 1
@@ -701,12 +720,27 @@ function connectDeriv() {
         }
     };
 
-    ws.onclose = () => {
+    ws.onclose = (e) => {
         status.innerHTML = "OFFLINE";
-        // වැදගත්: කලින් තිබුණ setInterval/timeout අයින් කර අලුතින් connect වෙන්න
-        setTimeout(connectDeriv, 2000);
+        systemStatus.innerHTML = "RECONNECTING...";
+        console.log("Connection closed. Reason: ", e.reason);
+
+        if (pingInterval) clearInterval(pingInterval);
+
+        // එකපාරටම reconnect නොවී තත්පර 3ක් ඉන්න (Loop නොවී තිබීමට)
+        reconnectTimeout = setTimeout(() => {
+            connectDeriv();
+        }, 3000);
+    };
+
+    ws.onerror = (err) => {
+        console.error("WebSocket Error occurred.");
+        ws.close(); 
     };
 }
+
+            
+                
 
 
     
