@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMC Pro Advanced Dashboard</title>
+    <title>SMC Pro AI Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #05070a; --glass: rgba(255, 255, 255, 0.03); --border: rgba(255, 255, 255, 0.08); }
-        body { background-color: var(--bg); color: #e1e1e1; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        body { background-color: var(--bg); color: #e1e1e1; font-family: 'Inter', sans-serif; overflow-x: hidden; margin: 0; }
         .glass { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 12px; }
         .neon-text { font-family: 'Orbitron', sans-serif; text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
-        #chart-container { height: 600px; width: 100%; position: relative; }
+        #chart-container { height: 500px; width: 100%; position: relative; }
         select { background: #1a1e23; color: white; border: 1px solid var(--border); padding: 5px 10px; border-radius: 8px; outline: none; }
     </style>
 </head>
@@ -24,33 +24,32 @@
             <div class="flex items-center gap-4">
                 <h1 class="neon-text text-xl font-bold text-blue-500 tracking-widest">SMC-AI ENGINE</h1>
                 <select id="market-select" onchange="changeMarket()">
-                    <option value="1HZ10V">Volatility 10 (1s)</option>
-                    <option value="1HZ25V">Volatility 25 (1s)</option>
-                    <option value="1HZ50V">Volatility 50 (1s)</option>
                     <option value="1HZ75V" selected>Volatility 75 (1s)</option>
+                    <option value="1HZ10V">Volatility 10 (1s)</option>
                     <option value="1HZ100V">Volatility 100 (1s)</option>
+                    <option value="R_100">Volatility 100 Index</option>
                 </select>
             </div>
             <div class="flex gap-8">
                 <div class="text-right"><p class="text-[10px] text-gray-500 uppercase">Live Price</p><p id="price" class="text-lg font-mono font-bold text-green-400">0.00</p></div>
-                <div class="text-right"><p class="text-[10px] text-gray-500 uppercase">Structure</p><p id="struct" class="text-lg font-bold text-blue-400">---</p></div>
+                <div class="text-right"><p class="text-[10px] text-gray-500 uppercase">Structure</p><p id="struct" class="text-lg font-bold text-blue-400">CONNECTING...</p></div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            <!-- Sidebar Stats -->
+            <!-- Sidebar -->
             <div class="lg:col-span-1 space-y-4">
                 <div class="glass p-4">
                     <h3 class="text-xs text-gray-500 mb-2 uppercase">Market Trend</h3>
                     <div id="trend-box" class="h-2 w-full bg-gray-800 rounded-full overflow-hidden">
                         <div id="trend-bar" class="h-full bg-blue-500 transition-all duration-500" style="width: 50%"></div>
                     </div>
-                    <p id="trend-text" class="mt-2 text-sm font-semibold">Neutral Range</p>
+                    <p id="trend-text" class="mt-2 text-sm font-semibold text-center">Analysing...</p>
                 </div>
                 <div class="glass p-4">
                     <h3 class="text-xs text-gray-500 mb-2 uppercase">Structure Log</h3>
-                    <div id="log" class="text-[11px] font-mono space-y-1 h-64 overflow-y-auto">
-                        <p class="text-gray-500">Waiting for data...</p>
+                    <div id="log" class="text-[11px] font-mono space-y-2 h-80 overflow-y-auto">
+                        <p class="text-gray-500">System initialization...</p>
                     </div>
                 </div>
             </div>
@@ -58,8 +57,7 @@
             <!-- Chart -->
             <div class="lg:col-span-3 glass relative overflow-hidden">
                 <div id="chart-container"></div>
-                <!-- Watermark -->
-                <div class="absolute bottom-10 right-10 text-white/5 text-4xl font-black pointer-events-none uppercase italic">SMC PRO AI</div>
+                <div class="absolute bottom-5 right-5 text-white/5 text-3xl font-black pointer-events-none uppercase italic">SMC PRO AI</div>
             </div>
         </div>
     </div>
@@ -69,13 +67,12 @@
         let ws;
         let candleData = [];
         let markers = [];
-        let lastBOS = null;
 
-        // --- CHART SETUP ---
+        // 1. Chart Setup
         const chart = LightweightCharts.createChart(document.getElementById('chart-container'), {
-            layout: { backgroundColor: 'transparent', textColor: '#848e9c', fontSize: 11 },
+            layout: { background: { color: 'transparent' }, textColor: '#848e9c', fontSize: 11 },
             grid: { vertLines: { color: '#161a1e' }, horzLines: { color: '#161a1e' } },
-            crosshair: { mode: 0, vertLine: { labelBackgroundColor: '#2b3139' }, horzLine: { labelBackgroundColor: '#2b3139' } },
+            crosshair: { mode: 0 },
             timeScale: { borderColor: '#2b3139', timeVisible: true, secondsVisible: true },
         });
 
@@ -84,44 +81,54 @@
             wickUpColor: '#089981', wickDownColor: '#f23645',
         });
 
+        // 2. WebSocket Connection
         function connect() {
             if (ws) ws.close();
             ws = new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id=1089');
 
             ws.onopen = () => {
+                addLog(`Connected to ${currentSymbol}`, 'text-blue-400');
                 ws.send(JSON.stringify({
-                    ticks_history: currentSymbol, adjust_start_time: 1, count: 200,
+                    ticks_history: currentSymbol, adjust_start_time: 1, count: 100,
                     end: "latest", granularity: 60, style: "candles", subscribe: 1
                 }));
-                addLog(`Connected to ${currentSymbol}`, 'text-blue-400');
             };
 
             ws.onmessage = (msg) => {
                 const res = JSON.parse(msg.data);
+                
                 if (res.candles) {
-                    candleData = res.candles.map(c => ({ time: c.epoch, open: c.open, high: c.high, low: c.low, close: c.close }));
+                    candleData = res.candles.map(c => ({ 
+                        time: c.epoch, open: c.open, high: c.high, low: c.low, close: c.close 
+                    }));
                     candleSeries.setData(candleData);
-                    processSMC();
+                    analyzeSMC();
                 }
+
                 if (res.ohlc) {
                     const o = res.ohlc;
                     const update = { time: o.open_time, open: o.open, high: o.high, low: o.low, close: o.close };
                     candleSeries.update(update);
                     document.getElementById('price').innerText = o.close;
-                    // Real-time analysis for every tick
-                    candleData[candleData.length - 1] = update;
-                    processSMC();
+                    
+                    // Update last candle in array
+                    if (candleData.length > 0) {
+                        candleData[candleData.length - 1] = update;
+                    }
+                    analyzeSMC();
                 }
             };
+
+            ws.onerror = () => addLog("Connection Error!", "text-red-500");
         }
 
-        function processSMC() {
-            if (candleData.length < 20) return;
+        // 3. SMC Logic (BOS / CHOCH / HH-LL)
+        function analyzeSMC() {
+            if (candleData.length < 10) return;
+            
             markers = [];
-            let swings = [];
-            const lookback = 3; // Window to find peaks/troughs
+            const lookback = 3; 
 
-            // 1. Identify Swing Highs/Lows
             for (let i = lookback; i < candleData.length - lookback; i++) {
                 let isHigh = true, isLow = true;
                 for (let j = 1; j <= lookback; j++) {
@@ -129,36 +136,29 @@
                     if (candleData[i].low > candleData[i-j].low || candleData[i].low > candleData[i+j].low) isLow = false;
                 }
 
-                if (isHigh) swings.push({ type: 'H', val: candleData[i].high, time: candleData[i].time });
-                if (isLow) swings.push({ type: 'L', val: candleData[i].low, time: candleData[i].time });
-            }
-
-            // 2. Label HH, HL, LH, LL
-            for (let i = 2; i < swings.length; i++) {
-                let label = "";
-                let color = "#fff";
-                
-                if (swings[i].type === 'H') {
-                    label = (swings[i].val > swings[i-2].val) ? "HH" : "LH";
-                    color = "#00ffcc";
-                } else {
-                    label = (swings[i].val < swings[i-2].val) ? "LL" : "HL";
-                    color = "#ff4d4d";
+                if (isHigh) {
+                    markers.push({ time: candleData[i].time, position: 'aboveBar', color: '#00ffcc', shape: 'arrowDown', text: 'H' });
                 }
-
-                markers.push({ time: swings[i].time, position: swings[i].type === 'H' ? 'aboveBar' : 'belowBar', color: color, shape: 'arrowDown', text: label });
-
-                // 3. Simple BOS/CHOCH logic
-                const lastPrice = candleData[candleData.length - 1].close;
-                if (swings[i].type === 'H' && lastPrice > swings[i].val) {
-                    addLog(`BOS Detected @ ${swings[i].val}`, 'text-green-400');
-                    document.getElementById('struct').innerText = "Bullish BOS";
-                }
-                if (swings[i].type === 'L' && lastPrice < swings[i].val) {
-                    addLog(`CHOCH Detected @ ${swings[i].val}`, 'text-red-400');
-                    document.getElementById('struct').innerText = "Bearish CHOCH";
+                if (isLow) {
+                    markers.push({ time: candleData[i].time, position: 'belowBar', color: '#ff4d4d', shape: 'arrowUp', text: 'L' });
                 }
             }
+
+            // Simple Trend Logic
+            const last = candleData[candleData.length-1];
+            const prev = candleData[candleData.length-5];
+            if(last.close > prev.high) {
+                document.getElementById('struct').innerText = "Bullish BOS";
+                document.getElementById('trend-text').innerText = "Strong Buy";
+                document.getElementById('trend-bar').style.width = "90%";
+                document.getElementById('trend-bar').style.backgroundColor = "#089981";
+            } else if (last.close < prev.low) {
+                document.getElementById('struct').innerText = "Bearish CHOCH";
+                document.getElementById('trend-text').innerText = "Strong Sell";
+                document.getElementById('trend-bar').style.width = "10%";
+                document.getElementById('trend-bar').style.backgroundColor = "#f23645";
+            }
+
             candleSeries.setMarkers(markers);
         }
 
@@ -169,6 +169,18 @@
             connect();
         }
 
-        function addLog(txt, color) {
+        function addLog(txt, colorClass) {
             const log = document.getElementById('log');
             const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('p');
+            entry.className = colorClass;
+            entry.innerHTML = `<span class="text-gray-600">[${time}]</span> ${txt}`;
+            log.prepend(entry);
+        }
+
+        // START
+        window.onload = connect;
+
+    </script>
+</body>
+</html>
