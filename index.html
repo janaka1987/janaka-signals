@@ -667,7 +667,7 @@ function connectDeriv(){
                 subscribe: 1
             }));
 
-            systemStatus.innerHTML = "LIVE";
+            systemStatus.innerHTML = data.msg_type;
         }
 
         if(data.tick){
