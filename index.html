@@ -728,21 +728,8 @@ function connectDeriv() {
 
     
 
-    ws.onerror = () => {
+    
 
-        status.innerHTML = "ERROR";
-        systemStatus.innerHTML = "FAILED";
-
-    };
-
-    ws.onclose = () => {
-
-        status.innerHTML = "OFFLINE";
-        systemStatus.innerHTML = "DISCONNECTED";
-
-    };
-
-}
 
         
             
