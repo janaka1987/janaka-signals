@@ -641,19 +641,13 @@ function connectDeriv(){
             end: "latest",
             granularity: 60,
             style: "candles"
-            subscribe: 1
+            
         }));
 
     };
 
     ws.onmessage = (msg) => {
-const data = JSON.parse(msg.data);
 
-if(data.error){
-    status.innerHTML = "ERROR";
-    systemStatus.innerHTML = data.error.message;
-    return;
-}
         const data = JSON.parse(msg.data);
 
         if(data.candles){
@@ -673,7 +667,7 @@ if(data.error){
                 subscribe: 1
             }));
 
-            systemStatus.innerHTML = data.msg_type;
+            systemStatus.innerHTML = "LIVE";
         }
 
         if(data.tick){
