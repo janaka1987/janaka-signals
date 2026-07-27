@@ -81,9 +81,6 @@ select:focus{border-color:var(--green);box-shadow:0 0 12px rgba(0,255,136,.3);}
 </div>
 
 <script>
-/*=========================================
-            CONFIG
-=========================================*/
 const APP_ID = "1089";
 const TIMEFRAME = 60;
 const MAX_CANDLES = 300;
@@ -101,11 +98,11 @@ function calculateSMC() {
     let swings = [];
     const windowSize = 4;
 
-    // Remove old FVG Boxes
+    // Clear old FVG visuals
     fvgSeriesList.forEach(s => chart.removeSeries(s));
     fvgSeriesList = [];
 
-    // SWING DETECTION (BOS/CHOCH/HH/LH/LL - Preserved exactly)
+    // SWING DETECTION (BOS/CHOCH/HH/LH/LL)
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true, isLow = true;
         for (let j = 1; j <= windowSize; j++) {
@@ -146,7 +143,7 @@ function calculateSMC() {
         lineData.push({ time: s.time, value: s.price });
     });
 
-    // ENGULFING (B.E and S.E - Preserved exactly)
+    // ENGULFING
     for (let i = candles.length - 15; i < candles.length; i++) {
         if (i < 1) continue;
         const curr = candles[i], prev = candles[i-1];
@@ -158,12 +155,18 @@ function calculateSMC() {
         }
     }
 
-    // --- PERFECT FVG BOX LOGIC (As per user request) ---
-    for (let i = candles.length - 50; i < candles.length - 1; i++) {
+    // --- NEW CLEAN FVG BOX LOGIC ---
+    for (let i = candles.length - 80; i < candles.length; i++) {
         if (i < 2) continue;
+        
         let fvgTop = 0, fvgBottom = 0, fvgType = "";
-        if (candles[i-2].high < candles[i].low) { fvgTop = candles[i].low; fvgBottom = candles[i-2].high; fvgType = "BULL"; }
-        else if (candles[i-2].low > candles[i].high) { fvgTop = candles[i-2].low; fvgBottom = candles[i].high; fvgType = "BEAR"; }
+        const c1 = candles[i-2], c3 = candles[i];
+
+        if (c1.high < c3.low) { 
+            fvgTop = c3.low; fvgBottom = c1.high; fvgType = "BULL"; 
+        } else if (c1.low > c3.high) { 
+            fvgTop = c1.low; fvgBottom = c3.high; fvgType = "BEAR"; 
+        }
 
         if (fvgType !== "") {
             let mitigationTime = null;
@@ -171,16 +174,18 @@ function calculateSMC() {
                 if (fvgType === "BULL" && candles[k].low <= fvgBottom) { mitigationTime = candles[k].time; break; }
                 if (fvgType === "BEAR" && candles[k].high >= fvgTop) { mitigationTime = candles[k].time; break; }
             }
-            const boxEndTime = mitigationTime || candles[candles.length - 1].time;
-            const color = fvgType === "BULL" ? 'rgba(0, 255, 136, 0.25)' : 'rgba(255, 77, 77, 0.25)';
 
-            const area = chart.addAreaSeries({
-                topColor: color, bottomColor: color, lineVisible: false,
-                baseValue: { type: 'price', price: fvgBottom },
+            const endTime = mitigationTime || candles[candles.length - 1].time;
+            const boxColor = fvgType === "BULL" ? 'rgba(0, 255, 136, 0.15)' : 'rgba(255, 77, 77, 0.15)';
+
+            const fvgSeries = chart.addAreaSeries({
+                topColor: boxColor, bottomColor: boxColor, lineVisible: false,
                 lastValueVisible: false, priceLineVisible: false,
+                baseValue: { type: 'price', price: fvgBottom },
             });
-            area.setData([ { time: candles[i-1].time, value: fvgTop }, { time: boxEndTime, value: fvgTop } ]);
-            fvgSeriesList.push(area);
+
+            fvgSeries.setData([{ time: candles[i-1].time, value: fvgTop }, { time: endTime, value: fvgTop }]);
+            fvgSeriesList.push(fvgSeries);
         }
     }
 
