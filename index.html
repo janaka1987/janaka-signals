@@ -149,6 +149,13 @@ function calculateSMC() {
             }
             if (!isMitigated && currentDir === "UPTREND") {
                 markers.push({ time: candles[i-1].time, position: 'belowBar', color: '#00FF88', shape: 'square', text: 'FVG ZONE' });
+                activeFVGs.push({
+    type: "bull",
+    startTime: candles[i-1].time,
+    top: candles[i].low,
+    bottom: candles[i-2].high,
+    active: true
+});
             }
         }
         // Bearish FVG
