@@ -399,9 +399,29 @@ height:520px;
 
         </div>
 
-        
+        <div class="card">
 
-    
+            <h3>🌐 CONNECTION STATUS</h3>
+
+            <div class="status">
+
+                Status :
+                <span id="status">
+                    Connecting...
+                </span>
+
+                <br><br>
+
+                Market :
+                <span id="marketName">
+                    Volatility 50
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
 
     <div class="card chart-card">
 
@@ -425,13 +445,23 @@ height:520px;
                 WAIT
             </div>
 
-        
+        </div>
 
-        
+        <div class="info-box">
 
-    
+            <div class="info-title">
+                ⚡ SYSTEM STATUS
+            </div>
 
+            <div class="info-value cyan" id="systemStatus">
+                READY
+            </div>
 
+        </div>
+
+    </div>
+
+</div>
 
     <script>
 
@@ -467,9 +497,9 @@ let supportLine = null;
 
 const marketSelect = document.getElementById("market");
 const marketName = document.getElementById("marketName");
-
+const status = document.getElementById("status");
 const trend = document.getElementById("trend");
-
+const systemStatus = document.getElementById("systemStatus");
 const chartContainer = document.getElementById("chart");
 
 
@@ -639,7 +669,14 @@ chart.applyOptions({ width:chartContainer.clientWidth });
 }
 
 
+/*=========================================
+        START APP
+=========================================*/
 
+createChart();
+status.innerHTML="READY";
+systemStatus.innerHTML="INITIALIZED";
+marketName.innerHTML="Volatility 50";
     
         
 /*=========================================
@@ -691,7 +728,6 @@ function connectDeriv() {
         }
 
         if (data.tick) {
-            systemStatus.innerHTML = "TICK";
             let price = Number(data.tick.quote);
             let epoch = Number(data.tick.epoch);
             let candleTime = Math.floor(epoch / TIMEFRAME) * TIMEFRAME;
@@ -722,7 +758,7 @@ function connectDeriv() {
     };
 
     ws.onclose = () => {
-        
+        status.innerHTML = "OFFLINE";
        setTimeout(connectDeriv, 2000);
     };
 }
