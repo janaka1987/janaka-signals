@@ -89,7 +89,6 @@ let ws = null, chart = null, candleSeries = null, trendSeries = null;
 let candles = [];
 let currentMarket = "R_50";
 let resistanceLine = null, supportLine = null;
-let activeFVGs = []; // Store active FVG objects
 
 function calculateSMC() {
     if (candles.length < 20) return;
@@ -98,7 +97,7 @@ function calculateSMC() {
     let swings = [];
     const windowSize = 4;
 
-    // SWING DETECTION
+    // SWING DETECTION (BOS/CHOCH/HH/LH/LL)
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true, isLow = true;
         for (let j = 1; j <= windowSize; j++) {
@@ -139,44 +138,28 @@ function calculateSMC() {
         lineData.push({ time: s.time, value: s.price });
     });
 
-    // --- FVG BOX LOGIC ---
-    const minGap = (candles[0].high - candles[0].low) * 0.3; 
-    
-    // Check mitigation for existing FVGs first
-    const currentPrice = candles[candles.length - 1].close;
-    activeFVGs = activeFVGs.filter(fvg => {
-        if (fvg.type === "bull" && candles[candles.length - 1].low <= fvg.top && candles[candles.length - 1].low >= fvg.bottom) {
-            chart.removeSeries(fvg.series); return false;
-        }
-        if (fvg.type === "bear" && candles[candles.length - 1].high >= fvg.bottom && candles[candles.length - 1].high <= fvg.top) {
-            chart.removeSeries(fvg.series); return false;
-        }
-        // Update box end time to current candle to draw it forward
-        fvg.series.setData([{ time: fvg.startTime, value: fvg.top }, { time: candles[candles.length-1].time, value: fvg.top }]);
-        return true;
-    });
-
-    for (let i = 2; i < candles.length - 1; i++) {
-        let fvgId = "fvg_" + candles[i-1].time;
-        if (activeFVGs.find(f => f.id === fvgId)) continue;
-
+    // --- FVG LOGIC WITH 4 FILTERS ---
+    const minGap = (candles[0].high - candles[0].low) * 0.5; // Gap Size Filter Logic
+    for (let i = 2; i < candles.length; i++) {
         // Bullish FVG
         if (candles[i-2].high < candles[i].low && (candles[i].low - candles[i-2].high) > minGap) {
-            let s = chart.addAreaSeries({ 
-                topColor: 'rgba(0, 255, 136, 0.2)', bottomColor: 'rgba(0, 255, 136, 0.2)', 
-                lineColor: 'rgba(0, 255, 136, 0.4)', lineWidth: 1, baseValue: { type: 'price', price: candles[i-2].high }
-            });
-            activeFVGs.push({ id: fvgId, type: "bull", startTime: candles[i-1].time, top: candles[i].low, bottom: candles[i-2].high, series: s });
-            markers.push({ time: candles[i-1].time, position: 'belowBar', color: '#00FF88', shape: 'square', text: 'FVG' });
+            let isMitigated = false;
+            for (let j = i + 1; j < candles.length; j++) {
+                if (candles[j].low <= candles[i-2].high) { isMitigated = true; break; }
+            }
+            if (!isMitigated && currentDir === "UPTREND") {
+                markers.push({ time: candles[i-1].time, position: 'belowBar', color: '#00FF88', shape: 'square', text: 'FVG ZONE' });
+            }
         }
         // Bearish FVG
         else if (candles[i-2].low > candles[i].high && (candles[i-2].low - candles[i].high) > minGap) {
-            let s = chart.addAreaSeries({ 
-                topColor: 'rgba(255, 77, 77, 0.2)', bottomColor: 'rgba(255, 77, 77, 0.2)', 
-                lineColor: 'rgba(255, 77, 77, 0.4)', lineWidth: 1, baseValue: { type: 'price', price: candles[i].high }
-            });
-            activeFVGs.push({ id: fvgId, type: "bear", startTime: candles[i-1].time, top: candles[i-2].low, bottom: candles[i].high, series: s });
-            markers.push({ time: candles[i-1].time, position: 'aboveBar', color: '#FF4D4D', shape: 'square', text: 'FVG' });
+            let isMitigated = false;
+            for (let j = i + 1; j < candles.length; j++) {
+                if (candles[j].high >= candles[i-2].low) { isMitigated = true; break; }
+            }
+            if (!isMitigated && currentDir === "DOWNTREND") {
+                markers.push({ time: candles[i-1].time, position: 'aboveBar', color: '#FF4D4D', shape: 'square', text: 'FVG ZONE' });
+            }
         }
     }
 
@@ -226,10 +209,6 @@ const marketSelect = document.getElementById("market"), marketName = document.ge
 function connectDeriv() {
     status.innerHTML = "CONNECTING...";
     if (ws) ws.close();
-    // Clear old FVG series when changing market
-    activeFVGs.forEach(fvg => chart.removeSeries(fvg.series));
-    activeFVGs = [];
-    
     ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
     ws.onopen = () => {
         status.innerHTML = "ONLINE";
@@ -255,9 +234,8 @@ function connectDeriv() {
             } else {
                 let newCandle = { time: candleTime, open: price, high: price, low: price, close: price };
                 candles.push(newCandle); if (candles.length > 300) candles.shift();
-                candleSeries.update(newCandle); 
+                candleSeries.update(newCandle); calculateSMC();
             }
-            calculateSMC(); // Keep checking for FVG mitigation and draw boxes
         }
     };
     ws.onclose = () => { status.innerHTML = "OFFLINE"; setTimeout(connectDeriv, 2000); };
