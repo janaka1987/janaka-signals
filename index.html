@@ -89,7 +89,6 @@ let ws = null, chart = null, candleSeries = null, trendSeries = null;
 let candles = [];
 let currentMarket = "R_50";
 let resistanceLine = null, supportLine = null;
-let fvgSeriesList = []; 
 
 function calculateSMC() {
     if (candles.length < 20) return;
@@ -97,10 +96,6 @@ function calculateSMC() {
     let markers = [];
     let swings = [];
     const windowSize = 4;
-
-    // Clear old FVG visuals
-    fvgSeriesList.forEach(s => chart.removeSeries(s));
-    fvgSeriesList = [];
 
     // SWING DETECTION (BOS/CHOCH/HH/LH/LL)
     for (let i = windowSize; i < candles.length - windowSize; i++) {
@@ -152,40 +147,6 @@ function calculateSMC() {
         }
         if (prev.close > prev.open && curr.close < curr.open && curr.close < prev.open && curr.open > prev.close) {
             markers.push({ time: curr.time, position: 'aboveBar', color: '#A020F0', shape: 'arrowDown', text: 'S.E' });
-        }
-    }
-
-    // --- NEW CLEAN FVG BOX LOGIC ---
-    for (let i = candles.length - 80; i < candles.length; i++) {
-        if (i < 2) continue;
-        
-        let fvgTop = 0, fvgBottom = 0, fvgType = "";
-        const c1 = candles[i-2], c3 = candles[i];
-
-        if (c1.high < c3.low) { 
-            fvgTop = c3.low; fvgBottom = c1.high; fvgType = "BULL"; 
-        } else if (c1.low > c3.high) { 
-            fvgTop = c1.low; fvgBottom = c3.high; fvgType = "BEAR"; 
-        }
-
-        if (fvgType !== "") {
-            let mitigationTime = null;
-            for (let k = i + 1; k < candles.length; k++) {
-                if (fvgType === "BULL" && candles[k].low <= fvgBottom) { mitigationTime = candles[k].time; break; }
-                if (fvgType === "BEAR" && candles[k].high >= fvgTop) { mitigationTime = candles[k].time; break; }
-            }
-
-            const endTime = mitigationTime || candles[candles.length - 1].time;
-            const boxColor = fvgType === "BULL" ? 'rgba(0, 255, 136, 0.15)' : 'rgba(255, 77, 77, 0.15)';
-
-            const fvgSeries = chart.addAreaSeries({
-                topColor: boxColor, bottomColor: boxColor, lineVisible: false,
-                lastValueVisible: false, priceLineVisible: false,
-                baseValue: { type: 'price', price: fvgBottom },
-            });
-
-            fvgSeries.setData([{ time: candles[i-1].time, value: fvgTop }, { time: endTime, value: fvgTop }]);
-            fvgSeriesList.push(fvgSeries);
         }
     }
 
