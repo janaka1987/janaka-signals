@@ -88,18 +88,12 @@ const APP_ID = "1089";
 const TIMEFRAME = 60;
 const MAX_CANDLES = 300;
 
-/*=========================================
-        GLOBAL VARIABLES
-=========================================*/
 let ws = null, chart = null, candleSeries = null, trendSeries = null;
 let candles = [];
 let currentMarket = "R_50";
 let resistanceLine = null, supportLine = null;
 let fvgSeriesList = []; 
 
-/*=========================================
-        SMC + FVG + ENGULFING LOGIC
-=========================================*/
 function calculateSMC() {
     if (candles.length < 20) return;
 
@@ -107,11 +101,11 @@ function calculateSMC() {
     let swings = [];
     const windowSize = 4;
 
-    // Reset FVG Areas
+    // Remove old FVG Boxes
     fvgSeriesList.forEach(s => chart.removeSeries(s));
     fvgSeriesList = [];
 
-    // SWING DETECTION (Identical to original)
+    // SWING DETECTION (BOS/CHOCH/HH/LH/LL - Preserved exactly)
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true, isLow = true;
         for (let j = 1; j <= windowSize; j++) {
@@ -152,7 +146,7 @@ function calculateSMC() {
         lineData.push({ time: s.time, value: s.price });
     });
 
-    // --- INTEGRATED: ENGULFING ---
+    // ENGULFING (B.E and S.E - Preserved exactly)
     for (let i = candles.length - 15; i < candles.length; i++) {
         if (i < 1) continue;
         const curr = candles[i], prev = candles[i-1];
@@ -164,33 +158,29 @@ function calculateSMC() {
         }
     }
 
-    // --- INTEGRATED: FVG ---
-    for (let i = candles.length - 25; i < candles.length - 1; i++) {
+    // --- PERFECT FVG BOX LOGIC (As per user request) ---
+    for (let i = candles.length - 50; i < candles.length - 1; i++) {
         if (i < 2) continue;
         let fvgTop = 0, fvgBottom = 0, fvgType = "";
         if (candles[i-2].high < candles[i].low) { fvgTop = candles[i].low; fvgBottom = candles[i-2].high; fvgType = "BULL"; }
         else if (candles[i-2].low > candles[i].high) { fvgTop = candles[i-2].low; fvgBottom = candles[i].high; fvgType = "BEAR"; }
 
         if (fvgType !== "") {
-            let mitigated = false;
+            let mitigationTime = null;
             for (let k = i + 1; k < candles.length; k++) {
-                if (fvgType === "BULL" && candles[k].low <= fvgBottom) mitigated = true;
-                if (fvgType === "BEAR" && candles[k].high >= fvgTop) mitigated = true;
+                if (fvgType === "BULL" && candles[k].low <= fvgBottom) { mitigationTime = candles[k].time; break; }
+                if (fvgType === "BEAR" && candles[k].high >= fvgTop) { mitigationTime = candles[k].time; break; }
             }
-            if (!mitigated) {
-                const area = chart.addAreaSeries({
-                    topColor: fvgType === "BULL" ? 'rgba(0, 255, 136, 0.15)' : 'rgba(255, 77, 77, 0.15)',
-                    bottomColor: 'rgba(0,0,0,0)', lineVisible: false, lastValueVisible: false, priceLineVisible: false,
-                });
-                area.setData([
-                    { time: candles[i-1].time, value: fvgTop },
-                    { time: candles[candles.length-1].time, value: fvgTop },
-                    { time: candles[i-1].time, value: fvgBottom },
-                    { time: candles[candles.length-1].time, value: fvgBottom }
-                ]);
-                markers.push({ time: candles[i-1].time, position: fvgType==="BULL"?'belowBar':'aboveBar', color: fvgType==="BULL"?'rgba(0,255,136,0.4)':'rgba(255,77,77,0.4)', shape: 'square', text: 'FVG' });
-                fvgSeriesList.push(area);
-            }
+            const boxEndTime = mitigationTime || candles[candles.length - 1].time;
+            const color = fvgType === "BULL" ? 'rgba(0, 255, 136, 0.25)' : 'rgba(255, 77, 77, 0.25)';
+
+            const area = chart.addAreaSeries({
+                topColor: color, bottomColor: color, lineVisible: false,
+                baseValue: { type: 'price', price: fvgBottom },
+                lastValueVisible: false, priceLineVisible: false,
+            });
+            area.setData([ { time: candles[i-1].time, value: fvgTop }, { time: boxEndTime, value: fvgTop } ]);
+            fvgSeriesList.push(area);
         }
     }
 
@@ -199,7 +189,6 @@ function calculateSMC() {
     trend.innerText = currentDir || "ANALYZING";
     trend.style.color = currentDir === "UPTREND" ? "#00FF88" : "#FF4D4D";
 
-    // Support/Resistance (Identical to original)
     if (resistanceLine) candleSeries.removePriceLine(resistanceLine);
     if (supportLine) candleSeries.removePriceLine(supportLine);
     const highSwings = swings.filter(s => s.type === 'H'), lowSwings = swings.filter(s => s.type === 'L');
@@ -224,7 +213,7 @@ function createChart(){
     window.addEventListener("resize",()=>{ chart.applyOptions({ width:chartContainer.clientWidth }); });
 }
 
-const marketSelect = document.getElementById("market"), marketName = document.getElementById("marketName"), status = document.getElementById("status"), trend = document.getElementById("trend"), systemStatus = document.getElementById("systemStatus"), chartContainer = document.getElementById("chart");
+const marketSelect = document.getElementById("market"), marketName = document.getElementById("marketName"), status = document.getElementById("status"), trend = document.getElementById("trend"), chartContainer = document.getElementById("chart");
 
 function connectDeriv() {
     status.innerHTML = "CONNECTING...";
