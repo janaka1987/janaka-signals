@@ -276,6 +276,20 @@ if(currentDir=="UPTREND" && green>=3){
 if(currentDir=="DOWNTREND" && red>=3){
     oneColour = true;
 }
+
+    // HIDDEN OPEN
+
+let hiddenOpen = false;
+
+let last = candles[candles.length - 1];
+
+if(currentDir == "UPTREND" && last.close > last.open){
+    hiddenOpen = true;
+}
+
+if(currentDir == "DOWNTREND" && last.close < last.open){
+    hiddenOpen = true;
+}
     // SIGNAL ENGINE
 
 let confidence = 0;
