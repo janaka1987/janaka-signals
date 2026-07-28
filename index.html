@@ -313,7 +313,7 @@ signalText;
 
 document.getElementById("confidence").innerHTML =
 confidence + "%";
-}
+
     document.getElementById("techniquesBox").innerHTML = `
 Key Level ❌<br>
 One Colour ❌<br>
@@ -327,7 +327,7 @@ BOS ${recentBOS ? "✅" : "❌"}<br>
 CHOCH ${recentCHOCH ? "✅" : "❌"}<br>
 Trendline ❌
 `;
-
+}
 function createChart(){
     chart = LightweightCharts.createChart(chartContainer,{
         layout:{ background:{ color:"#05070A" }, textColor:"#E5E7EB" },
