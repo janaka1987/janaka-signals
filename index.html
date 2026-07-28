@@ -142,6 +142,7 @@ let candles = [];
 let currentMarket = "R_50";
 let resistanceLine = null, supportLine = null;
 let activeFVGs = [];
+    let hasFVG = false;
     
 function calculateSMC() {
     if (candles.length < 20) return;
