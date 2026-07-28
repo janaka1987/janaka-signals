@@ -199,7 +199,7 @@ let hasEngulfing = false;
 
     // --- FVG LOGIC WITH 4 FILTERS ---
     const minGap = (candles[0].high - candles[0].low) * 0.5; // Gap Size Filter Logic
-    for (let i = 2; i < candles.length; i++) {
+    for (let i = Math.max(2, candles.length - 30); i < candles.length; i++) {
         // Bullish FVG
         if (candles[i-2].high < candles[i].low && (candles[i].low - candles[i-2].high) > minGap) {
             let isMitigated = false;
