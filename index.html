@@ -242,7 +242,14 @@ let hasEngulfing = false;
     trendSeries.setData(lineData);
     trend.innerText = currentDir || "ANALYZING";
     trend.style.color = currentDir === "UPTREND" ? "#00FF88" : "#FF4D4D";
+    
+// KEY LEVEL
 
+let hasKeyLevel = false;
+
+if (supportLine || resistanceLine) {
+    hasKeyLevel = true;
+}
     if (resistanceLine) candleSeries.removePriceLine(resistanceLine);
     if (supportLine) candleSeries.removePriceLine(supportLine);
     const highSwings = swings.filter(s => s.type === 'H'), lowSwings = swings.filter(s => s.type === 'L');
