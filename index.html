@@ -229,9 +229,11 @@ let hasEngulfing = false;
         if (i < 1) continue;
         const curr = candles[i], prev = candles[i-1];
         if (prev.close < prev.open && curr.close > curr.open && curr.close > prev.open && curr.open < prev.close) {
+            hasEngulfing = true;
             markers.push({ time: curr.time, position: 'belowBar', color: '#FFA500', shape: 'arrowUp', text: 'B.E' });
         }
         if (prev.close > prev.open && curr.close < curr.open && curr.close < prev.open && curr.open > prev.close) {
+            hasEngulfing = true;
             markers.push({ time: curr.time, position: 'aboveBar', color: '#A020F0', shape: 'arrowDown', text: 'S.E' });
         }
     }
