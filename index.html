@@ -175,6 +175,7 @@ let recentCHOCH = false;
                 currentDir = "UPTREND";
             } else if (lastH && s.price < lastH.price) {
                 label = "LH"; color = "#FF4D4D";
+                recentCHOCH = true;
                 if(currentDir === "UPTREND") markers.push({ time: s.time, position: 'aboveBar', color: '#FF00FF', shape: 'arrowDown', text: 'CHOCH' });
                 currentDir = "DOWNTREND";
             }
@@ -186,6 +187,7 @@ let recentCHOCH = false;
                 markers.push({ time: s.time, position: 'belowBar', color: '#FFD700', shape: 'arrowUp', text: 'BOS' });
             } else if (lastL && s.price > lastL.price) {
                 label = "HL"; color = "#00FF88";
+                recentCHOCH = true;
                 if(currentDir === "DOWNTREND") markers.push({ time: s.time, position: 'belowBar', color: '#FF00FF', shape: 'arrowUp', text: 'CHOCH' });
             }
             lastL = s;
