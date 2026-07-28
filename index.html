@@ -314,6 +314,19 @@ signalText;
 document.getElementById("confidence").innerHTML =
 confidence + "%";
 }
+    document.getElementById("techniquesBox").innerHTML = `
+Key Level ❌<br>
+One Colour ❌<br>
+Hidden Open ❌<br>
+FVG ${hasFVG ? "✅" : "❌"}<br>
+Engulfing ${hasEngulfing ? "✅" : "❌"}
+`;
+
+document.getElementById("supportBox").innerHTML = `
+BOS ${recentBOS ? "✅" : "❌"}<br>
+CHOCH ${recentCHOCH ? "✅" : "❌"}<br>
+Trendline ❌
+`;
 
 function createChart(){
     chart = LightweightCharts.createChart(chartContainer,{
