@@ -322,7 +322,7 @@ document.getElementById("confidence").innerHTML =
 confidence + "%";
 
     document.getElementById("techniquesBox").innerHTML = `
-Key Level ❌<br>
+Key Level ${hasKeyLevel ? "✅" : "❌"}
 One Colour ❌<br>
 Hidden Open ❌<br>
 FVG ${hasFVG ? "✅" : "❌"}<br>
