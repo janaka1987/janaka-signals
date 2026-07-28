@@ -164,7 +164,8 @@ function calculateSMC() {
     let lineData = [];
     let recentBOS = false;
 let recentCHOCH = false;
-
+let hasFVG = false;
+let hasEngulfing = false;
     swings.forEach((s) => {
         let label = "", color = "#FFFFFF";
         if (s.type === 'H') {
