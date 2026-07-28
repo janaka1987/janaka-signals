@@ -146,7 +146,8 @@ let activeFVGs = [];
     
 function calculateSMC() {
     if (candles.length < 20) return;
-
+    
+hasFVG = false;
     let markers = [];
     let swings = [];
     const windowSize = 4;
