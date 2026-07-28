@@ -141,18 +141,14 @@ let ws = null, chart = null, candleSeries = null, trendSeries = null;
 let candles = [];
 let currentMarket = "R_50";
 let resistanceLine = null, supportLine = null;
-let activeFVGs = [];
-    let hasFVG = false;
-    
+
 function calculateSMC() {
     if (candles.length < 20) return;
-    
-hasFVG = false;
+
     let markers = [];
     let swings = [];
     const windowSize = 4;
 
-    
     // SWING DETECTION (BOS/CHOCH/HH/LH/LL)
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true, isLow = true;
@@ -203,7 +199,7 @@ let hasEngulfing = false;
 
     // --- FVG LOGIC WITH 4 FILTERS ---
     const minGap = (candles[0].high - candles[0].low) * 0.5; // Gap Size Filter Logic
-    for (let i = Math.max(2, candles.length - 30); i < candles.length; i++) {
+    for (let i = 2; i < candles.length; i++) {
         // Bullish FVG
         if (candles[i-2].high < candles[i].low && (candles[i].low - candles[i-2].high) > minGap) {
             let isMitigated = false;
@@ -211,17 +207,8 @@ let hasEngulfing = false;
                 if (candles[j].low <= candles[i-2].high) { isMitigated = true; break; }
             }
             if (!isMitigated && currentDir === "UPTREND") {
-                if (hasFVG) continue;
                 hasFVG = true;
-
-activeFVGs.push({
-    type: "bull",
-    top: candles[i].low,
-    bottom: candles[i-2].high,
-    start: candles[i-1].time,
-    active: true
-});
-               
+                markers.push({ time: candles[i-1].time, position: 'belowBar', color: '#00FF88', shape: 'square', text: 'FVG ZONE' });
             }
         }
         // Bearish FVG
@@ -232,14 +219,7 @@ activeFVGs.push({
             }
             if (!isMitigated && currentDir === "DOWNTREND") {
                 hasFVG = true;
-
-activeFVGs.push({
-    type: "bear",
-    top: candles[i-2].low,
-    bottom: candles[i].high,
-    start: candles[i-1].time,
-    active: true
-});
+                markers.push({ time: candles[i-1].time, position: 'aboveBar', color: '#FF4D4D', shape: 'square', text: 'FVG ZONE' });
             }
         }
     }
