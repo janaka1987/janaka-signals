@@ -328,8 +328,8 @@ if(hasFVG){
 }
 
 // Engulfing
-if(markers.some(m => m.text === "B.E" || m.text === "S.E")){
-    confidence += 20;
+if(hasEngulfing){
+    confidence += 10;
 }
 
 // SIGNAL RESULT
