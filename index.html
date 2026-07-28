@@ -207,6 +207,7 @@ let hasEngulfing = false;
                 if (candles[j].low <= candles[i-2].high) { isMitigated = true; break; }
             }
             if (!isMitigated && currentDir === "UPTREND") {
+                hasFVG = true;
                 markers.push({ time: candles[i-1].time, position: 'belowBar', color: '#00FF88', shape: 'square', text: 'FVG ZONE' });
             }
         }
@@ -217,6 +218,7 @@ let hasEngulfing = false;
                 if (candles[j].high >= candles[i-2].low) { isMitigated = true; break; }
             }
             if (!isMitigated && currentDir === "DOWNTREND") {
+                hasFVG = true;
                 markers.push({ time: candles[i-1].time, position: 'aboveBar', color: '#FF4D4D', shape: 'square', text: 'FVG ZONE' });
             }
         }
