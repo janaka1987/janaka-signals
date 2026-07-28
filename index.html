@@ -290,6 +290,18 @@ if(currentDir == "UPTREND" && last.close > last.open){
 if(currentDir == "DOWNTREND" && last.close < last.open){
     hiddenOpen = true;
 }
+
+    // TRENDLINE
+
+let trendlineOK = false;
+
+if (
+    (currentDir == "UPTREND" && swings.length >= 2) ||
+    (currentDir == "DOWNTREND" && swings.length >= 2)
+){
+    trendlineOK = true;
+}
+    
     // SIGNAL ENGINE
 
 let confidence = 0;
