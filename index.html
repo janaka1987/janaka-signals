@@ -210,7 +210,15 @@ let hasEngulfing = false;
             if (!isMitigated && currentDir === "UPTREND") {
                 if (hasFVG) continue;
                 hasFVG = true;
-                markers.push({ time: candles[i-1].time, position: 'belowBar', color: '#00FF88', shape: 'square', text: 'FVG ZONE' });
+
+activeFVGs.push({
+    type: "bull",
+    top: candles[i].low,
+    bottom: candles[i-2].high,
+    start: candles[i-1].time,
+    active: true
+});
+               
             }
         }
         // Bearish FVG
