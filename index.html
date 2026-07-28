@@ -149,10 +149,7 @@ function calculateSMC() {
     let markers = [];
     let swings = [];
     const windowSize = 4;
-let bullishFVG = [];
-let bearishFVG = [];
 
-let hasFVG = false;
     
     // SWING DETECTION (BOS/CHOCH/HH/LH/LL)
     for (let i = windowSize; i < candles.length - windowSize; i++) {
