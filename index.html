@@ -259,6 +259,23 @@ if (supportLine || resistanceLine) {
     if (lowSwings.length >= 2) {
         supportLine = candleSeries.createPriceLine({ price: lowSwings[lowSwings.length-1].price, color: '#00FF88', lineWidth: 2, lineStyle: 0, axisLabelVisible: true, title: 'SUPPORT' });
     }
+
+    // ONE COLOUR
+
+let oneColour = false;
+
+let last4 = candles.slice(-4);
+
+let green = last4.filter(c => c.close > c.open).length;
+let red = last4.filter(c => c.close < c.open).length;
+
+if(currentDir=="UPTREND" && green>=3){
+    oneColour = true;
+}
+
+if(currentDir=="DOWNTREND" && red>=3){
+    oneColour = true;
+}
     // SIGNAL ENGINE
 
 let confidence = 0;
