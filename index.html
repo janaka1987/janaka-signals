@@ -229,7 +229,14 @@ activeFVGs.push({
             }
             if (!isMitigated && currentDir === "DOWNTREND") {
                 hasFVG = true;
-                markers.push({ time: candles[i-1].time, position: 'aboveBar', color: '#FF4D4D', shape: 'square', text: 'FVG ZONE' });
+
+activeFVGs.push({
+    type: "bear",
+    top: candles[i-2].low,
+    bottom: candles[i].high,
+    start: candles[i-1].time,
+    active: true
+});
             }
         }
     }
