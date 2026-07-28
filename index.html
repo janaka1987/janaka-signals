@@ -241,6 +241,67 @@ function calculateSMC() {
     if (lowSwings.length >= 2) {
         supportLine = candleSeries.createPriceLine({ price: lowSwings[lowSwings.length-1].price, color: '#00FF88', lineWidth: 2, lineStyle: 0, axisLabelVisible: true, title: 'SUPPORT' });
     }
+    // SIGNAL ENGINE
+
+let confidence = 0;
+let signalText = "WAIT ⚪";
+
+// Trend
+if(currentDir === "UPTREND" || currentDir === "DOWNTREND"){
+    confidence += 20;
+}
+
+// BOS
+if(markers.some(m => m.text === "BOS")){
+    confidence += 20;
+}
+
+// CHOCH
+if(markers.some(m => m.text === "CHOCH")){
+    confidence += 20;
+}
+
+// FVG
+if(markers.some(m => m.text === "FVG ZONE")){
+    confidence += 20;
+}
+
+// Engulfing
+if(markers.some(m => m.text === "B.E" || m.text === "S.E")){
+    confidence += 20;
+}
+
+// SIGNAL RESULT
+
+if(confidence >= 85){
+    signalText =
+        currentDir === "UPTREND"
+        ? "PREMIUM BUY 🔥"
+        : "PREMIUM SELL 🔥";
+}
+else if(confidence >= 70){
+    signalText =
+        currentDir === "UPTREND"
+        ? "STRONG BUY 🟢"
+        : "STRONG SELL 🟢";
+}
+else if(confidence >= 50){
+    signalText =
+        currentDir === "UPTREND"
+        ? "BUY 🟡"
+        : "SELL 🟡";
+}
+else{
+    signalText = "WAIT ⚪";
+}
+
+// UPDATE BOXES
+
+document.getElementById("signal").innerHTML =
+signalText;
+
+document.getElementById("confidence").innerHTML =
+confidence + "%";
 }
 
 function createChart(){
