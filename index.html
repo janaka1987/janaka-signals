@@ -258,13 +258,13 @@ if(currentDir === "UPTREND" || currentDir === "DOWNTREND"){
 }
 
 // BOS
-if(markers.some(m => m.text === "BOS")){
+if(recentBOS){
     confidence += 20;
 }
 
 // CHOCH
-if(markers.some(m => m.text === "CHOCH")){
-    confidence += 20;
+if(recentCHOCH){
+    confidence += 15;
 }
 
 // FVG
