@@ -207,6 +207,7 @@ let hasEngulfing = false;
                 if (candles[j].low <= candles[i-2].high) { isMitigated = true; break; }
             }
             if (!isMitigated && currentDir === "UPTREND") {
+                if (hasFVG) continue;
                 hasFVG = true;
                 markers.push({ time: candles[i-1].time, position: 'belowBar', color: '#00FF88', shape: 'square', text: 'FVG ZONE' });
             }
