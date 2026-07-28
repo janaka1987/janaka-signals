@@ -162,6 +162,8 @@ function calculateSMC() {
 
     let lastH = null, lastL = null, currentDir = "";
     let lineData = [];
+    let recentBOS = false;
+let recentCHOCH = false;
 
     swings.forEach((s) => {
         let label = "", color = "#FFFFFF";
