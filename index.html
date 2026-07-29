@@ -209,39 +209,10 @@ let hasEngulfing = false;
         lineData.push({ time: s.time, value: s.price });
     });
 
-    // LIQUIDITY SWEEP
+    
+        
 
-if(lastL){
-    if(candles[candles.length-1].low < lastL.price &&
-       candles[candles.length-1].close > lastL.price){
 
-        liquiditySweepBuy = true;
-
-        markers.push({
-            time: candles[candles.length-1].time,
-            position: 'belowBar',
-            color: '#00FFFF',
-            shape: 'arrowUp',
-            text: 'SSL'
-        });
-    }
-}
-
-if(lastH){
-    if(candles[candles.length-1].high > lastH.price &&
-       candles[candles.length-1].close < lastH.price){
-
-        liquiditySweepSell = true;
-
-        markers.push({
-            time: candles[candles.length-1].time,
-            position: 'aboveBar',
-            color: '#FF00FF',
-            shape: 'arrowDown',
-            text: 'BSL'
-        });
-    }
-}
 
     // --- FVG LOGIC WITH 4 FILTERS ---
     const minGap = (candles[0].high - candles[0].low) * 0.5; // Gap Size Filter Logic
