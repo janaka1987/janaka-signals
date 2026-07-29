@@ -363,6 +363,11 @@ if(hasKeyLevel) mainCount++;
 if(oneColour) mainCount++;
 
 if(hiddenOpen) mainCount++;
+
+    if(liquiditySweepBuy || liquiditySweepSell){
+    mainCount++;
+}
+    
 let supportCount = 0;
 
 if(recentBOS) supportCount++;
