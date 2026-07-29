@@ -306,6 +306,17 @@ if (
 
 let confidence = 0;
 let signalText = "WAIT ⚪";
+    let mainCount = 0;
+
+if(hasFVG) mainCount++;
+
+if(hasEngulfing) mainCount++;
+
+if(hasKeyLevel) mainCount++;
+
+if(oneColour) mainCount++;
+
+if(hiddenOpen) mainCount++;
 
 // Trend
 if(currentDir === "UPTREND" || currentDir === "DOWNTREND"){
