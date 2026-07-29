@@ -374,27 +374,33 @@ if(trendlineOK){
 
 // SIGNAL RESULT
 
-if(confidence >= 85){
-    signalText =
-        currentDir === "UPTREND"
-        ? "PREMIUM BUY 🔥"
-        : "PREMIUM SELL 🔥";
+signalText = "WAIT ⚪";
+
+// Trend එක නැත්නම් signal නැහැ
+if(currentDir=="UPTREND" || currentDir=="DOWNTREND"){
+
+    // Main Techniques 5න් 2ක්
+    if(mainCount >= 2){
+
+        // Supporting Factors 3න් 2ක්
+        if(supportCount >= 2){
+
+            if(currentDir=="UPTREND"){
+                signalText = "BUY 🟡";
+            }
+
+            if(currentDir=="DOWNTREND"){
+                signalText = "SELL 🟡";
+            }
+
+        }
+
+    }
+
 }
-else if(confidence >= 70){
-    signalText =
-        currentDir === "UPTREND"
-        ? "STRONG BUY 🟢"
-        : "STRONG SELL 🟢";
-}
-else if(confidence >= 50){
-    signalText =
-        currentDir === "UPTREND"
-        ? "BUY 🟡"
-        : "SELL 🟡";
-}
-else{
-    signalText = "WAIT ⚪";
-}
+
+
+
 
 // UPDATE BOXES
 
