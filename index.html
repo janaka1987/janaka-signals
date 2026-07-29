@@ -378,6 +378,17 @@ if(trendlineOK){
 // SIGNAL RESULT
 
 signalText = "WAIT ⚪";
+    let freshBOS = false;
+
+if(recentBOSTime > 0){
+
+    let lastCandleTime = candles[candles.length-1].time;
+
+    if((lastCandleTime - recentBOSTime) <= TIMEFRAME * 3){
+        freshBOS = true;
+    }
+
+}
 
 // Trend එක නැත්නම් signal නැහැ
 if(currentDir=="UPTREND" || currentDir=="DOWNTREND"){
