@@ -166,6 +166,7 @@ function calculateSMC() {
 let recentCHOCH = false;
 let hasFVG = false;
 let hasEngulfing = false;
+    let recentBOSTime = 0;
     swings.forEach((s) => {
         let label = "", color = "#FFFFFF";
         if (s.type === 'H') {
