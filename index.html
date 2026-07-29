@@ -148,7 +148,7 @@ function calculateSMC() {
     let markers = [];
     let swings = [];
     const windowSize = 4;
-let recentBOS = false;
+
 let recentBOSIndex = -1;
     
     // SWING DETECTION (BOS/CHOCH/HH/LH/LL)
@@ -179,7 +179,7 @@ let hasEngulfing = false;
                 recentBOSTime = s.time;
                 currentDir = "UPTREND";
                 recentBOS = true;
-recentBOSIndex = candles.length - 1;
+
             } else if (lastH && s.price < lastH.price) {
                 label = "LH"; color = "#FF4D4D";
                 recentCHOCH = true;
@@ -195,7 +195,7 @@ recentBOSIndex = candles.length - 1;
                 recentBOSTime = s.time;
                 currentDir = "DOWNTREND";
                 recentBOS = true;
-recentBOSIndex = candles.length - 1;
+
             } else if (lastL && s.price > lastL.price) {
                 label = "HL"; color = "#00FF88";
                 recentCHOCH = true;
