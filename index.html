@@ -148,7 +148,9 @@ function calculateSMC() {
     let markers = [];
     let swings = [];
     const windowSize = 4;
-
+let recentBOS = false;
+let recentBOSIndex = -1;
+    
     // SWING DETECTION (BOS/CHOCH/HH/LH/LL)
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true, isLow = true;
