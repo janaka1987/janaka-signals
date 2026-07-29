@@ -386,12 +386,36 @@ if(currentDir=="UPTREND" || currentDir=="DOWNTREND"){
         if(supportCount >= 2){
 
             if(currentDir=="UPTREND"){
-                signalText = "BUY 🟡";
-            }
 
-            if(currentDir=="DOWNTREND"){
-                signalText = "SELL 🟡";
-            }
+    if(mainCount>=4 && supportCount>=3){
+        signalText="PREMIUM BUY 🔥";
+    }
+
+    else if(mainCount>=3 && supportCount>=2){
+        signalText="STRONG BUY 🟢";
+    }
+
+    else{
+        signalText="BUY 🟡";
+    }
+
+}
+
+if(currentDir=="DOWNTREND"){
+
+    if(mainCount>=4 && supportCount>=3){
+        signalText="PREMIUM SELL 🔥";
+    }
+
+    else if(mainCount>=3 && supportCount>=2){
+        signalText="STRONG SELL 🟢";
+    }
+
+    else{
+        signalText="SELL 🟡";
+    }
+
+}
 
         }
 
