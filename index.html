@@ -317,9 +317,19 @@ if(hasKeyLevel) mainCount++;
 if(oneColour) mainCount++;
 
 if(hiddenOpen) mainCount++;
+let supportCount = 0;
 
+if(recentBOS) supportCount++;
+
+if(recentCHOCH) supportCount++;
+
+if(trendlineOK) supportCount++;
+    
 // Trend
-if(currentDir === "UPTREND" || currentDir === "DOWNTREND"){
+    
+    
+
+    if(currentDir === "UPTREND" || currentDir === "DOWNTREND"){
     confidence += 20;
 }
 
