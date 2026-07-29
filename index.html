@@ -178,6 +178,8 @@ let hasEngulfing = false;
                 markers.push({ time: s.time, position: 'aboveBar', color: '#FFD700', shape: 'arrowDown', text: 'BOS' });
                 recentBOSTime = s.time;
                 currentDir = "UPTREND";
+                recentBOS = true;
+recentBOSIndex = candles.length - 1;
             } else if (lastH && s.price < lastH.price) {
                 label = "LH"; color = "#FF4D4D";
                 recentCHOCH = true;
@@ -191,6 +193,9 @@ let hasEngulfing = false;
                 recentBOS = true;
                 markers.push({ time: s.time, position: 'belowBar', color: '#FFD700', shape: 'arrowUp', text: 'BOS' });
                 recentBOSTime = s.time;
+                currentDir = "DOWNTREND";
+                recentBOS = true;
+recentBOSIndex = candles.length - 1;
             } else if (lastL && s.price > lastL.price) {
                 label = "HL"; color = "#00FF88";
                 recentCHOCH = true;
