@@ -364,9 +364,7 @@ if(oneColour) mainCount++;
 
 if(hiddenOpen) mainCount++;
 
-    if(liquiditySweepBuy || liquiditySweepSell){
-    mainCount++;
-}
+    
     
 let supportCount = 0;
 
@@ -434,12 +432,8 @@ if(currentDir=="UPTREND" || currentDir=="DOWNTREND"){
     // Main Techniques 5න් 2ක්
      if(
     mainCount >= 3 &&
-    recentBOS &&
-    (
-        (currentDir=="UPTREND" && liquiditySweepBuy) ||
-        (currentDir=="DOWNTREND" && liquiditySweepSell)
-    )
-){
+    recentBOS
+)
 
         // Supporting Factors 3න් 2ක්
         if(supportCount >= 2){
