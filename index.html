@@ -225,7 +225,7 @@ recentCHOCH = markers.some(
     const oneColour = currentDir === "UPTREND" ? lastCandles.filter(c => c.close > c.open).length >= 3 : lastCandles.filter(c => c.close < c.open).length >= 3;
     const last = candles[candles.length - 1];
     const hiddenOpen = currentDir === "UPTREND" ? last.close > last.open : last.close < last.open;
-    const trendlineOK = swings.length >= 3;
+    const trendlineOK = false;
 
     // SIGNAL LOGIC
     let mainCount = 0;
