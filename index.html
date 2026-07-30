@@ -116,6 +116,30 @@ select:focus{border-color:var(--green);box-shadow:0 0 12px rgba(0,255,136,.3);}
 </div>
 
 <script>
+    // DAILY RESET
+const today =
+new Date().toDateString();
+
+const savedDay =
+localStorage.getItem("day");
+
+if(savedDay !== today){
+
+localStorage.removeItem(
+"signalHistory"
+);
+
+localStorage.removeItem(
+"stats"
+);
+
+localStorage.setItem(
+"day",
+today
+);
+
+}
+    
 const APP_ID = "1089";
 const TIMEFRAME = 60;
 const MAX_CANDLES = 300;
