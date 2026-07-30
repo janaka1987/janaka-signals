@@ -168,6 +168,15 @@ function calculateSMC() {
         if (label !== "") markers.push({ time: s.time, position: s.type === 'H' ? 'aboveBar' : 'belowBar', color: color, shape: 'text', text: label });
         lineData.push({ time: s.time, value: s.price });
     });
+    const recentTime = candles[candles.length - 10].time;
+
+recentBOS = markers.some(
+    m => m.text === "BOS" && m.time >= recentTime
+);
+
+recentCHOCH = markers.some(
+    m => m.text === "CHOCH" && m.time >= recentTime
+);
 
     // FVG LOGIC (FIXED FILTER)
     for (let i = candles.length - 15; i < candles.length; i++) {
