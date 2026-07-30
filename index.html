@@ -235,7 +235,7 @@ function calculateSMC() {
     let signalText = "WAIT ⚪";
 
     if (currentDir !== "WAITING" && recentBOS) {
-        if (mainCount >= 2 && supportCount >= 2) {
+        if (mainCount >= 3 && supportCount >= 2) {
             if (currentDir === "UPTREND") {
                 signalText = mainCount >= 4 ? "PREMIUM BUY 🔥" : "STRONG BUY 🟢";
             } else {
