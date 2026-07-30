@@ -365,6 +365,15 @@ function checkResults() {
         return true;
     });
 }
+    localStorage.setItem(
+"signalHistory",
+document.getElementById("signalHistory").innerHTML
+);
+
+localStorage.setItem(
+"stats",
+JSON.stringify(stats)
+);
 
 function updateStatsUI() {
     document.getElementById("totalSignals").innerText = stats.total;
