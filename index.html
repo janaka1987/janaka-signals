@@ -244,14 +244,27 @@ recentCHOCH = markers.some(
     let signalText = "WAIT ⚪";
 
     if (currentDir !== "WAITING" && recentBOS) {
-        if (mainCount >= 3 && supportCount >= 2) {
-            if (currentDir === "UPTREND") {
-                signalText = mainCount >= 4 ? "PREMIUM BUY 🔥" : "STRONG BUY 🟢";
-            } else {
-                signalText = mainCount >= 4 ? "PREMIUM SELL 🔥" : "STRONG SELL 🔴";
-            }
+
+    if (mainCount >= 4) {
+
+        if (currentDir === "UPTREND") {
+
+            signalText = recentCHOCH
+                ? "PREMIUM BUY 🔥"
+                : "STRONG BUY 🟢";
+
+        } else {
+
+            signalText = recentCHOCH
+                ? "PREMIUM SELL 🔥"
+                : "STRONG SELL 🔴";
+
         }
+
     }
+
+}
+                
 
     // UI UPDATE
     document.getElementById("trend").innerText = currentDir;
