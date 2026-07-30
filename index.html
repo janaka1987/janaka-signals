@@ -98,6 +98,57 @@ select:focus{border-color:var(--green);box-shadow:0 0 12px rgba(0,255,136,.3);}
             <div class="info-value" id="confidence" style="color:#38BDF8;">0%</div>
         </div>
     </div>
+    <div class="card" style="margin-top:20px;">
+
+    <h3>📊 PERFORMANCE & SIGNAL HISTORY</h3>
+
+    <div style="
+        font-family:'JetBrains Mono',monospace;
+        line-height:32px;
+        margin-bottom:20px;
+        color:white;
+        font-size:16px;
+    ">
+        TOTAL SIGNALS :
+        <span id="totalSignals">0</span><br>
+
+        WIN :
+        <span id="totalWins" style="color:#00FF88;">0</span><br>
+
+        LOSS :
+        <span id="totalLosses" style="color:#FF4D4D;">0</span><br>
+
+        WIN RATE :
+        <span id="winRate" style="color:#38BDF8;">0%</span>
+    </div>
+
+    <hr style="
+        border:none;
+        border-top:1px solid #233044;
+        margin:15px 0;
+    ">
+
+    <div style="
+        color:#94A3B8;
+        font-size:14px;
+        margin-bottom:10px;
+        font-weight:600;
+    ">
+        TIME | MARKET | SIGNAL | CONF | RESULT
+    </div>
+
+    <div id="signalHistory"
+    style="
+        max-height:350px;
+        overflow-y:auto;
+        font-family:'JetBrains Mono',monospace;
+        font-size:14px;
+        line-height:30px;
+        color:white;
+    ">
+    </div>
+
+</div>
 </div>
 
 <script>
