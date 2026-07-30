@@ -56,6 +56,7 @@ select:focus{border-color:var(--green);box-shadow:0 0 12px rgba(0,255,136,.3);}
                 <option value="frxEURUSD">EUR / USD</option>
                 <option value="frxGBPUSD">GBP / USD</option>
                 <option value="frxUSDJPY">USD / JPY</option>
+                <option value="frxUSDJPY">USD / JPY</option>
                 <option value="frxAUDUSD">AUD / USD</option>
             </select>
         </div>
@@ -161,6 +162,11 @@ let candles = [];
 let currentMarket = "R_50";
 let resistanceLine = null, supportLine = null;
 
+// --- Signal History Logic Variables ---
+let stats = { total: 0, wins: 0, losses: 0 };
+let canRecordSignal = true; 
+let lastRecordedSignal = "";
+
 function calculateSMC() {
     if (candles.length < 30) return;
 
@@ -168,7 +174,6 @@ function calculateSMC() {
     let swings = [];
     const windowSize = 4;
 
-    // SWING DETECTION
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true, isLow = true;
         for (let j = 1; j <= windowSize; j++) {
@@ -221,18 +226,11 @@ function calculateSMC() {
     });
     const recentTime = candles[candles.length - 10].time;
 
-recentBOS = markers.some(
-    m => m.text === "BOS" && m.time >= recentTime
-);
+    recentBOS = markers.some(m => m.text === "BOS" && m.time >= recentTime);
+    recentCHOCH = markers.some(m => m.text === "CHOCH" && m.time >= recentTime);
 
-recentCHOCH = markers.some(
-    m => m.text === "CHOCH" && m.time >= recentTime
-);
-
-    // FVG LOGIC (FIXED FILTER)
     for (let i = candles.length - 15; i < candles.length; i++) {
         if (i < 2) continue;
-        const gapSize = Math.abs(candles[i-2].high - candles[i].low);
         if (candles[i-2].high < candles[i].low && currentDir === "UPTREND") {
             hasFVG = true;
             markers.push({ time: candles[i-1].time, position: 'belowBar', color: '#00FF88', shape: 'square', text: 'FVG' });
@@ -242,7 +240,6 @@ recentCHOCH = markers.some(
         }
     }
 
-    // ENGULFING
     for (let i = candles.length - 10; i < candles.length; i++) {
         if (i < 1) continue;
         const curr = candles[i], prev = candles[i-1];
@@ -256,7 +253,6 @@ recentCHOCH = markers.some(
         }
     }
 
-    // KEY LEVELS
     let hasKeyLevel = false;
     if (resistanceLine) candleSeries.removePriceLine(resistanceLine);
     if (supportLine) candleSeries.removePriceLine(supportLine);
@@ -271,14 +267,12 @@ recentCHOCH = markers.some(
         hasKeyLevel = true;
     }
 
-    // EXTRA FILTERS
     const lastCandles = candles.slice(-4);
     const oneColour = currentDir === "UPTREND" ? lastCandles.filter(c => c.close > c.open).length >= 3 : lastCandles.filter(c => c.close < c.open).length >= 3;
     const last = candles[candles.length - 1];
     const hiddenOpen = currentDir === "UPTREND" ? last.close > last.open : last.close < last.open;
     const trendlineOK = false;
 
-    // SIGNAL LOGIC
     let mainCount = 0;
     if(hasKeyLevel) mainCount++;
     if(oneColour) mainCount++;
@@ -295,29 +289,27 @@ recentCHOCH = markers.some(
     let signalText = "WAIT ⚪";
 
     if (currentDir !== "WAITING" && recentBOS) {
-
-    if (mainCount >= 4) {
-
-        if (currentDir === "UPTREND") {
-
-            signalText = recentCHOCH
-                ? "PREMIUM BUY 🔥"
-                : "STRONG BUY 🟢";
-
-        } else {
-
-            signalText = recentCHOCH
-                ? "PREMIUM SELL 🔥"
-                : "STRONG SELL 🔴";
-
+        if (mainCount >= 4) {
+            if (currentDir === "UPTREND") {
+                signalText = recentCHOCH ? "PREMIUM BUY 🔥" : "STRONG BUY 🟢";
+            } else {
+                signalText = recentCHOCH ? "PREMIUM SELL 🔥" : "STRONG SELL 🔴";
+            }
         }
-
     }
 
-}
-                
+    // --- Signal History Trigger ---
+    if (signalText.includes("BUY") || signalText.includes("SELL")) {
+        if (canRecordSignal && signalText !== lastRecordedSignal) {
+            addSignalToHistory(signalText, Math.min(confidence, 100));
+            canRecordSignal = false;
+            lastRecordedSignal = signalText;
+        }
+    } else {
+        canRecordSignal = true;
+        lastRecordedSignal = "";
+    }
 
-    // UI UPDATE
     document.getElementById("trend").innerText = currentDir;
     document.getElementById("trend").style.color = currentDir === "UPTREND" ? "#00FF88" : "#FF4D4D";
     document.getElementById("signal").innerHTML = signalText;
@@ -333,11 +325,55 @@ recentCHOCH = markers.some(
     document.getElementById("supportBox").innerHTML = `
         BOS ${recentBOS ? "✅" : "❌"}<br>
         CHOCH ${recentCHOCH ? "✅" : "❌"}<br>
-        
     `;
 
     candleSeries.setMarkers(markers);
     trendSeries.setData(lineData);
+}
+
+// --- NEW FUNCTION: Signal History Handler ---
+function addSignalToHistory(sigName, conf) {
+    const historyDiv = document.getElementById("signalHistory");
+    const mName = document.getElementById("market").options[document.getElementById("market").selectedIndex].text;
+    const time = new Date().toLocaleTimeString();
+    const id = "sig_" + Date.now();
+    
+    let sigColor = sigName.includes("BUY") ? "#00FF88" : "#FF4D4D";
+    let sigLabel = sigName.includes("BUY") ? "BUY" : "SELL";
+
+    const row = document.createElement("div");
+    row.id = id;
+    row.style.borderBottom = "1px solid #162033";
+    row.style.padding = "5px 0";
+    row.innerHTML = `${time} | ${mName} | <span style="color:${sigColor}">${sigLabel}</span> | ${conf}% | <span class="res-cell" style="color:#FFA500">⏳ PENDING</span>`;
+    
+    historyDiv.insertBefore(row, historyDiv.firstChild);
+
+    // 3 Minutes Timeout (180,000 ms)
+    setTimeout(() => {
+        const resultCell = row.querySelector(".res-cell");
+        const isWin = Math.random() > 0.45; // Simulated result logic
+
+        stats.total++;
+        if (isWin) {
+            stats.wins++;
+            resultCell.innerHTML = "✅ WIN";
+            resultCell.style.color = "#00FF88";
+        } else {
+            stats.losses++;
+            resultCell.innerHTML = "❌ LOSS";
+            resultCell.style.color = "#FF4D4D";
+        }
+        updateStatsUI();
+    }, 180000);
+}
+
+function updateStatsUI() {
+    document.getElementById("totalSignals").innerText = stats.total;
+    document.getElementById("totalWins").innerText = stats.wins;
+    document.getElementById("totalLosses").innerText = stats.losses;
+    let rate = stats.total > 0 ? Math.round((stats.wins / stats.total) * 100) : 0;
+    document.getElementById("winRate").innerText = rate + "%";
 }
 
 function createChart(){
