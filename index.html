@@ -400,48 +400,45 @@ signalText = "WAIT ⚪";
 if(currentDir=="UPTREND" || currentDir=="DOWNTREND"){
 
     // Main Techniques 5න් 2ක්
-     if(mainCount >= 3 && recentBOS)
+     if(mainCount >= 3 && recentBOS){
 
-        // Supporting Factors 3න් 2ක්
-        if(supportCount >= 2){
+    if(supportCount >= 2){
 
-            if(currentDir=="UPTREND"){
+        if(currentDir=="UPTREND"){
 
-    if(mainCount>=4 && supportCount>=3){
-        signalText="PREMIUM BUY 🔥";
-    }
+            if(mainCount>=4 && supportCount>=3){
+                signalText="PREMIUM BUY 🔥";
+            }
+            else if(mainCount>=3 && supportCount>=2){
+                signalText="STRONG BUY 🟢";
+            }
+            else{
+                signalText="BUY 🟡";
+            }
 
-    else if(mainCount>=3 && supportCount>=2){
-        signalText="STRONG BUY 🟢";
-    }
+        }
 
-    else{
-        signalText="BUY 🟡";
-    }
+        if(currentDir=="DOWNTREND"){
 
-}
-
-if(currentDir=="DOWNTREND"){
-
-    if(mainCount>=4 && supportCount>=3){
-        signalText="PREMIUM SELL 🔥";
-    }
-
-    else if(mainCount>=3 && supportCount>=2){
-        signalText="STRONG SELL 🟢";
-    }
-
-    else{
-        signalText="SELL 🟡";
-    }
-
-}
+            if(mainCount>=4 && supportCount>=3){
+                signalText="PREMIUM SELL 🔥";
+            }
+            else if(mainCount>=3 && supportCount>=2){
+                signalText="STRONG SELL 🟢";
+            }
+            else{
+                signalText="SELL 🟡";
+            }
 
         }
 
     }
 
 }
+
+            
+
+
 
 
 
