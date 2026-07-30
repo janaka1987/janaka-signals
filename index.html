@@ -322,6 +322,15 @@ function addSignalToHistory(sigName, conf) {
         expiry: expiry
     });
 }
+    localStorage.setItem(
+"signalHistory",
+document.getElementById("signalHistory").innerHTML
+);
+
+localStorage.setItem(
+"stats",
+JSON.stringify(stats)
+);
 
 function checkResults() {
     const now = Date.now();
