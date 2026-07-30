@@ -61,7 +61,7 @@ select:focus{border-color:var(--green);box-shadow:0 0 12px rgba(0,255,136,.3);}
         </div>
         <div class="card">
             <h3>🌐 CONNECTION STATUS</h3>
-            <div class="status">Status : <span id="status">Connecting...</span><br><br>Market : <span id="marketName">Volatility 50</span></div>
+            <div class="status">Status : <span id="status">Connecting...</span><br>Market : <span id="marketName">Volatility 50</span></div>
         </div>
     </div>
     <div class="card chart-card">
@@ -78,57 +78,25 @@ select:focus{border-color:var(--green);box-shadow:0 0 12px rgba(0,255,136,.3);}
             <div class="info-value cyan" id="systemStatus">READY</div>
         </div>
         <div class="info-box">
-    <div class="info-title">
-        🔵 TECHNIQUES
-    </div>
-
-    <div id="techniquesBox"
-    style="font-size:15px;line-height:30px;text-align:left;">
-
-        Key Level ❌<br>
-        One Colour ❌<br>
-        Hidden Open ❌<br>
-        FVG ❌<br>
-        Engulfing ❌
-
-    </div>
-</div>
+            <div class="info-title">🔵 TECHNIQUES</div>
+            <div id="techniquesBox" style="font-size:15px;line-height:28px;text-align:left; color: white;">
+                Key Level ❌<br>One Colour ❌<br>Hidden Open ❌<br>FVG ❌<br>Engulfing ❌
+            </div>
+        </div>
         <div class="info-box">
-    <div class="info-title">
-        🟣 SUPPORTING FACTORS
-    </div>
-
-    <div id="supportBox"
-    style="font-size:15px;line-height:30px;text-align:left;">
-
-        BOS ❌<br>
-        CHOCH ❌<br>
-        Trendline ❌
-
-    </div>
-</div>
+            <div class="info-title">🟣 SUPPORTING FACTORS</div>
+            <div id="supportBox" style="font-size:15px;line-height:28px;text-align:left; color: white;">
+                BOS ❌<br>CHOCH ❌<br>Trendline ❌
+            </div>
+        </div>
         <div class="info-box">
-    <div class="info-title">
-        🎯 SIGNAL
-    </div>
-
-    <div class="info-value"
-         id="signal"
-         style="color:#FFFFFF;">
-        WAIT ⚪
-    </div>
-</div>
+            <div class="info-title">🎯 SIGNAL</div>
+            <div class="info-value" id="signal" style="color:#FFFFFF;">WAIT ⚪</div>
+        </div>
         <div class="info-box">
-    <div class="info-title">
-        📊 CONFIDENCE
-    </div>
-
-    <div class="info-value"
-         id="confidence"
-         style="color:#38BDF8;">
-        0%
-    </div>
-</div>
+            <div class="info-title">📊 CONFIDENCE</div>
+            <div class="info-value" id="confidence" style="color:#38BDF8;">0%</div>
+        </div>
     </div>
 </div>
 
@@ -143,33 +111,27 @@ let currentMarket = "R_50";
 let resistanceLine = null, supportLine = null;
 
 function calculateSMC() {
-    if (candles.length < 20) return;
+    if (candles.length < 30) return;
 
     let markers = [];
     let swings = [];
     const windowSize = 4;
 
-let recentBOSIndex = -1;
-    
-    // SWING DETECTION (BOS/CHOCH/HH/LH/LL)
+    // SWING DETECTION
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true, isLow = true;
         for (let j = 1; j <= windowSize; j++) {
-            if (candles[i].high < candles[i-j].high || candles[i].high < candles[i+j].high) isHigh = false;
-            if (candles[i].low > candles[i-j].low || candles[i].low > candles[i+j].low) isLow = false;
+            if (candles[i].high <= candles[i-j].high || candles[i].high <= candles[i+j].high) isHigh = false;
+            if (candles[i].low >= candles[i-j].low || candles[i].low >= candles[i+j].low) isLow = false;
         }
         if (isHigh) swings.push({ type: 'H', price: candles[i].high, time: candles[i].time });
         if (isLow) swings.push({ type: 'L', price: candles[i].low, time: candles[i].time });
     }
 
-    let lastH = null, lastL = null, currentDir = "";
+    let lastH = null, lastL = null, currentDir = "WAITING";
     let lineData = [];
-    let recentBOS = false;
-let recentCHOCH = false;
-let hasFVG = false;
-    
-let hasEngulfing = false;
-    let recentBOSTime = 0;
+    let recentBOS = false, recentCHOCH = false, hasFVG = false, hasEngulfing = false;
+
     swings.forEach((s) => {
         let label = "", color = "#FFFFFF";
         if (s.type === 'H') {
@@ -177,14 +139,13 @@ let hasEngulfing = false;
                 label = "HH"; color = "#00FF88";
                 recentBOS = true;
                 markers.push({ time: s.time, position: 'aboveBar', color: '#FFD700', shape: 'arrowDown', text: 'BOS' });
-                recentBOSTime = s.time;
                 currentDir = "UPTREND";
-                recentBOS = true;
-
             } else if (lastH && s.price < lastH.price) {
                 label = "LH"; color = "#FF4D4D";
-                recentCHOCH = true;
-                if(currentDir === "UPTREND") markers.push({ time: s.time, position: 'aboveBar', color: '#FF00FF', shape: 'arrowDown', text: 'CHOCH' });
+                if(currentDir === "UPTREND") { 
+                    recentCHOCH = true;
+                    markers.push({ time: s.time, position: 'aboveBar', color: '#FF00FF', shape: 'arrowDown', text: 'CHOCH' });
+                }
                 currentDir = "DOWNTREND";
             }
             lastH = s;
@@ -193,14 +154,14 @@ let hasEngulfing = false;
                 label = "LL"; color = "#FF4D4D";
                 recentBOS = true;
                 markers.push({ time: s.time, position: 'belowBar', color: '#FFD700', shape: 'arrowUp', text: 'BOS' });
-                recentBOSTime = s.time;
                 currentDir = "DOWNTREND";
-                recentBOS = true;
-
             } else if (lastL && s.price > lastL.price) {
                 label = "HL"; color = "#00FF88";
-                recentCHOCH = true;
-                if(currentDir === "DOWNTREND") markers.push({ time: s.time, position: 'belowBar', color: '#FF00FF', shape: 'arrowUp', text: 'CHOCH' });
+                if(currentDir === "DOWNTREND") {
+                    recentCHOCH = true;
+                    markers.push({ time: s.time, position: 'belowBar', color: '#FF00FF', shape: 'arrowUp', text: 'CHOCH' });
+                }
+                currentDir = "UPTREND";
             }
             lastL = s;
         }
@@ -208,285 +169,124 @@ let hasEngulfing = false;
         lineData.push({ time: s.time, value: s.price });
     });
 
-    
-        
-
-
-
-    // --- FVG LOGIC WITH 4 FILTERS ---
-    const minGap = (candles[0].high - candles[0].low) * 0.5; // Gap Size Filter Logic
-    for (let i = 2; i < candles.length; i++) {
-        // Bullish FVG
-        if (candles[i-2].high < candles[i].low && (candles[i].low - candles[i-2].high) > minGap) {
-            let isMitigated = false;
-            for (let j = i + 1; j < candles.length; j++) {
-                if (candles[j].low <= candles[i-2].high) { isMitigated = true; break; }
-            }
-            if (!isMitigated && currentDir === "UPTREND") {
-                hasFVG = true;
-                markers.push({ time: candles[i-1].time, position: 'belowBar', color: '#00FF88', shape: 'square', text: 'FVG ZONE' });
-            }
-        }
-        // Bearish FVG
-        else if (candles[i-2].low > candles[i].high && (candles[i-2].low - candles[i].high) > minGap) {
-            let isMitigated = false;
-            for (let j = i + 1; j < candles.length; j++) {
-                if (candles[j].high >= candles[i-2].low) { isMitigated = true; break; }
-            }
-            if (!isMitigated && currentDir === "DOWNTREND") {
-                hasFVG = true;
-                markers.push({ time: candles[i-1].time, position: 'aboveBar', color: '#FF4D4D', shape: 'square', text: 'FVG ZONE' });
-            }
+    // FVG LOGIC (FIXED FILTER)
+    for (let i = candles.length - 15; i < candles.length; i++) {
+        if (i < 2) continue;
+        const gapSize = Math.abs(candles[i-2].high - candles[i].low);
+        if (candles[i-2].high < candles[i].low && currentDir === "UPTREND") {
+            hasFVG = true;
+            markers.push({ time: candles[i-1].time, position: 'belowBar', color: '#00FF88', shape: 'square', text: 'FVG' });
+        } else if (candles[i-2].low > candles[i].high && currentDir === "DOWNTREND") {
+            hasFVG = true;
+            markers.push({ time: candles[i-1].time, position: 'aboveBar', color: '#FF4D4D', shape: 'square', text: 'FVG' });
         }
     }
 
     // ENGULFING
-    for (let i = candles.length - 15; i < candles.length; i++) {
+    for (let i = candles.length - 10; i < candles.length; i++) {
         if (i < 1) continue;
         const curr = candles[i], prev = candles[i-1];
-        if (prev.close < prev.open && curr.close > curr.open && curr.close > prev.open && curr.open < prev.close) {
+        if (prev.close < prev.open && curr.close > curr.open && curr.close > prev.high) {
             hasEngulfing = true;
             markers.push({ time: curr.time, position: 'belowBar', color: '#FFA500', shape: 'arrowUp', text: 'B.E' });
         }
-        if (prev.close > prev.open && curr.close < curr.open && curr.close < prev.open && curr.open > prev.close) {
+        if (prev.close > prev.open && curr.close < curr.open && curr.close < prev.low) {
             hasEngulfing = true;
             markers.push({ time: curr.time, position: 'aboveBar', color: '#A020F0', shape: 'arrowDown', text: 'S.E' });
         }
     }
 
-    candleSeries.setMarkers(markers);
-    trendSeries.setData(lineData);
-    trend.innerText = currentDir || "ANALYZING";
-    trend.style.color = currentDir === "UPTREND" ? "#00FF88" : "#FF4D4D";
-    
-// KEY LEVEL
-
-let hasKeyLevel = false;
-
-if (supportLine || resistanceLine) {
-    hasKeyLevel = true;
-}
+    // KEY LEVELS
+    let hasKeyLevel = false;
     if (resistanceLine) candleSeries.removePriceLine(resistanceLine);
     if (supportLine) candleSeries.removePriceLine(supportLine);
-    const highSwings = swings.filter(s => s.type === 'H'), lowSwings = swings.filter(s => s.type === 'L');
-    if (highSwings.length >= 2) {
-        resistanceLine = candleSeries.createPriceLine({ price: highSwings[highSwings.length-1].price, color: '#FF4D4D', lineWidth: 2, lineStyle: 0, axisLabelVisible: true, title: 'RESISTANCE' });
-    }
-    if (lowSwings.length >= 2) {
-        supportLine = candleSeries.createPriceLine({ price: lowSwings[lowSwings.length-1].price, color: '#00FF88', lineWidth: 2, lineStyle: 0, axisLabelVisible: true, title: 'SUPPORT' });
-    }
-
-    // ONE COLOUR
-
-let oneColour = false;
-
-let last4 = candles.slice(-4);
-
-let green = last4.filter(c => c.close > c.open).length;
-let red = last4.filter(c => c.close < c.open).length;
-
-if(currentDir=="UPTREND" && green>=3){
-    oneColour = true;
-}
-
-if(currentDir=="DOWNTREND" && red>=3){
-    oneColour = true;
-}
-
-    // HIDDEN OPEN
-
-let hiddenOpen = false;
-
-let last = candles[candles.length - 1];
-
-if(currentDir == "UPTREND" && last.close > last.open){
-    hiddenOpen = true;
-}
-
-if(currentDir == "DOWNTREND" && last.close < last.open){
-    hiddenOpen = true;
-}
-
-    // TRENDLINE
-
-let trendlineOK = false;
-
-if (
-    (currentDir == "UPTREND" && swings.length >= 2) ||
-    (currentDir == "DOWNTREND" && swings.length >= 2)
-){
-    trendlineOK = true;
-}
     
-    // SIGNAL ENGINE
+    if (swings.length > 0) {
+        const lastSwing = swings[swings.length - 1];
+        if (lastSwing.type === 'H') {
+            resistanceLine = candleSeries.createPriceLine({ price: lastSwing.price, color: '#FF4D4D', lineWidth: 2, title: 'RESISTANCE' });
+        } else {
+            supportLine = candleSeries.createPriceLine({ price: lastSwing.price, color: '#00FF88', lineWidth: 2, title: 'SUPPORT' });
+        }
+        hasKeyLevel = true;
+    }
 
-let confidence = 0;
-let signalText = "WAIT ⚪";
+    // EXTRA FILTERS
+    const lastCandles = candles.slice(-4);
+    const oneColour = currentDir === "UPTREND" ? lastCandles.filter(c => c.close > c.open).length >= 3 : lastCandles.filter(c => c.close < c.open).length >= 3;
+    const last = candles[candles.length - 1];
+    const hiddenOpen = currentDir === "UPTREND" ? last.close > last.open : last.close < last.open;
+    const trendlineOK = swings.length >= 3;
+
+    // SIGNAL LOGIC
     let mainCount = 0;
+    if(hasKeyLevel) mainCount++;
+    if(oneColour) mainCount++;
+    if(hiddenOpen) mainCount++;
+    if(hasFVG) mainCount++;
+    if(hasEngulfing) mainCount++;
 
-if(hasFVG) mainCount++;
+    let supportCount = 0;
+    if(recentBOS) supportCount++;
+    if(recentCHOCH) supportCount++;
+    if(trendlineOK) supportCount++;
 
-if(hasEngulfing) mainCount++;
+    let confidence = (mainCount * 12) + (supportCount * 10) + (currentDir !== "WAITING" ? 10 : 0);
+    let signalText = "WAIT ⚪";
 
-if(hasKeyLevel) mainCount++;
-
-if(oneColour) mainCount++;
-
-if(hiddenOpen) mainCount++;
-
-    
-    
-let supportCount = 0;
-
-if(recentBOS) supportCount++;
-
-if(recentCHOCH) supportCount++;
-
-if(trendlineOK) supportCount++;
-    
-// Trend
-    
-    
-
-    if(currentDir === "UPTREND" || currentDir === "DOWNTREND"){
-    confidence += 20;
-}
-
-// BOS
-if(recentBOS){
-    confidence += 20;
-}
-
-// CHOCH
-if(recentCHOCH){
-    confidence += 10;
-}
-
-// FVG
-if(hasFVG){
-    confidence += 10;
-}
-
-// Engulfing
-if(hasEngulfing){
-    confidence += 10;
-}
-    // Key Level
-if(hasKeyLevel){
-    confidence += 10;
-}
-
-// One Colour
-if(oneColour){
-    confidence += 10;
-}
-
-// Hidden Open
-if(hiddenOpen){
-    confidence += 10;
-}
-
-// Trendline
-if(trendlineOK){
-    confidence += 0;
-}
-
-// SIGNAL RESULT
-
-signalText = "WAIT ⚪";
-    
-
-// Trend එක නැත්නම් signal නැහැ
-if(currentDir=="UPTREND" || currentDir=="DOWNTREND"){
-
-    // Main Techniques 5න් 2ක්
-     if(mainCount >= 3 && recentBOS){
-
-    if(supportCount >= 2){
-
-        if(currentDir=="UPTREND"){
-
-            if(mainCount>=4 && supportCount>=3){
-                signalText="PREMIUM BUY 🔥";
+    if (currentDir !== "WAITING" && recentBOS) {
+        if (mainCount >= 2 && supportCount >= 2) {
+            if (currentDir === "UPTREND") {
+                signalText = mainCount >= 4 ? "PREMIUM BUY 🔥" : "STRONG BUY 🟢";
+            } else {
+                signalText = mainCount >= 4 ? "PREMIUM SELL 🔥" : "STRONG SELL 🔴";
             }
-            else if(mainCount>=3 && supportCount>=2){
-                signalText="STRONG BUY 🟢";
-            }
-            else{
-                signalText="BUY 🟡";
-            }
-
         }
-
-        if(currentDir=="DOWNTREND"){
-
-            if(mainCount>=4 && supportCount>=3){
-                signalText="PREMIUM SELL 🔥";
-            }
-            else if(mainCount>=3 && supportCount>=2){
-                signalText="STRONG SELL 🟢";
-            }
-            else{
-                signalText="SELL 🟡";
-            }
-
-        }
-
     }
 
-}
-
-            
-
-
-
-
-
-
-// UPDATE BOXES
-
-document.getElementById("signal").innerHTML =
-signalText;
-
-document.getElementById("confidence").innerHTML =
-confidence + "%";
-
+    // UI UPDATE
+    document.getElementById("trend").innerText = currentDir;
+    document.getElementById("trend").style.color = currentDir === "UPTREND" ? "#00FF88" : "#FF4D4D";
+    document.getElementById("signal").innerHTML = signalText;
+    document.getElementById("confidence").innerHTML = Math.min(confidence, 100) + "%";
+    
     document.getElementById("techniquesBox").innerHTML = `
-Key Level ${hasKeyLevel ? "✅" : "❌"}
-One Colour ${oneColour ? "✅" : "❌"}
-Hidden Open ${hiddenOpen ? "✅" : "❌"}
-FVG ${hasFVG ? "✅" : "❌"}<br>
-Engulfing ${hasEngulfing ? "✅" : "❌"}
-`;
+        Key Level ${hasKeyLevel ? "✅" : "❌"}<br>
+        One Colour ${oneColour ? "✅" : "❌"}<br>
+        Hidden Open ${hiddenOpen ? "✅" : "❌"}<br>
+        FVG ${hasFVG ? "✅" : "❌"}<br>
+        Engulfing ${hasEngulfing ? "✅" : "❌"}
+    `;
+    document.getElementById("supportBox").innerHTML = `
+        BOS ${recentBOS ? "✅" : "❌"}<br>
+        CHOCH ${recentCHOCH ? "✅" : "❌"}<br>
+        Trendline ${trendlineOK ? "✅" : "❌"}
+    `;
 
-document.getElementById("supportBox").innerHTML = `
-BOS ${recentBOS ? "✅" : "❌"}<br>
-CHOCH ${recentCHOCH ? "✅" : "❌"}<br>
-Trendline ${trendlineOK ? "✅" : "❌"}
-`;
+    candleSeries.setMarkers(markers);
+    trendSeries.setData(lineData);
 }
+
 function createChart(){
-    chart = LightweightCharts.createChart(chartContainer,{
+    chart = LightweightCharts.createChart(document.getElementById("chart"),{
         layout:{ background:{ color:"#05070A" }, textColor:"#E5E7EB" },
         grid:{ vertLines:{ color:"#162033" }, horzLines:{ color:"#162033" } },
         rightPriceScale:{ borderColor:"#253244" },
         timeScale:{ borderColor:"#253244", timeVisible:true },
-        width:chartContainer.clientWidth, height:560
+        width:document.getElementById("chart").clientWidth, height:560
     });
     candleSeries = chart.addCandlestickSeries({ upColor:"#00FF88", downColor:"#FF4D4D", borderUpColor:"#00FF88", borderDownColor:"#FF4D4D", wickUpColor:"#00FF88", wickDownColor:"#FF4D4D" });
-    trendSeries = chart.addLineSeries({ color: 'rgba(56, 189, 248, 0.4)', lineWidth: 1, lineStyle: 2 });
-    window.addEventListener("resize",()=>{ chart.applyOptions({ width:chartContainer.clientWidth }); });
+    trendSeries = chart.addLineSeries({ color: 'rgba(56, 189, 248, 0.3)', lineWidth: 1 });
+    window.addEventListener("resize",()=>{ chart.applyOptions({ width:document.getElementById("chart").clientWidth }); });
 }
 
-const marketSelect = document.getElementById("market"), marketName = document.getElementById("marketName"), status = document.getElementById("status"), trend = document.getElementById("trend"), chartContainer = document.getElementById("chart");
-
 function connectDeriv() {
-    status.innerHTML = "CONNECTING...";
+    document.getElementById("status").innerHTML = "CONNECTING...";
     if (ws) ws.close();
     ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
     ws.onopen = () => {
-        status.innerHTML = "ONLINE";
-        ws.send(JSON.stringify({ ticks_history: currentMarket, adjust_start_time: 1, count: 300, end: "latest", granularity: TIMEFRAME, style: "candles" }));
+        document.getElementById("status").innerHTML = "ONLINE";
+        ws.send(JSON.stringify({ ticks_history: currentMarket, count: 300, end: "latest", granularity: TIMEFRAME, style: "candles" }));
     };
     ws.onmessage = (msg) => {
         const data = JSON.parse(msg.data);
@@ -498,28 +298,27 @@ function connectDeriv() {
         if (data.tick) {
             let price = Number(data.tick.quote), epoch = Number(data.tick.epoch);
             let candleTime = Math.floor(epoch / TIMEFRAME) * TIMEFRAME;
-            if (candles.length === 0) return;
             let lastCandle = candles[candles.length - 1];
-            if (candleTime === lastCandle.time) {
+            if (lastCandle && candleTime === lastCandle.time) {
                 lastCandle.close = price;
-                if (price > lastCandle.high) lastCandle.high = price;
-                if (price < lastCandle.low) lastCandle.low = price;
+                lastCandle.high = Math.max(lastCandle.high, price);
+                lastCandle.low = Math.min(lastCandle.low, price);
                 candleSeries.update(lastCandle);
-            } else {
+            } else if(lastCandle) {
                 let newCandle = { time: candleTime, open: price, high: price, low: price, close: price };
                 candles.push(newCandle); if (candles.length > 300) candles.shift();
                 candleSeries.update(newCandle); calculateSMC();
             }
         }
     };
-    ws.onclose = () => { status.innerHTML = "OFFLINE"; setTimeout(connectDeriv, 2000); };
+    ws.onclose = () => { document.getElementById("status").innerHTML = "OFFLINE"; setTimeout(connectDeriv, 2000); };
 }
 
 createChart();
 connectDeriv();
-marketSelect.addEventListener("change", () => {
-    currentMarket = marketSelect.value;
-    marketName.innerHTML = marketSelect.options[marketSelect.selectedIndex].text;
+document.getElementById("market").addEventListener("change", (e) => {
+    currentMarket = e.target.value;
+    document.getElementById("marketName").innerHTML = e.target.options[e.target.selectedIndex].text;
     candles = []; connectDeriv();
 });
 </script>
