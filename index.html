@@ -123,7 +123,8 @@ const MAX_CANDLES = 300;
 let ws = null, chart = null, candleSeries = null, trendSeries = null;
 let candles = [];
 let currentMarket = "R_50";
-let activeTradeMarkers = []; // අලුත්: ට්‍රේඩ් මාකර්ස් ගබඩා කිරීමට
+let activeTradeMarkers = []; 
+let activeTradeLines = {}; // අලුත්: Live Lines ගබඩා කිරීමට
 
 // දත්ත ගබඩා කිරීමේ පද්ධතිය
 let signalStorage = {
@@ -160,32 +161,45 @@ function saveStorage() {
     localStorage.setItem('janaka_smc_pro_v6', JSON.stringify(signalStorage));
 }
 
-function renderHistory() {
+// වෙනස් කළ renderHistory: මෙයට currentPrice ලැබුණු විට සජීවීව පාට වෙනස් කරයි
+function renderHistory(currentPrice = null) {
     const container = document.getElementById("signalHistory");
     container.innerHTML = "";
     signalStorage.history.slice().reverse().forEach(sig => {
         const div = document.createElement("div");
         div.style.borderBottom = "1px solid #233044";
         div.style.padding = "5px 0";
-        const resColor = sig.result === "WIN" ? "#00FF88" : (sig.result === "LOSS" ? "#FF4D4D" : "#FFA500");
-        div.innerHTML = `${sig.time} | ${sig.market} | ${sig.type} | ${sig.conf}% | <span style="color:${resColor}; font-weight:bold;">${sig.result}</span>`;
+        
+        let resColor = "#FFA500"; // Default Pending
+        let resultLabel = sig.result;
+
+        if (sig.result === "PENDING" && currentPrice && sig.market === currentMarket) {
+            let isWin = (sig.type === "BUY" && currentPrice > sig.entryPrice) || (sig.type === "SELL" && currentPrice < sig.entryPrice);
+            resColor = isWin ? "#00FF88" : "#FF4D4D";
+            resultLabel = "PENDING...";
+        } else {
+            resColor = sig.result === "WIN" ? "#00FF88" : (sig.result === "LOSS" ? "#FF4D4D" : "#FFA500");
+        }
+
+        div.innerHTML = `${sig.time} | ${sig.market} | ${sig.type} | ${sig.conf}% | <span style="color:${resColor}; font-weight:bold;">${resultLabel}</span>`;
         container.appendChild(div);
     });
 }
 
-// අලුත්: චාර්ට් එකේ සුදු පාටින් ට්‍රේඩ් එක පෙන්වීමට
 function drawPocketOptionVisual(type, price, id) {
-    // 1. සුදු පැහැති තිත් ඉර
+    // 1. තිත් ඉර සාදා activeTradeLines වෙත එක් කිරීම
     const tradeLine = candleSeries.createPriceLine({
         price: price,
         color: '#FFFFFF',
         lineWidth: 2,
-        lineStyle: 2, // Dotted
+        lineStyle: 2,
         axisLabelVisible: true,
         title: 'ENTRY @ ' + price,
     });
+    
+    activeTradeLines[id] = tradeLine;
 
-    // 2. සුදු පැහැති ඊතලය
+    // 2. ඊතල මාකර් එක
     const visualMarker = {
         id: id,
         time: Math.floor(Date.now() / 1000),
@@ -196,13 +210,16 @@ function drawPocketOptionVisual(type, price, id) {
     };
 
     activeTradeMarkers.push(visualMarker);
-    calculateSMC(); // මාකර් එක පෙන්වීමට refresh කරයි
+    calculateSMC(); 
 
     // 3. විනාඩි 3 කින් ඉවත් කිරීම
     setTimeout(() => {
-        candleSeries.removePriceLine(tradeLine);
+        if(activeTradeLines[id]) {
+            candleSeries.removePriceLine(activeTradeLines[id]);
+            delete activeTradeLines[id];
+        }
         activeTradeMarkers = activeTradeMarkers.filter(m => m.id !== id);
-        calculateSMC(); // මාකර් එක මැකීමට refresh කරයි
+        calculateSMC(); 
     }, 180000);
 }
 
@@ -226,8 +243,6 @@ function addSignalToHistory(type, conf, entryPrice) {
     saveStorage();
     renderHistory();
     updateStatsUI();
-    
-    // Pocket Option Style Visual එක දීම
     drawPocketOptionVisual(type, entryPrice, signalID);
 }
 
@@ -237,13 +252,26 @@ function checkSignalOutcomes(currentPrice) {
 
     signalStorage.history.forEach(sig => {
         if (sig.result === "PENDING" && sig.market === currentMarket) {
-            if (now >= sig.expiry) {
-                let isWin = false;
-                if (sig.type === "BUY" && currentPrice > sig.entryPrice) isWin = true;
-                if (sig.type === "SELL" && currentPrice < sig.entryPrice) isWin = true;
+            
+            // සජීවීව චාර්ට් එකේ ඉරේ පාට වෙනස් කිරීම
+            if (activeTradeLines[sig.id]) {
+                let isWinNow = (sig.type === "BUY" && currentPrice > sig.entryPrice) || (sig.type === "SELL" && currentPrice < sig.entryPrice);
+                activeTradeLines[sig.id].applyOptions({
+                    color: isWinNow ? "#00FF88" : "#FF4D4D"
+                });
+            }
 
-                sig.result = isWin ? "WIN" : "LOSS";
-                if (isWin) signalStorage.wins++; else signalStorage.losses++;
+            // කාලය අවසන් වූ පසු WIN/LOSS තීරණය
+            if (now >= sig.expiry) {
+                let isFinalWin = (sig.type === "BUY" && currentPrice > sig.entryPrice) || (sig.type === "SELL" && currentPrice < sig.entryPrice);
+                sig.result = isFinalWin ? "WIN" : "LOSS";
+                if (isFinalWin) signalStorage.wins++; else signalStorage.losses++;
+                
+                // ඉර ඉවත් කිරීම
+                if(activeTradeLines[sig.id]) {
+                    candleSeries.removePriceLine(activeTradeLines[sig.id]);
+                    delete activeTradeLines[sig.id];
+                }
                 changed = true;
             }
         }
@@ -251,9 +279,10 @@ function checkSignalOutcomes(currentPrice) {
 
     if (changed) {
         saveStorage();
-        renderHistory();
         updateStatsUI();
     }
+    // හැම Tick එකකදීම Table එකේ පාට වෙනස් වීමට මෙය අවශ්‍යයි
+    renderHistory(currentPrice);
 }
 
 function calculateSMC() {
@@ -348,7 +377,6 @@ function calculateSMC() {
     document.getElementById("techniquesBox").innerHTML = `Key Level ${hasKeyLevel ? "✅" : "❌"}<br>One Colour ${oneColour ? "✅" : "❌"}<br>Hidden Open ${hiddenOpen ? "✅" : "❌"}<br>FVG ${hasFVG ? "✅" : "❌"}`;
     document.getElementById("supportBox").innerHTML = `BOS ${recentBOS ? "✅" : "❌"}<br>CHOCH ${recentCHOCH ? "✅" : "❌"}<br>`;
     
-    // වැදගත්: SMC markers සමඟ අපේ Trade markers එකතු කර පෙන්වීම
     candleSeries.setMarkers([...markers, ...activeTradeMarkers]);
     trendSeries.setData(lineData);
 }
@@ -415,7 +443,8 @@ document.getElementById("market").addEventListener("change", (e) => {
     currentMarket = e.target.value;
     document.getElementById("marketName").innerHTML = e.target.options[e.target.selectedIndex].text;
     candles = []; 
-    activeTradeMarkers = []; // Market එක මාරු කරන විට පැරණි මාකර් ඉවත් කරයි
+    activeTradeMarkers = []; 
+    activeTradeLines = {};
     connectDeriv();
 });
 
