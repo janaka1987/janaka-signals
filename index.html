@@ -123,7 +123,7 @@ const MAX_CANDLES = 300;
 let ws = null, chart = null, candleSeries = null, trendSeries = null;
 let candles = [];
 let currentMarket = "R_50";
-let resistanceLine = null, supportLine = null;
+let activeTradeMarkers = []; // අලුත්: ට්‍රේඩ් මාකර්ස් ගබඩා කිරීමට
 
 // දත්ත ගබඩා කිරීමේ පද්ධතිය
 let signalStorage = {
@@ -173,11 +173,45 @@ function renderHistory() {
     });
 }
 
+// අලුත්: චාර්ට් එකේ සුදු පාටින් ට්‍රේඩ් එක පෙන්වීමට
+function drawPocketOptionVisual(type, price, id) {
+    // 1. සුදු පැහැති තිත් ඉර
+    const tradeLine = candleSeries.createPriceLine({
+        price: price,
+        color: '#FFFFFF',
+        lineWidth: 2,
+        lineStyle: 2, // Dotted
+        axisLabelVisible: true,
+        title: 'ENTRY @ ' + price,
+    });
+
+    // 2. සුදු පැහැති ඊතලය
+    const visualMarker = {
+        id: id,
+        time: Math.floor(Date.now() / 1000),
+        position: (type === 'BUY') ? 'belowBar' : 'aboveBar',
+        color: '#FFFFFF',
+        shape: (type === 'BUY') ? 'arrowUp' : 'arrowDown',
+        text: 'TRADE'
+    };
+
+    activeTradeMarkers.push(visualMarker);
+    calculateSMC(); // මාකර් එක පෙන්වීමට refresh කරයි
+
+    // 3. විනාඩි 3 කින් ඉවත් කිරීම
+    setTimeout(() => {
+        candleSeries.removePriceLine(tradeLine);
+        activeTradeMarkers = activeTradeMarkers.filter(m => m.id !== id);
+        calculateSMC(); // මාකර් එක මැකීමට refresh කරයි
+    }, 180000);
+}
+
 function addSignalToHistory(type, conf, entryPrice) {
     const now = Math.floor(Date.now() / 1000);
     const dateObj = new Date();
+    const signalID = Date.now();
     const newSignal = {
-        id: Date.now(),
+        id: signalID,
         time: dateObj.getHours().toString().padStart(2,'0') + ":" + dateObj.getMinutes().toString().padStart(2,'0'),
         timestamp: now,
         market: currentMarket,
@@ -185,23 +219,24 @@ function addSignalToHistory(type, conf, entryPrice) {
         conf: conf,
         entryPrice: entryPrice,
         result: "PENDING",
-        expiry: now + 180 // විනාඩි 3 කින් පසු අවසන් වේ
+        expiry: now + 180 
     };
     signalStorage.history.push(newSignal);
     signalStorage.total++;
     saveStorage();
     renderHistory();
     updateStatsUI();
+    
+    // Pocket Option Style Visual එක දීම
+    drawPocketOptionVisual(type, entryPrice, signalID);
 }
 
-// දිනුම් හෝ පැරදුම් පරීක්ෂා කිරීමේ ශක්තිමත් ක්‍රමය
 function checkSignalOutcomes(currentPrice) {
     const now = Math.floor(Date.now() / 1000);
     let changed = false;
 
     signalStorage.history.forEach(sig => {
         if (sig.result === "PENDING" && sig.market === currentMarket) {
-            // සිග්නල් එකේ වෙලාව අවසන් වී ඇත්නම් පමණක් බලන්න
             if (now >= sig.expiry) {
                 let isWin = false;
                 if (sig.type === "BUY" && currentPrice > sig.entryPrice) isWin = true;
@@ -221,7 +256,6 @@ function checkSignalOutcomes(currentPrice) {
     }
 }
 
-// SMC ගණනය කිරීම් (ඔබේ මුල්ම Logic එක)
 function calculateSMC() {
     if (candles.length < 30) return;
     let markers = [];
@@ -238,7 +272,7 @@ function calculateSMC() {
     }
     let lastH = null, lastL = null, currentDir = "WAITING";
     let lineData = [];
-    let recentBOS = false, recentCHOCH = false, hasFVG = false, hasEngulfing = false;
+    let recentBOS = false, recentCHOCH = false, hasFVG = false;
     
     swings.forEach((s) => {
         let label = "", color = "#FFFFFF";
@@ -279,14 +313,10 @@ function calculateSMC() {
     recentBOS = markers.some(m => m.text === "BOS" && m.time >= recentTime);
     recentCHOCH = markers.some(m => m.text === "CHOCH" && m.time >= recentTime);
 
-    // FVG & Engulfing Logic
     for (let i = candles.length - 15; i < candles.length; i++) {
         if (i < 2) continue;
-        if (candles[i-2].high < candles[i].low && currentDir === "UPTREND") {
-            hasFVG = true;
-        } else if (candles[i-2].low > candles[i].high && currentDir === "DOWNTREND") {
-            hasFVG = true;
-        }
+        if (candles[i-2].high < candles[i].low && currentDir === "UPTREND") { hasFVG = true; } 
+        else if (candles[i-2].low > candles[i].high && currentDir === "DOWNTREND") { hasFVG = true; }
     }
     
     let hasKeyLevel = swings.length > 0;
@@ -305,7 +335,6 @@ function calculateSMC() {
         if (currentDir === "UPTREND") signalText = "STRONG BUY 🟢";
         else signalText = "STRONG SELL 🔴";
 
-        // දැනටමත් එම තත්පරයේම සිග්නල් එකක් දී ඇත්දැයි බලන්න
         const lastSig = signalStorage.history[signalStorage.history.length - 1];
         if (!lastSig || (Math.floor(Date.now()/1000) - lastSig.timestamp > 60)) {
             addSignalToHistory(currentDir === "UPTREND" ? "BUY" : "SELL", Math.min(confidence, 100), last.close);
@@ -319,7 +348,8 @@ function calculateSMC() {
     document.getElementById("techniquesBox").innerHTML = `Key Level ${hasKeyLevel ? "✅" : "❌"}<br>One Colour ${oneColour ? "✅" : "❌"}<br>Hidden Open ${hiddenOpen ? "✅" : "❌"}<br>FVG ${hasFVG ? "✅" : "❌"}`;
     document.getElementById("supportBox").innerHTML = `BOS ${recentBOS ? "✅" : "❌"}<br>CHOCH ${recentCHOCH ? "✅" : "❌"}<br>`;
     
-    candleSeries.setMarkers(markers);
+    // වැදගත්: SMC markers සමඟ අපේ Trade markers එකතු කර පෙන්වීම
+    candleSeries.setMarkers([...markers, ...activeTradeMarkers]);
     trendSeries.setData(lineData);
 }
 
@@ -357,7 +387,6 @@ function connectDeriv() {
             let price = Number(data.tick.quote), epoch = Number(data.tick.epoch);
             let candleTime = Math.floor(epoch / TIMEFRAME) * TIMEFRAME;
             
-            // වැදගත්ම කොටස: සෑම Tick එකකදීම Pending සිග්නල් පරීක්ෂා කරයි
             checkSignalOutcomes(price);
 
             let lastCandle = candles[candles.length - 1];
@@ -386,6 +415,7 @@ document.getElementById("market").addEventListener("change", (e) => {
     currentMarket = e.target.value;
     document.getElementById("marketName").innerHTML = e.target.options[e.target.selectedIndex].text;
     candles = []; 
+    activeTradeMarkers = []; // Market එක මාරු කරන විට පැරණි මාකර් ඉවත් කරයි
     connectDeriv();
 });
 
