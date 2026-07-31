@@ -99,55 +99,19 @@ select:focus{border-color:var(--green);box-shadow:0 0 12px rgba(0,255,136,.3);}
         </div>
     </div>
     <div class="card" style="margin-top:20px;">
-
     <h3>📊 PERFORMANCE & SIGNAL HISTORY</h3>
-
-    <div style="
-        font-family:'JetBrains Mono',monospace;
-        line-height:32px;
-        margin-bottom:20px;
-        color:white;
-        font-size:16px;
-    ">
-        TOTAL SIGNALS :
-        <span id="totalSignals">0</span><br>
-
-        WIN :
-        <span id="totalWins" style="color:#00FF88;">0</span><br>
-
-        LOSS :
-        <span id="totalLosses" style="color:#FF4D4D;">0</span><br>
-
-        WIN RATE :
-        <span id="winRate" style="color:#38BDF8;">0%</span>
+    <div style="font-family:'JetBrains Mono',monospace; line-height:32px; margin-bottom:20px; color:white; font-size:16px;">
+        TOTAL SIGNALS : <span id="totalSignals">0</span><br>
+        WIN : <span id="totalWins" style="color:#00FF88;">0</span><br>
+        LOSS : <span id="totalLosses" style="color:#FF4D4D;">0</span><br>
+        WIN RATE : <span id="winRate" style="color:#38BDF8;">0%</span>
     </div>
-
-    <hr style="
-        border:none;
-        border-top:1px solid #233044;
-        margin:15px 0;
-    ">
-
-    <div style="
-        color:#94A3B8;
-        font-size:14px;
-        margin-bottom:10px;
-        font-weight:600;
-    ">
+    <hr style="border:none; border-top:1px solid #233044; margin:15px 0;">
+    <div style="color:#94A3B8; font-size:14px; margin-bottom:10px; font-weight:600;">
         TIME | MARKET | SIGNAL | CONF | RESULT
     </div>
-
-    <div id="signalHistory"
-    style="
-        max-height:350px;
-        overflow-y:auto;
-        font-family:'JetBrains Mono',monospace;
-        font-size:14px;
-        line-height:30px;
-        color:white;
-    ">
+    <div id="signalHistory" style="max-height:350px; overflow-y:auto; font-family:'JetBrains Mono',monospace; font-size:14px; line-height:30px; color:white;">
     </div>
-
 </div>
 </div>
 
@@ -161,7 +125,6 @@ let candles = [];
 let currentMarket = "R_50";
 let resistanceLine = null, supportLine = null;
 
-// --- JANAKA SMC CORE LOGIC FOR HISTORY & ACCURACY ---
 let signalStorage = {
     date: new Date().toLocaleDateString(),
     total: 0,
@@ -170,7 +133,6 @@ let signalStorage = {
     history: []
 };
 
-// Load storage on start
 function initStorage() {
     const saved = localStorage.getItem('janaka_smc_pro_v6');
     if (saved) {
@@ -220,7 +182,7 @@ function addSignalToHistory(type, conf, entryPrice) {
         conf: conf,
         entryPrice: entryPrice,
         result: "PENDING",
-        expiry: Math.floor(Date.now() / 1000) + 180 // 3 Minutes Expiry
+        expiry: Math.floor(Date.now() / 1000) + 180 
     };
     signalStorage.history.push(newSignal);
     signalStorage.total++;
@@ -229,12 +191,14 @@ function addSignalToHistory(type, conf, entryPrice) {
     updateStatsUI();
 }
 
+// දෝෂය නිවැරදි කළ ප්‍රධාන ෆන්ක්ෂන් එක
 function checkSignalOutcomes(currentPrice) {
     let changed = false;
     const now = Math.floor(Date.now() / 1000);
 
     signalStorage.history.forEach(sig => {
-        if (sig.result === "PENDING" && now >= sig.expiry) {
+        // අදාළ මාර්කට් එකේ විනාඩි 3 සම්පූර්ණ වී ඇත්නම් ප්‍රතිඵල ලබා දෙයි
+        if (sig.result === "PENDING" && sig.market === currentMarket && now >= sig.expiry) {
             let isWin = false;
             if (sig.type === "BUY" && currentPrice > sig.entryPrice) isWin = true;
             if (sig.type === "SELL" && currentPrice < sig.entryPrice) isWin = true;
@@ -251,15 +215,12 @@ function checkSignalOutcomes(currentPrice) {
         updateStatsUI();
     }
 }
-// --- END CORE LOGIC ---
 
 function calculateSMC() {
     if (candles.length < 30) return;
-
     let markers = [];
     let swings = [];
     const windowSize = 4;
-
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true, isLow = true;
         for (let j = 1; j <= windowSize; j++) {
@@ -269,17 +230,14 @@ function calculateSMC() {
         if (isHigh) swings.push({ type: 'H', price: candles[i].high, time: candles[i].time });
         if (isLow) swings.push({ type: 'L', price: candles[i].low, time: candles[i].time });
     }
-
     let lastH = null, lastL = null, currentDir = "WAITING";
     let lineData = [];
     let recentBOS = false, recentCHOCH = false, hasFVG = false, hasEngulfing = false;
-
     swings.forEach((s) => {
         let label = "", color = "#FFFFFF";
         if (s.type === 'H') {
             if (lastH && s.price > lastH.price) {
-                label = "HH"; color = "#00FF88";
-                recentBOS = true;
+                label = "HH"; color = "#00FF88"; recentBOS = true;
                 markers.push({ time: s.time, position: 'aboveBar', color: '#FFD700', shape: 'arrowDown', text: 'BOS' });
                 currentDir = "UPTREND";
             } else if (lastH && s.price < lastH.price) {
@@ -293,8 +251,7 @@ function calculateSMC() {
             lastH = s;
         } else {
             if (lastL && s.price < lastL.price) {
-                label = "LL"; color = "#FF4D4D";
-                recentBOS = true;
+                label = "LL"; color = "#FF4D4D"; recentBOS = true;
                 markers.push({ time: s.time, position: 'belowBar', color: '#FFD700', shape: 'arrowUp', text: 'BOS' });
                 currentDir = "DOWNTREND";
             } else if (lastL && s.price > lastL.price) {
@@ -310,11 +267,9 @@ function calculateSMC() {
         if (label !== "") markers.push({ time: s.time, position: s.type === 'H' ? 'aboveBar' : 'belowBar', color: color, shape: 'text', text: label });
         lineData.push({ time: s.time, value: s.price });
     });
-
     const recentTime = candles[candles.length - 10].time;
     recentBOS = markers.some(m => m.text === "BOS" && m.time >= recentTime);
     recentCHOCH = markers.some(m => m.text === "CHOCH" && m.time >= recentTime);
-
     for (let i = candles.length - 15; i < candles.length; i++) {
         if (i < 2) continue;
         if (candles[i-2].high < candles[i].low && currentDir === "UPTREND") {
@@ -325,7 +280,6 @@ function calculateSMC() {
             markers.push({ time: candles[i-1].time, position: 'aboveBar', color: '#FF4D4D', shape: 'square', text: 'FVG' });
         }
     }
-
     for (let i = candles.length - 10; i < candles.length; i++) {
         if (i < 1) continue;
         const curr = candles[i], prev = candles[i-1];
@@ -338,11 +292,9 @@ function calculateSMC() {
             markers.push({ time: curr.time, position: 'aboveBar', color: '#A020F0', shape: 'arrowDown', text: 'S.E' });
         }
     }
-
     let hasKeyLevel = false;
     if (resistanceLine) candleSeries.removePriceLine(resistanceLine);
     if (supportLine) candleSeries.removePriceLine(supportLine);
-    
     if (swings.length > 0) {
         const lastSwing = swings[swings.length - 1];
         if (lastSwing.type === 'H') {
@@ -352,58 +304,30 @@ function calculateSMC() {
         }
         hasKeyLevel = true;
     }
-
     const lastCandles = candles.slice(-4);
     const oneColour = currentDir === "UPTREND" ? lastCandles.filter(c => c.close > c.open).length >= 3 : lastCandles.filter(c => c.close < c.open).length >= 3;
     const last = candles[candles.length - 1];
     const hiddenOpen = currentDir === "UPTREND" ? last.close > last.open : last.close < last.open;
-    
     let mainCount = 0;
-    if(hasKeyLevel) mainCount++;
-    if(oneColour) mainCount++;
-    if(hiddenOpen) mainCount++;
-    if(hasFVG) mainCount++;
-    if(hasEngulfing) mainCount++;
-
+    if(hasKeyLevel) mainCount++; if(oneColour) mainCount++; if(hiddenOpen) mainCount++; if(hasFVG) mainCount++; if(hasEngulfing) mainCount++;
     let supportCount = 0;
-    if(recentBOS) supportCount++;
-    if(recentCHOCH) supportCount++;
-
+    if(recentBOS) supportCount++; if(recentCHOCH) supportCount++;
     let confidence = (mainCount * 12) + (supportCount * 10) + (currentDir !== "WAITING" ? 10 : 0);
     let signalText = "WAIT ⚪";
-
-    // SIGNAL DETECTION
     if (currentDir !== "WAITING" && recentBOS && mainCount >= 4) {
-        if (currentDir === "UPTREND") {
-            signalText = recentCHOCH ? "PREMIUM BUY 🔥" : "STRONG BUY 🟢";
-        } else {
-            signalText = recentCHOCH ? "PREMIUM SELL 🔥" : "STRONG SELL 🔴";
-        }
-
-        // Logic to prevent duplicate signals for same candle
+        if (currentDir === "UPTREND") { signalText = recentCHOCH ? "PREMIUM BUY 🔥" : "STRONG BUY 🟢"; }
+        else { signalText = recentCHOCH ? "PREMIUM SELL 🔥" : "STRONG SELL 🔴"; }
         const alreadyCalled = signalStorage.history.some(s => s.timestamp > (Math.floor(Date.now()/1000) - 60) && s.market === currentMarket);
         if (!alreadyCalled) {
             addSignalToHistory(currentDir === "UPTREND" ? "BUY" : "SELL", Math.min(confidence, 100), last.close);
         }
     }
-
     document.getElementById("trend").innerText = currentDir;
     document.getElementById("trend").style.color = currentDir === "UPTREND" ? "#00FF88" : "#FF4D4D";
     document.getElementById("signal").innerHTML = signalText;
     document.getElementById("confidence").innerHTML = Math.min(confidence, 100) + "%";
-    
-    document.getElementById("techniquesBox").innerHTML = `
-        Key Level ${hasKeyLevel ? "✅" : "❌"}<br>
-        One Colour ${oneColour ? "✅" : "❌"}<br>
-        Hidden Open ${hiddenOpen ? "✅" : "❌"}<br>
-        FVG ${hasFVG ? "✅" : "❌"}<br>
-        Engulfing ${hasEngulfing ? "✅" : "❌"}
-    `;
-    document.getElementById("supportBox").innerHTML = `
-        BOS ${recentBOS ? "✅" : "❌"}<br>
-        CHOCH ${recentCHOCH ? "✅" : "❌"}<br>
-    `;
-
+    document.getElementById("techniquesBox").innerHTML = `Key Level ${hasKeyLevel ? "✅" : "❌"}<br>One Colour ${oneColour ? "✅" : "❌"}<br>Hidden Open ${hiddenOpen ? "✅" : "❌"}<br>FVG ${hasFVG ? "✅" : "❌"}<br>Engulfing ${hasEngulfing ? "✅" : "❌"}`;
+    document.getElementById("supportBox").innerHTML = `BOS ${recentBOS ? "✅" : "❌"}<br>CHOCH ${recentCHOCH ? "✅" : "❌"}<br>`;
     candleSeries.setMarkers(markers);
     trendSeries.setData(lineData);
 }
@@ -441,7 +365,7 @@ function connectDeriv() {
             let candleTime = Math.floor(epoch / TIMEFRAME) * TIMEFRAME;
             let lastCandle = candles[candles.length - 1];
             
-            // Real-time outcome check
+            // සෑම ටික් එකකදීම Pending සිග්නල් පරීක්ෂා කරයි
             checkSignalOutcomes(price);
 
             if (lastCandle && candleTime === lastCandle.time) {
@@ -459,7 +383,6 @@ function connectDeriv() {
     ws.onclose = () => { document.getElementById("status").innerHTML = "OFFLINE"; setTimeout(connectDeriv, 2000); };
 }
 
-// Start System
 initStorage();
 createChart();
 connectDeriv();
