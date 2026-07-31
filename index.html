@@ -124,7 +124,7 @@ let ws = null, chart = null, candleSeries = null, trendSeries = null;
 let candles = [];
 let currentMarket = "R_50";
 let activeTradeMarkers = [];
-let activePriceLines = {}; // අලුත්: ප්‍රයිස් ලයින්ස් ට්‍රැක් කිරීමට
+let activePriceLines = {}; 
 
 let signalStorage = {
     date: new Date().toLocaleDateString(),
@@ -173,17 +173,18 @@ function renderHistory() {
     });
 }
 
-function drawPocketOptionVisual(type, price, id) {
+// සුදු පාට ඉර (Price Line) ඇඳීමේ ෆන්ක්ෂන් එක
+function drawSignalLine(type, price, id) {
     const tradeLine = candleSeries.createPriceLine({
         price: price,
         color: '#FFFFFF',
         lineWidth: 2,
-        lineStyle: 2,
+        lineStyle: 0, // Solid line
         axisLabelVisible: true,
         title: 'ENTRY @ ' + price,
     });
 
-    activePriceLines[id] = tradeLine; // ලයින් එක ගබඩා කරයි
+    activePriceLines[id] = tradeLine;
 
     const visualMarker = {
         id: id,
@@ -195,13 +196,14 @@ function drawPocketOptionVisual(type, price, id) {
     };
 
     activeTradeMarkers.push(visualMarker);
-    calculateSMC();
-
+    
+    // මිනිත්තු 3 කින් ඉර ඉවත් කිරීම (Expiry)
     setTimeout(() => {
-        candleSeries.removePriceLine(tradeLine);
-        delete activePriceLines[id];
+        if(activePriceLines[id]) {
+            candleSeries.removePriceLine(activePriceLines[id]);
+            delete activePriceLines[id];
+        }
         activeTradeMarkers = activeTradeMarkers.filter(m => m.id !== id);
-        calculateSMC();
     }, 180000);
 }
 
@@ -225,7 +227,7 @@ function addSignalToHistory(type, conf, entryPrice) {
     saveStorage();
     renderHistory();
     updateStatsUI();
-    drawPocketOptionVisual(type, entryPrice, signalID);
+    drawSignalLine(type, entryPrice, signalID);
 }
 
 function checkSignalOutcomes(currentPrice) {
@@ -235,7 +237,7 @@ function checkSignalOutcomes(currentPrice) {
     signalStorage.history.forEach(sig => {
         if (sig.result === "PENDING" && sig.market === currentMarket) {
             
-            // ලයින් එකේ පාට වෙනස් කිරීම (LIVE)
+            // ඉරේ පාට LIVE වෙනස් කිරීම (Win නම් කොළ, Loss නම් රතු)
             if(activePriceLines[sig.id]) {
                 let isWinning = (sig.type === "BUY" && currentPrice > sig.entryPrice) || (sig.type === "SELL" && currentPrice < sig.entryPrice);
                 activePriceLines[sig.id].applyOptions({
@@ -421,6 +423,8 @@ document.getElementById("market").addEventListener("change", (e) => {
     document.getElementById("marketName").innerHTML = e.target.options[e.target.selectedIndex].text;
     candles = []; 
     activeTradeMarkers = [];
+    // කලින් තිබු ඉරි මැකීම
+    Object.values(activePriceLines).forEach(line => candleSeries.removePriceLine(line));
     activePriceLines = {};
     connectDeriv();
 });
