@@ -27,10 +27,25 @@ select:focus{border-color:var(--green);box-shadow:0 0 12px rgba(0,255,136,.3);}
 .chart-card{padding:14px;}.chart-title{font-size:18px;font-weight:700;color:var(--blue);margin-bottom:12px;}
 #chart{width:100%;height:560px;border-radius:16px;overflow:hidden;background:#0A1322;border:1px solid var(--border);}
 .bottom-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:18px;}
-.info-box{background:linear-gradient(180deg,#111827,#0A1322);border:1px solid var(--border);border-radius:18px;padding:22px;text-align:center;box-shadow:0 8px 20px rgba(0,0,0,.35);}
+.info-box{background:linear-gradient(180deg,#111827,#0A1322);border:2px solid var(--border);border-radius:18px;padding:22px;text-align:center;box-shadow:0 8px 20px rgba(0,0,0,.35); transition: all 0.3s ease;}
 .info-title{font-size:14px;font-weight:600;letter-spacing:1px;color:var(--muted);margin-bottom:12px;}
 .info-value{font-size:30px;font-weight:700;font-family:'JetBrains Mono',monospace;}
 .green{color:var(--green);}.cyan{color:var(--blue);}.red{color:var(--red);}
+
+/* SIGNAL ALERT ANIMATIONS */
+@keyframes pulse-red {
+    0% { border-color: var(--red); box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.7); }
+    70% { border-color: var(--red); box-shadow: 0 0 0 15px rgba(255, 77, 77, 0); }
+    100% { border-color: var(--red); box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
+}
+@keyframes pulse-green {
+    0% { border-color: var(--green); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
+    70% { border-color: var(--green); box-shadow: 0 0 0 15px rgba(0, 255, 136, 0); }
+    100% { border-color: var(--green); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+}
+.signal-active-red { animation: pulse-red 1s infinite; border-width: 2px !important; }
+.signal-active-green { animation: pulse-green 1s infinite; border-width: 2px !important; }
+
 @media(max-width:900px){.title{font-size:26px;}.grid-top{grid-template-columns:1fr;}.bottom-grid{grid-template-columns:1fr 1fr;}#chart{height:520px;}}
 </style>
 </head>
@@ -89,7 +104,7 @@ select:focus{border-color:var(--green);box-shadow:0 0 12px rgba(0,255,136,.3);}
                 BOS ❌<br>CHOCH ❌<br>Trendline ❌
             </div>
         </div>
-        <div class="info-box">
+        <div class="info-box" id="signalBox">
             <div class="info-title">🎯 SIGNAL</div>
             <div class="info-value" id="signal" style="color:#FFFFFF;">WAIT ⚪</div>
         </div>
@@ -123,8 +138,8 @@ const MAX_CANDLES = 300;
 let ws = null, chart = null, candleSeries = null, trendSeries = null;
 let candles = [];
 let currentMarket = "R_50";
-let activeTradeMarkers = [];
-let activePriceLines = {}; 
+let activeTradeMarkers = []; 
+let activeLines = []; 
 
 let signalStorage = {
     date: new Date().toLocaleDateString(),
@@ -167,24 +182,43 @@ function renderHistory() {
         const div = document.createElement("div");
         div.style.borderBottom = "1px solid #233044";
         div.style.padding = "5px 0";
-        const resColor = sig.result === "WIN" ? "#00FF88" : (sig.result === "LOSS" ? "#FF4D4D" : "#FFA500");
-        div.innerHTML = `${sig.time} | ${sig.market} | ${sig.type} | ${sig.conf}% | <span style="color:${resColor}; font-weight:bold;">${sig.result}</span>`;
+        
+        let resColor = "#FFA500"; // Default orange for Pending
+        if(sig.result === "WIN") resColor = "#00FF88";
+        else if(sig.result === "LOSS") resColor = "#FF4D4D";
+
+        div.innerHTML = `${sig.time} | ${sig.market} | ${sig.type} | ${sig.conf}% | <span id="res-${sig.id}" style="color:${resColor}; font-weight:bold;">${sig.result}</span>`;
         container.appendChild(div);
     });
 }
 
-// සුදු පාට ඉර (Price Line) ඇඳීමේ ෆන්ක්ෂන් එක
-function drawSignalLine(type, price, id) {
+// *** චාර්ට් එකේ ඉර සහ හිස්ට්‍රි එකේ පෙන්ඩින් එකේ පාට එකට වෙනස් කිරීම ***
+function updateLineColors(currentPrice) {
+    activeLines.forEach(item => {
+        let isWin = false;
+        if (item.type === 'BUY' && currentPrice > item.entryPrice) isWin = true;
+        if (item.type === 'SELL' && currentPrice < item.entryPrice) isWin = true;
+        
+        let color = isWin ? '#00FF88' : '#FF4D4D';
+        item.line.applyOptions({ color: color });
+
+        // හිස්ට්‍රි එකේ තියෙන පෙන්ඩින් අකුරේ පාට වෙනස් කිරීම
+        const resEl = document.getElementById(`res-${item.id}`);
+        if(resEl && resEl.innerText === "PENDING") {
+            resEl.style.color = color;
+        }
+    });
+}
+
+function drawPocketOptionVisual(type, price, id) {
     const tradeLine = candleSeries.createPriceLine({
         price: price,
         color: '#FFFFFF',
         lineWidth: 2,
-        lineStyle: 0, // Solid line
+        lineStyle: 2, 
         axisLabelVisible: true,
         title: 'ENTRY @ ' + price,
     });
-
-    activePriceLines[id] = tradeLine;
 
     const visualMarker = {
         id: id,
@@ -196,15 +230,29 @@ function drawSignalLine(type, price, id) {
     };
 
     activeTradeMarkers.push(visualMarker);
-    
-    // මිනිත්තු 3 කින් ඉර ඉවත් කිරීම (Expiry)
+    activeLines.push({ id: id, type: type, entryPrice: price, line: tradeLine });
+
+    // *** විනාඩි 3 කට පසු තීරණය ස්ථිර කිරීම ***
     setTimeout(() => {
-        if(activePriceLines[id]) {
-            candleSeries.removePriceLine(activePriceLines[id]);
-            delete activePriceLines[id];
+        const lastPrice = candles[candles.length - 1].close;
+        let isWin = false;
+        if (type === 'BUY' && lastPrice > price) isWin = true;
+        if (type === 'SELL' && lastPrice < price) isWin = true;
+
+        // හිස්ට්‍රි එකේ පෙන්ඩින් එක වින්/ලොස් වලට හරවමු
+        const sig = signalStorage.history.find(s => s.id === id);
+        if(sig && sig.result === "PENDING") {
+            sig.result = isWin ? "WIN" : "LOSS";
+            if(isWin) signalStorage.wins++; else signalStorage.losses++;
+            saveStorage();
+            renderHistory();
+            updateStatsUI();
         }
+
+        candleSeries.removePriceLine(tradeLine);
         activeTradeMarkers = activeTradeMarkers.filter(m => m.id !== id);
-    }, 180000);
+        activeLines = activeLines.filter(l => l.id !== id);
+    }, 180000); // 3 Minutes
 }
 
 function addSignalToHistory(type, conf, entryPrice) {
@@ -227,41 +275,7 @@ function addSignalToHistory(type, conf, entryPrice) {
     saveStorage();
     renderHistory();
     updateStatsUI();
-    drawSignalLine(type, entryPrice, signalID);
-}
-
-function checkSignalOutcomes(currentPrice) {
-    const now = Math.floor(Date.now() / 1000);
-    let changed = false;
-
-    signalStorage.history.forEach(sig => {
-        if (sig.result === "PENDING" && sig.market === currentMarket) {
-            
-            // ඉරේ පාට LIVE වෙනස් කිරීම (Win නම් කොළ, Loss නම් රතු)
-            if(activePriceLines[sig.id]) {
-                let isWinning = (sig.type === "BUY" && currentPrice > sig.entryPrice) || (sig.type === "SELL" && currentPrice < sig.entryPrice);
-                activePriceLines[sig.id].applyOptions({
-                    color: isWinning ? '#00FF88' : '#FF4D4D'
-                });
-            }
-
-            if (now >= sig.expiry) {
-                let isWin = false;
-                if (sig.type === "BUY" && currentPrice > sig.entryPrice) isWin = true;
-                if (sig.type === "SELL" && currentPrice < sig.entryPrice) isWin = true;
-
-                sig.result = isWin ? "WIN" : "LOSS";
-                if (isWin) signalStorage.wins++; else signalStorage.losses++;
-                changed = true;
-            }
-        }
-    });
-
-    if (changed) {
-        saveStorage();
-        renderHistory();
-        updateStatsUI();
-    }
+    drawPocketOptionVisual(type, entryPrice, signalID);
 }
 
 function calculateSMC() {
@@ -339,9 +353,17 @@ function calculateSMC() {
     let confidence = (mainCount * 15) + (recentBOS ? 20 : 0) + (recentCHOCH ? 20 : 0);
     let signalText = "WAIT ⚪";
 
+    const signalBox = document.getElementById("signalBox");
+    signalBox.classList.remove("signal-active-green", "signal-active-red");
+
     if (currentDir !== "WAITING" && mainCount >= 3) {
-        if (currentDir === "UPTREND") signalText = "STRONG BUY 🟢";
-        else signalText = "STRONG SELL 🔴";
+        if (currentDir === "UPTREND") {
+            signalText = "STRONG BUY 🟢";
+            signalBox.classList.add("signal-active-green");
+        } else {
+            signalText = "STRONG SELL 🔴";
+            signalBox.classList.add("signal-active-red");
+        }
 
         const lastSig = signalStorage.history[signalStorage.history.length - 1];
         if (!lastSig || (Math.floor(Date.now()/1000) - lastSig.timestamp > 60)) {
@@ -394,7 +416,7 @@ function connectDeriv() {
             let price = Number(data.tick.quote), epoch = Number(data.tick.epoch);
             let candleTime = Math.floor(epoch / TIMEFRAME) * TIMEFRAME;
             
-            checkSignalOutcomes(price);
+            updateLineColors(price);
 
             let lastCandle = candles[candles.length - 1];
             if (lastCandle && candleTime === lastCandle.time) {
@@ -422,10 +444,8 @@ document.getElementById("market").addEventListener("change", (e) => {
     currentMarket = e.target.value;
     document.getElementById("marketName").innerHTML = e.target.options[e.target.selectedIndex].text;
     candles = []; 
-    activeTradeMarkers = [];
-    // කලින් තිබු ඉරි මැකීම
-    Object.values(activePriceLines).forEach(line => candleSeries.removePriceLine(line));
-    activePriceLines = {};
+    activeTradeMarkers = []; 
+    activeLines = []; 
     connectDeriv();
 });
 
