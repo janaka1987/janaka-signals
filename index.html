@@ -173,16 +173,17 @@ function renderHistory() {
 
 function addSignalToHistory(type, conf, entryPrice) {
     const now = new Date();
+    const serverNow = Math.floor(Date.now() / 1000);
     const newSignal = {
         id: Date.now(),
         time: now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0'),
-        timestamp: Math.floor(Date.now() / 1000),
+        timestamp: serverNow,
         market: currentMarket,
         type: type,
         conf: conf,
         entryPrice: entryPrice,
         result: "PENDING",
-        expiry: Math.floor(Date.now() / 1000) + 180 
+        expiry: serverNow + 180 
     };
     signalStorage.history.push(newSignal);
     signalStorage.total++;
@@ -191,14 +192,12 @@ function addSignalToHistory(type, conf, entryPrice) {
     updateStatsUI();
 }
 
-// දෝෂය නිවැරදි කළ ප්‍රධාන ෆන්ක්ෂන් එක
-function checkSignalOutcomes(currentPrice) {
+// Win/Loss නිවැරදිව පරීක්ෂා කරන කොටස
+function checkSignalOutcomes(currentPrice, serverTime) {
     let changed = false;
-    const now = Math.floor(Date.now() / 1000);
 
     signalStorage.history.forEach(sig => {
-        // අදාළ මාර්කට් එකේ විනාඩි 3 සම්පූර්ණ වී ඇත්නම් ප්‍රතිඵල ලබා දෙයි
-        if (sig.result === "PENDING" && sig.market === currentMarket && now >= sig.expiry) {
+        if (sig.result === "PENDING" && sig.market === currentMarket && serverTime >= sig.expiry) {
             let isWin = false;
             if (sig.type === "BUY" && currentPrice > sig.entryPrice) isWin = true;
             if (sig.type === "SELL" && currentPrice < sig.entryPrice) isWin = true;
@@ -365,8 +364,8 @@ function connectDeriv() {
             let candleTime = Math.floor(epoch / TIMEFRAME) * TIMEFRAME;
             let lastCandle = candles[candles.length - 1];
             
-            // සෑම ටික් එකකදීම Pending සිග්නල් පරීක්ෂා කරයි
-            checkSignalOutcomes(price);
+            // සර්වර් වෙලාව භාවිතා කර ප්‍රතිඵල පරීක්ෂා කරයි
+            checkSignalOutcomes(price, epoch);
 
             if (lastCandle && candleTime === lastCandle.time) {
                 lastCandle.close = price;
