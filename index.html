@@ -192,7 +192,6 @@ function renderHistory() {
     });
 }
 
-// *** චාර්ට් එකේ ඉර සහ හිස්ට්‍රි එකේ පෙන්ඩින් එකේ පාට එකට වෙනස් කිරීම ***
 function updateLineColors(currentPrice) {
     activeLines.forEach(item => {
         let isWin = false;
@@ -202,7 +201,6 @@ function updateLineColors(currentPrice) {
         let color = isWin ? '#00FF88' : '#FF4D4D';
         item.line.applyOptions({ color: color });
 
-        // හිස්ට්‍රි එකේ තියෙන පෙන්ඩින් අකුරේ පාට වෙනස් කිරීම
         const resEl = document.getElementById(`res-${item.id}`);
         if(resEl && resEl.innerText === "PENDING") {
             resEl.style.color = color;
@@ -232,14 +230,12 @@ function drawPocketOptionVisual(type, price, id) {
     activeTradeMarkers.push(visualMarker);
     activeLines.push({ id: id, type: type, entryPrice: price, line: tradeLine });
 
-    // *** විනාඩි 3 කට පසු තීරණය ස්ථිර කිරීම ***
     setTimeout(() => {
         const lastPrice = candles[candles.length - 1].close;
         let isWin = false;
         if (type === 'BUY' && lastPrice > price) isWin = true;
         if (type === 'SELL' && lastPrice < price) isWin = true;
 
-        // හිස්ට්‍රි එකේ පෙන්ඩින් එක වින්/ලොස් වලට හරවමු
         const sig = signalStorage.history.find(s => s.id === id);
         if(sig && sig.result === "PENDING") {
             sig.result = isWin ? "WIN" : "LOSS";
@@ -345,12 +341,21 @@ function calculateSMC() {
     const lastCandles = candles.slice(-4);
     const oneColour = currentDir === "UPTREND" ? lastCandles.filter(c => c.close > c.open).length >= 3 : lastCandles.filter(c => c.close < c.open).length >= 3;
     const last = candles[candles.length - 1];
+    const prev = candles[candles.length - 2];
     const hiddenOpen = currentDir === "UPTREND" ? last.close > last.open : last.close < last.open;
 
-    let mainCount = 0;
-    if(hasKeyLevel) mainCount++; if(oneColour) mainCount++; if(hiddenOpen) mainCount++; if(hasFVG) mainCount++;
+    // *** ENGULFING LOGIC RESTORED ***
+    let hasEngulfing = false;
+    if(currentDir === "UPTREND") {
+        if(last.close > last.open && prev.close < prev.open && last.close >= prev.open && last.open <= prev.close) hasEngulfing = true;
+    } else if(currentDir === "DOWNTREND") {
+        if(last.close < last.open && prev.close > prev.open && last.close <= prev.open && last.open >= prev.close) hasEngulfing = true;
+    }
 
-    let confidence = (mainCount * 15) + (recentBOS ? 20 : 0) + (recentCHOCH ? 20 : 0);
+    let mainCount = 0;
+    if(hasKeyLevel) mainCount++; if(oneColour) mainCount++; if(hiddenOpen) mainCount++; if(hasFVG) mainCount++; if(hasEngulfing) mainCount++;
+
+    let confidence = (mainCount * 14) + (recentBOS ? 15 : 0) + (recentCHOCH ? 15 : 0);
     let signalText = "WAIT ⚪";
 
     const signalBox = document.getElementById("signalBox");
@@ -375,9 +380,11 @@ function calculateSMC() {
     document.getElementById("trend").style.color = currentDir === "UPTREND" ? "#00FF88" : "#FF4D4D";
     document.getElementById("signal").innerHTML = signalText;
     document.getElementById("confidence").innerHTML = Math.min(confidence, 100) + "%";
-      document.getElementById("techniquesBox").innerHTML = `Key Level ${hasKeyLevel ? "✅" : "❌"}<br>One Colour ${oneColour ? "✅" : "❌"}<br>Hidden Open ${hiddenOpen ? "✅" : "❌"}<br>FVG ${hasFVG ? "✅" : "❌"}`;
     
-    document.getElementById("supportBox").innerHTML = `BOS ${recentBOS ? "✅" : "❌"}<br>CHOCH ${recentCHOCH ? "✅" : "❌"}<br>`;
+    // UI UPDATED WITH ENGULFING
+    document.getElementById("techniquesBox").innerHTML = `Key Level ${hasKeyLevel ? "✅" : "❌"}<br>One Colour ${oneColour ? "✅" : "❌"}<br>Hidden Open ${hiddenOpen ? "✅" : "❌"}<br>FVG ${hasFVG ? "✅" : "❌"}<br>Engulfing ${hasEngulfing ? "✅" : "❌"}`;
+    
+    document.getElementById("supportBox").innerHTML = `BOS ${recentBOS ? "✅" : "❌"}<br>CHOCH ${recentCHOCH ? "✅" : "❌"}<br>Trendline ❌`;
     
     candleSeries.setMarkers([...markers, ...activeTradeMarkers]);
     trendSeries.setData(lineData);
