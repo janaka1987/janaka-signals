@@ -512,6 +512,27 @@ const calculateNeuralSMC = () => {
     const isEngulfing = (last.close > last.open && prev.close < prev.open && last.close > prev.open) || 
                        (last.close < last.open && prev.close > prev.open && last.close < prev.open);
 
+    // --- NEW LABELS ADDED HERE (ENG & FVG) ---
+    if (isEngulfing) {
+        markers.push({ 
+            time: last.time, 
+            position: last.close > last.open ? 'belowBar' : 'aboveBar', 
+            color: '#ff9800', 
+            shape: 'circle', 
+            text: 'ENG' 
+        });
+    }
+    if (hasFVG) {
+        markers.push({ 
+            time: prev.time, 
+            position: prev2.high < last.low ? 'belowBar' : 'aboveBar', 
+            color: '#f471ff', 
+            shape: 'square', 
+            text: 'FVG' 
+        });
+    }
+    // ----------------------------------------
+
     let score = (bosDetected ? 40 : 0) + (hasFVG ? 20 : 0) + (isEngulfing ? 30 : 0) + (chochDetected ? 10 : 0);
 
     document.getElementById("trend").innerText = lastBOSDir;
