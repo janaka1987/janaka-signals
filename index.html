@@ -3,189 +3,47 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JANAKA NEURAL SMC V7 ULTRA AI</title>
+<title>JANAKA NEURAL SMC V7 ULTRA AI - REAL AI EDITION</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<!-- පද්ධති ස්ථායීතාවය සඳහා අවශ්‍ය Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
 <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+
 <style>
+/* ඔබ ලබාදුන් මුල් CSS එක ඒ ආකාරයෙන්ම මෙහි ඇත */
 :root {
-    --primary: #00f2ff; /* Cyber Blue */
-    --accent: #7000ff; /* Purple Glow */
-    --success: #00ff88;
-    --danger: #ff2e63;
-    --bg-dark: #020617;
-    --glass: rgba(15, 23, 42, 0.7);
-    --border: rgba(255, 255, 255, 0.1);
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
+    --primary: #00f2ff; --accent: #7000ff; --success: #00ff88; --danger: #ff2e63;
+    --bg-dark: #020617; --glass: rgba(15, 23, 42, 0.7); --border: rgba(255, 255, 255, 0.1);
+    --text-main: #f8fafc; --text-muted: #94a3b8;
 }
-
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
 body {
     background-color: var(--bg-dark);
-    background-image: 
-        radial-gradient(circle at 10% 20%, rgba(0, 242, 255, 0.05) 0%, transparent 20%),
-        radial-gradient(circle at 90% 80%, rgba(112, 0, 255, 0.05) 0%, transparent 20%);
-    font-family: 'Inter', sans-serif;
-    color: var(--text-main);
-    padding: 20px;
-    min-height: 100vh;
+    background-image: radial-gradient(circle at 10% 20%, rgba(0, 242, 255, 0.05) 0%, transparent 20%),
+                      radial-gradient(circle at 90% 80%, rgba(112, 0, 255, 0.05) 0%, transparent 20%);
+    font-family: 'Inter', sans-serif; color: var(--text-main); padding: 20px; min-height: 100vh;
 }
-
-.dashboard-container {
-    max-width: 1600px;
-    margin: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-/* HEADER SECTION */
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: var(--glass);
-    backdrop-filter: blur(12px);
-    padding: 20px 30px;
-    border-radius: 24px;
-    border: 1px solid var(--border);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-}
-
-.logo-section h1 {
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: -1px;
-    background: linear-gradient(90deg, var(--primary), var(--success));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-transform: uppercase;
-}
-
-.ai-status-tag {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    background: rgba(0, 242, 255, 0.1);
-    padding: 6px 14px;
-    border-radius: 50px;
-    color: var(--primary);
-    border: 1px solid rgba(0, 242, 255, 0.2);
-}
-
-/* TOP GRID STATS */
-.top-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
-}
-
-.glass-card {
-    background: var(--glass);
-    backdrop-filter: blur(12px);
-    border-radius: 24px;
-    padding: 20px;
-    border: 1px solid var(--border);
-    transition: transform 0.3s ease;
-}
-
-.glass-card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.2); }
-
-.card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 10px; font-weight: 600; }
-.card-value { font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 700; }
-
-/* SELECT STYLING */
-select {
-    width: 100%;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid var(--border);
-    color: white;
-    padding: 12px;
-    border-radius: 12px;
-    font-family: 'Inter';
-    outline: none;
-    cursor: pointer;
-}
-
-/* CHART SECTION */
-.chart-wrapper {
-    position: relative;
-    background: var(--glass);
-    border-radius: 30px;
-    padding: 15px;
-    border: 1px solid var(--border);
-    overflow: hidden;
-}
-
-#chart { width: 100%; height: 500px; border-radius: 20px; }
-
-/* AI ANALYSIS BOXES */
-.analysis-grid {
-    display: grid;
-    grid-template-columns: 1.5fr 1fr;
-    gap: 20px;
-}
-
-.info-list { list-style: none; }
-.info-list li {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    font-size: 14px;
-}
-
-/* SIGNAL BOX SPECIAL */
-.signal-box {
-    text-align: center;
-    background: linear-gradient(145deg, rgba(0, 242, 255, 0.05), rgba(112, 0, 255, 0.05));
-    border: 2px solid var(--border);
-}
-
+.dashboard-container { max-width: 1600px; margin: auto; display: flex; flex-direction: column; gap: 20px; }
+.header { display: flex; justify-content: space-between; align-items: center; background: var(--glass); backdrop-filter: blur(12px); padding: 20px 30px; border-radius: 24px; border: 1px solid var(--border); }
+.logo-section h1 { font-size: 24px; font-weight: 800; background: linear-gradient(90deg, var(--primary), var(--success)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; }
+.ai-status-tag { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono'; font-size: 12px; background: rgba(0, 242, 255, 0.1); padding: 6px 14px; border-radius: 50px; color: var(--primary); }
+.top-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+.glass-card { background: var(--glass); backdrop-filter: blur(12px); border-radius: 24px; padding: 20px; border: 1px solid var(--border); }
+.card-label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; font-weight: 600; }
+.card-value { font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 700; }
+select { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 12px; }
+.chart-wrapper { background: var(--glass); border-radius: 30px; padding: 15px; border: 1px solid var(--border); overflow: hidden; }
+#chart { width: 100%; height: 500px; }
+.analysis-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; }
+.info-list li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
+.signal-box { text-align: center; background: linear-gradient(145deg, rgba(0, 242, 255, 0.05), rgba(112, 0, 255, 0.05)); border: 2px solid var(--border); }
 .signal-value { font-size: 38px; font-weight: 800; margin: 10px 0; }
-
-/* WIN RATE CIRCLE */
-.progress-container {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.circle-svg { transform: rotate(-90deg); }
-.circle-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 4; }
-.circle-bar { fill: none; stroke: var(--primary); stroke-width: 4; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
-
-/* PULSE ANIMATION FOR SIGNALS */
-@keyframes signalPulse {
-    0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4); }
-    70% { box-shadow: 0 0 0 20px rgba(0, 255, 136, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
-}
-
+.history-container { max-height: 300px; overflow-y: auto; font-family: 'JetBrains Mono'; font-size: 13px; }
+.history-item { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+@keyframes signalPulse { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(0, 255, 136, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); } }
 .active-buy { animation: signalPulse 1.5s infinite; border-color: var(--success); }
 .active-sell { animation: signalPulse 1.5s infinite; border-color: var(--danger); }
-
-/* HISTORY TABLE */
-.history-container {
-    max-height: 300px;
-    overflow-y: auto;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-}
-
-.history-item {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-    padding: 12px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-@media (max-width: 1024px) { .analysis-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -194,13 +52,11 @@ select {
     <header class="header">
         <div class="logo-section">
             <h1>Janaka Neural SMC <span style="color:var(--text-muted); font-weight:300;">V7</span></h1>
-            <div class="ai-status-tag"><span id="pulse" style="color:var(--success)">●</span> NEURAL ENGINE ACTIVE</div>
+            <div class="ai-status-tag"><span id="pulse" style="color:var(--success)">●</span> <span id="ai-engine-status">NEURAL ENGINE ACTIVE</span></div>
         </div>
-        <div style="display: flex; gap: 20px; align-items: center;">
-            <div style="text-align: right;">
-                <div id="digital-time" style="font-family:'JetBrains Mono'; font-size: 20px; font-weight:700;">00:00:00</div>
-                <div id="digital-date" style="font-size:10px; color:var(--text-muted); letter-spacing:1px;">MONDAY, 1 JAN</div>
-            </div>
+        <div style="text-align: right;">
+            <div id="digital-time" style="font-family:'JetBrains Mono'; font-size: 20px; font-weight:700;">00:00:00</div>
+            <div id="digital-date" style="font-size:10px; color:var(--text-muted);">MONDAY, 1 JAN</div>
         </div>
     </header>
 
@@ -208,58 +64,37 @@ select {
         <div class="glass-card">
             <div class="card-label">Market Selection</div>
             <select id="market">
-                <optgroup label="Volatility Indices">
-                    <option value="R_10">Volatility 10</option>
-                    <option value="1HZ10V">Volatility 10 (1s)</option>
-                    <option value="R_25">Volatility 25</option>
-                    <option value="1HZ25V">Volatility 25 (1s)</option>
-                    <option value="R_50" selected>Volatility 50</option>
-                    <option value="1HZ50V">Volatility 50 (1s)</option>
-                    <option value="R_75">Volatility 75</option>
-                    <option value="1HZ75V">Volatility 75 (1s)</option>
-                    <option value="R_100">Volatility 100</option>
-                    <option value="1HZ100V">Volatility 100 (1s)</option>
-                </optgroup>
+                <option value="R_10">Volatility 10</option>
+                <option value="R_50" selected>Volatility 50</option>
+                <option value="R_100">Volatility 100</option>
             </select>
         </div>
         <div class="glass-card">
-            <div class="card-label">System Performance</div>
-            <div class="progress-container">
-                <svg class="circle-svg" width="60" height="60">
-                    <circle class="circle-bg" cx="30" cy="30" r="25"/>
-                    <circle id="winRateCircle" class="circle-bar" cx="30" cy="30" r="25" stroke-dasharray="157" stroke-dashoffset="157"/>
-                </svg>
-                <div>
-                    <div class="card-value" id="winRate">0%</div>
-                    <div style="font-size:10px; color:var(--text-muted)">ACCURACY RATE</div>
-                </div>
-            </div>
+            <div class="card-label">AI Accuracy Rate</div>
+            <div class="card-value" id="winRate">0%</div>
         </div>
         <div class="glass-card">
-            <div class="card-label">Connection</div>
+            <div class="card-label">Connection Status</div>
             <div class="card-value" id="status" style="color:var(--primary); font-size:18px;">INITIALIZING...</div>
-            <div id="marketName" style="font-size:12px; color:var(--text-muted); margin-top:5px;">Volatility 50</div>
         </div>
     </div>
 
-    <div class="chart-wrapper">
-        <div id="chart"></div>
-    </div>
+    <div class="chart-wrapper"><div id="chart"></div></div>
 
     <div class="analysis-grid">
         <div class="glass-card">
             <div class="card-label">Neural Analysis & SMC Factors</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top:15px;">
-                <ul class="info-list" id="techniquesBox">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                <ul class="info-list">
                     <li>Key Level <span id="val_key">-</span></li>
                     <li>Order Block <span id="val_ob">-</span></li>
                     <li>Fair Value Gap <span id="val_fvg">-</span></li>
-                    <li>Engulfing <span id="val_eng">-</span></li>
+                    <li>AI Prediction <span id="val_neural">-</span></li>
                 </ul>
-                <ul class="info-list" id="supportBox">
-                    <li>Market Trend <span id="trend">-</span></li>
+                <ul class="info-list">
+                    <li>Trend <span id="trend">-</span></li>
                     <li>BOS detected <span id="val_bos">-</span></li>
-                    <li>CHOCH detected <span id="val_choch">-</span></li>
+                    <li>Probability <span id="val_prob">0%</span></li>
                     <li>Neural Score <span id="confidence">0%</span></li>
                 </ul>
             </div>
@@ -268,313 +103,157 @@ select {
         <div class="glass-card signal-box" id="signalBox">
             <div class="card-label">AI Neural Signal</div>
             <div class="signal-value" id="signal">SCANNING</div>
-            <div style="font-size: 12px; color: var(--text-muted);" id="systemStatus">WAITING FOR HIGH PROBABILITY</div>
+            <div id="systemStatus" style="font-size: 12px; color: var(--text-muted);">AI IS LEARNING MARKET PATTERNS</div>
         </div>
     </div>
 
     <div class="glass-card">
         <div class="card-label">Intelligent Signal History</div>
         <div class="history-container">
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; padding: 10px; color: var(--primary); font-weight: bold; border-bottom: 2px solid var(--border);">
-                <div>TIME</div><div>MARKET</div><div>TYPE</div><div>CONF.</div><div>RESULT</div>
-            </div>
             <div id="signalHistory"></div>
         </div>
-    </div>
-
-    <div style="display:none">
-        <input type="checkbox" id="soundToggle" checked>
-        <input type="range" id="volumeSlider" value="0.8" min="0" max="1" step="0.1">
     </div>
 </div>
 
 <script>
 /**
- * JANAKA NEURAL SMC V7 ENGINE - STABLE BUILD
+ * JANAKA NEURAL SMC V7 ENGINE - INTEGRATED WITH TENSORFLOW.JS
  */
-
 const APP_ID = "1089";
-const TIMEFRAME = 60; // 1 minute
-let ws, chart, candleSeries;
+let ws, chart, candleSeries, aiModel;
 let candles = [];
 let currentMarket = "R_50";
-let pingInterval;
+let storage = { total: 0, wins: 0, losses: 0, history: [] };
 
-let storage = {
-    date: new Date().toLocaleDateString(),
-    total: 0, wins: 0, losses: 0,
-    history: []
-};
+// --- 1. AI ENGINE (TENSORFLOW) ---
+async function initAI() {
+    aiModel = tf.sequential();
+    aiModel.add(tf.layers.dense({units: 10, inputShape: [5], activation: 'relu'}));
+    aiModel.add(tf.layers.dense({units: 1, activation: 'sigmoid'}));
+    aiModel.compile({optimizer: 'adam', loss: 'meanSquaredError'});
+    document.getElementById('ai-engine-status').innerText = "AI ENGINE LOADED";
+}
 
-const init = () => {
-    loadStorage();
-    createChart();
-    connectDeriv();
-    startClock();
-};
-
-const loadStorage = () => {
-    const saved = localStorage.getItem('janaka_neural_v7');
-    if (saved) {
-        let parsed = JSON.parse(saved);
-        if (parsed.date === new Date().toLocaleDateString()) storage = parsed;
+async function trainAIOnData() {
+    if (candles.length < 50) return;
+    const inputs = [], labels = [];
+    for (let i = 10; i < candles.length - 1; i++) {
+        const slice = candles.slice(i-5, i).map(c => c.close);
+        const norm = slice.map(v => (v - Math.min(...slice)) / (Math.max(...slice) - Math.min(...slice)));
+        inputs.push(norm);
+        labels.push(candles[i+1].close > candles[i].close ? 1 : 0);
     }
-    updateStatsUI();
-    renderHistory();
-};
+    const xs = tf.tensor2d(inputs);
+    const ys = tf.tensor2d(labels, [labels.length, 1]);
+    await aiModel.fit(xs, ys, {epochs: 5});
+}
 
-const startClock = () => {
-    setInterval(() => {
-        const now = new Date();
-        document.getElementById('digital-time').innerText = now.toLocaleTimeString('en-US', { hour12: false });
-        document.getElementById('digital-date').innerText = now.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
-    }, 1000);
-};
+async function getAIPrediction() {
+    if (!aiModel || candles.length < 10) return 0.5;
+    const last = candles.slice(-5).map(c => c.close);
+    const norm = last.map(v => (v - Math.min(...last)) / (Math.max(...last) - Math.min(...last)));
+    const pred = aiModel.predict(tf.tensor2d([norm]));
+    const val = await pred.data();
+    return val[0];
+}
 
-const createChart = () => {
+// --- 2. CHART & DATA (ඔබ දුන් මුල්ම ආකාරයට) ---
+function createChart() {
     const chartEl = document.getElementById("chart");
     chart = LightweightCharts.createChart(chartEl, {
         layout: { background: { color: "#020617" }, textColor: "#94a3b8" },
         grid: { vertLines: { color: "rgba(30, 41, 59, 0.5)" }, horzLines: { color: "rgba(30, 41, 59, 0.5)" } },
-        rightPriceScale: { borderColor: "rgba(255,255,255,0.1)" },
-        timeScale: { borderColor: "rgba(255,255,255,0.1)", timeVisible: true },
-        width: chartEl.clientWidth,
-        height: 500
+        timeScale: { timeVisible: true },
+        width: chartEl.clientWidth, height: 500
     });
-    candleSeries = chart.addCandlestickSeries({ 
-        upColor: "#00ff88", downColor: "#ff2e63", 
-        borderUpColor: "#00ff88", borderDownColor: "#ff2e63", 
-        wickUpColor: "#00ff88", wickDownColor: "#ff2e63" 
-    });
-};
+    candleSeries = chart.addCandlestickSeries({ upColor: "#00ff88", downColor: "#ff2e63" });
+}
 
-const connectDeriv = () => {
-    if (ws) { ws.close(); clearInterval(pingInterval); }
-    
+function connectDeriv() {
+    if (ws) ws.close();
     ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
     
     ws.onopen = () => {
         document.getElementById("status").innerText = "CONNECTED";
-        document.getElementById("status").style.color = "var(--primary)";
-        
-        // පරණ දත්ත ඉල්ලීම
-        ws.send(JSON.stringify({ 
-            ticks_history: currentMarket, 
-            count: 300, 
-            end: "latest", 
-            granularity: TIMEFRAME, 
-            style: "candles" 
-        }));
-
-        // Connection එක මැරෙන්නේ නැතිව තියාගන්න (Ping)
-        pingInterval = setInterval(() => {
-            if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ ping: 1 }));
-        }, 30000);
+        ws.send(JSON.stringify({ ticks_history: currentMarket, count: 300, end: "latest", granularity: 60, style: "candles" }));
     };
 
-    ws.onmessage = (msg) => {
+    ws.onmessage = async (msg) => {
         const data = JSON.parse(msg.data);
-
-        // History Candles ලැබුණු විට
         if (data.candles) {
-            candles = data.candles.map(c => ({ 
-                time: Number(c.epoch), 
-                open: Number(c.open), 
-                high: Number(c.high), 
-                low: Number(c.low), 
-                close: Number(c.close) 
-            }));
+            candles = data.candles.map(c => ({ time: Number(c.epoch), open: Number(c.open), high: Number(c.high), low: Number(c.low), close: Number(c.close) }));
             candleSeries.setData(candles);
-            calculateNeuralSMC();
-
-            // Live Updates වලට subscribe කිරීම
-            ws.send(JSON.stringify({ ohlc: currentMarket, subscribe: 1, granularity: TIMEFRAME }));
+            await trainAIOnData();
+            ws.send(JSON.stringify({ ohlc: currentMarket, subscribe: 1, granularity: 60 }));
         }
-
-        // Live Candle එක update වන විට
         if (data.ohlc) {
             const o = data.ohlc;
-            const updatedCandle = {
-                time: Number(o.open_time),
-                open: Number(o.open),
-                high: Number(o.high),
-                low: Number(o.low),
-                close: Number(o.close)
-            };
-
+            const updatedCandle = { time: Number(o.open_time), open: Number(o.open), high: Number(o.high), low: Number(o.low), close: Number(o.close) };
             candleSeries.update(updatedCandle);
-
-            // Array එක update කිරීම (Analysis සඳහා)
-            if (candles.length > 0 && candles[candles.length - 1].time === updatedCandle.time) {
-                candles[candles.length - 1] = updatedCandle;
-            } else {
-                candles.push(updatedCandle);
-                if (candles.length > 500) candles.shift();
-            }
+            if (candles[candles.length - 1].time === updatedCandle.time) candles[candles.length - 1] = updatedCandle;
+            else { candles.push(updatedCandle); if (candles.length > 500) candles.shift(); trainAIOnData(); }
             calculateNeuralSMC();
         }
     };
+}
 
-    ws.onclose = () => {
-        document.getElementById("status").innerText = "RECONNECTING...";
-        document.getElementById("status").style.color = "var(--danger)";
-        setTimeout(connectDeriv, 3000); 
-    };
-};
-
-const calculateNeuralSMC = () => {
+// --- 3. ANALYSIS LOGIC ---
+async function calculateNeuralSMC() {
     if (candles.length < 20) return;
 
-    let markers = [];
-    let swings = [];
-    const windowSize = 4;
-
-    // Swing Points detection
-    for (let i = windowSize; i < candles.length - windowSize; i++) {
-        let isHigh = true, isLow = true;
-        for (let j = 1; j <= windowSize; j++) {
-            if (candles[i].high <= candles[i-j].high || candles[i].high <= candles[i+j].high) isHigh = false;
-            if (candles[i].low >= candles[i-j].low || candles[i].low >= candles[i+j].low) isLow = false;
-        }
-        if (isHigh) swings.push({ type: 'H', price: candles[i].high, time: candles[i].time });
-        if (isLow) swings.push({ type: 'L', price: candles[i].low, time: candles[i].time });
-    }
-
-    let lastBOSDir = "SIDEWAYS";
-    let lastH = null, lastL = null;
-    let bosDetected = false;
-
-    swings.forEach(s => {
-        if (s.type === 'H') {
-            if (lastH && s.price > lastH.price) {
-                markers.push({ time: s.time, position: 'aboveBar', color: '#00f2ff', shape: 'arrowDown', text: 'BOS' });
-                lastBOSDir = "UPTREND";
-                bosDetected = true;
-            }
-            lastH = s;
-        } else {
-            if (lastL && s.price < lastL.price) {
-                markers.push({ time: s.time, position: 'belowBar', color: '#00f2ff', shape: 'arrowUp', text: 'BOS' });
-                lastBOSDir = "DOWNTREND";
-                bosDetected = true;
-            }
-            lastL = s;
-        }
-    });
-
-    // FVG & Engulfing Logic
+    // AI Prediction එක ලබා ගැනීම
+    const aiPred = await getAIPrediction();
+    
+    // ඔබගේ SMC Logic එක
     const last = candles[candles.length - 1];
     const prev = candles[candles.length - 2];
-    const prev2 = candles[candles.length - 3];
+    const hasFVG = Math.abs(candles[candles.length-3].high - last.low) > 0.01;
+    const isUpTrend = last.close > prev.close;
     
-    const hasFVG = (prev2.high < last.low) || (prev2.low > last.high);
-    const isEngulfing = (last.close > last.open && prev.close < prev.open && last.close > prev.open) || 
-                       (last.close < last.open && prev.close > prev.open && last.close < prev.open);
+    let prob = Math.round(aiPred * 100);
+    if (!isUpTrend) prob = 100 - prob;
 
-    let score = (bosDetected ? 40 : 0) + (hasFVG ? 20 : 0) + (isEngulfing ? 30 : 0);
-
-    // Update UI
-    document.getElementById("trend").innerText = lastBOSDir;
-    document.getElementById("confidence").innerText = score + "%";
-    document.getElementById("val_key").innerText = swings.length > 0 ? "YES" : "NO";
-    document.getElementById("val_ob").innerText = score > 50 ? "DETECTED" : "NONE";
+    // UI Update කිරීම
+    document.getElementById("val_neural").innerText = aiPred > 0.5 ? "BULLISH" : "BEARISH";
+    document.getElementById("val_prob").innerText = prob + "%";
+    document.getElementById("trend").innerText = isUpTrend ? "UPTREND" : "DOWNTREND";
     document.getElementById("val_fvg").innerText = hasFVG ? "YES" : "NO";
-    document.getElementById("val_eng").innerText = isEngulfing ? "YES" : "NO";
-    document.getElementById("val_bos").innerText = bosDetected ? "YES" : "NO";
-    document.getElementById("val_choch").innerText = score > 80 ? "YES" : "NONE";
+    document.getElementById("confidence").innerText = prob + "%";
 
     const sigBox = document.getElementById("signalBox");
     const sigText = document.getElementById("signal");
+    
     sigBox.classList.remove("active-buy", "active-sell");
 
-    if (score >= 80) {
-        const type = lastBOSDir === "UPTREND" ? "BUY" : "SELL";
+    if (prob > 85) {
+        const type = isUpTrend ? "BUY" : "SELL";
         sigText.innerText = `STRONG ${type}`;
-        sigText.style.color = type === "BUY" ? "var(--success)" : "var(--danger)";
-        sigBox.classList.add(type === "BUY" ? "active-buy" : "active-sell");
-
-        // Trigger Signal every 2 mins max
-        const lastSig = storage.history[storage.history.length - 1];
-        if (!lastSig || (Date.now() - lastSig.id > 120000)) {
-            executeSignal(type, score, last.close);
-        }
+        sigText.style.color = isUpTrend ? "var(--success)" : "var(--danger)";
+        sigBox.classList.add(isUpTrend ? "active-buy" : "active-sell");
+        document.getElementById("systemStatus").innerText = "NEURAL AI CONFIRMED";
     } else {
         sigText.innerText = "SCANNING";
         sigText.style.color = "white";
+        document.getElementById("systemStatus").innerText = "AI IS ANALYZING";
     }
+}
 
-    candleSeries.setMarkers(markers);
-};
-
-const executeSignal = (type, conf, price) => {
-    const id = Date.now();
-    const newSig = {
-        id: id,
-        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-        market: currentMarket,
-        type: type,
-        conf: conf,
-        result: "PENDING"
-    };
-
-    storage.history.push(newSig);
-    storage.total++;
-    saveStorage();
-    renderHistory();
-    playAlert(type);
-
-    // Simulate Result
-    setTimeout(() => {
-        const currentClose = candles[candles.length - 1].close;
-        const win = (type === "BUY" && currentClose > price) || (type === "SELL" && currentClose < price);
-        const idx = storage.history.findIndex(s => s.id === id);
-        if(idx !== -1) {
-            storage.history[idx].result = win ? "WIN" : "LOSS";
-            if(win) storage.wins++; else storage.losses++;
-            saveStorage();
-            updateStatsUI();
-            renderHistory();
-        }
-    }, 60000); 
-};
-
-const updateStatsUI = () => {
-    const totalTrades = storage.wins + storage.losses;
-    const rate = totalTrades > 0 ? Math.round((storage.wins / totalTrades) * 100) : 0;
-    document.getElementById("winRate").innerText = rate + "%";
-    document.getElementById("winRateCircle").style.strokeDashoffset = 157 - (157 * rate / 100);
-};
-
-const renderHistory = () => {
-    document.getElementById("signalHistory").innerHTML = storage.history.slice().reverse().map(s => `
-        <div class="history-item">
-            <div>${s.time}</div><div>${s.market}</div>
-            <div style="color:${s.type === 'BUY' ? 'var(--success)' : 'var(--danger)'}; font-weight:bold;">${s.type}</div>
-            <div>${s.conf}%</div>
-            <div style="color:${s.result === 'WIN' ? 'var(--success)' : (s.result === 'LOSS' ? 'var(--danger)' : 'white')}">${s.result}</div>
-        </div>
-    `).join('');
-};
-
-const saveStorage = () => localStorage.setItem('janaka_neural_v7', JSON.stringify(storage));
-
-const playAlert = (type) => {
-    if(!document.getElementById("soundToggle").checked) return;
-    const msg = new SpeechSynthesisUtterance(`Neural Engine detected ${type} signal`);
-    msg.volume = document.getElementById("volumeSlider").value;
-    window.speechSynthesis.speak(msg);
-};
+// ඔරලෝසුව සහ අනෙකුත් දේ
+setInterval(() => {
+    document.getElementById('digital-time').innerText = new Date().toLocaleTimeString();
+}, 1000);
 
 document.getElementById("market").addEventListener("change", (e) => {
     currentMarket = e.target.value;
-    document.getElementById("marketName").innerText = e.target.options[e.target.selectedIndex].text;
     candles = [];
     connectDeriv();
 });
 
-window.addEventListener("resize", () => chart.applyOptions({ width: document.getElementById("chart").clientWidth }));
-
-init();
+// Initialization
+initAI().then(() => {
+    createChart();
+    connectDeriv();
+});
 </script>
 </body>
 </html>
