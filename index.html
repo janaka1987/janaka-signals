@@ -490,10 +490,29 @@ function calculateSMC() {
             signalBox.classList.add("signal-active-red");
         }
 
-        const lastSig = signalStorage.history[signalStorage.history.length - 1];
-        if (!lastSig || (Math.floor(Date.now()/1000) - lastSig.timestamp > 60)) {
-            addSignalToHistory(currentDir === "UPTREND" ? "BUY" : "SELL", Math.min(confidence, 100), last.close);
-        }
+        const sigType =
+currentDir === "UPTREND"
+? "BUY"
+: "SELL";
+
+const now =
+Math.floor(Date.now()/1000);
+
+if (
+sigType !== lastSignalType ||
+(now - lastSignalTime > 300)
+) {
+
+addSignalToHistory(
+sigType,
+Math.min(confidence,100),
+last.close
+);
+
+lastSignalType = sigType;
+lastSignalTime = now;
+
+}
     }
 
     document.getElementById("trend").innerText = currentDir;
