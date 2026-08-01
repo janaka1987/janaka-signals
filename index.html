@@ -212,6 +212,8 @@ let candles = [];
 let currentMarket = "R_50";
 let activeTradeMarkers = []; 
 let activeLines = []; 
+    let lastSignalType = "";
+let lastSignalTime = 0;
 
 let signalStorage = {
     date: new Date().toLocaleDateString(),
