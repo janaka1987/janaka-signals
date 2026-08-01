@@ -483,14 +483,21 @@ function calculateSMC() {
     const signalBox = document.getElementById("signalBox");
     signalBox.classList.remove("signal-active-green", "signal-active-red");
 
-    if (currentDir !== "WAITING" && mainCount >= 3) {
-        if (currentDir === "UPTREND") {
-            signalText = "STRONG BUY 🟢";
-            signalBox.classList.add("signal-active-green");
-        } else {
-            signalText = "STRONG SELL 🔴";
-            signalBox.classList.add("signal-active-red");
-        }
+    if (
+    currentDir !== "WAITING" &&
+    (
+        mainCount >= 3 ||
+        (recentCHOCH && hasFVG && hasKeyLevel)
+    )
+) {
+
+    if (currentDir === "UPTREND") {
+        signalText = "STRONG BUY 🟢";
+        signalBox.classList.add("signal-active-green");
+    } else {
+        signalText = "STRONG SELL 🔴";
+        signalBox.classList.add("signal-active-red");
+    }
 
         const sigType =
 currentDir === "UPTREND"
