@@ -419,13 +419,13 @@ const calculateNeuralSMC = () => {
 
     let markers = [];
     let swings = [];
-    const windowSize = 6; // Major Swing points හඳුනා ගැනීමට අගය වැඩි කරන ලදී
+    const windowSize = 6; 
 
     // Clear old S/R lines
     srLines.forEach(line => candleSeries.removePriceLine(line));
     srLines = [];
 
-    // Swing Points detection (Highs and Lows)
+    // Swing Points detection
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true, isLow = true;
         for (let j = 1; j <= windowSize; j++) {
@@ -437,18 +437,15 @@ const calculateNeuralSMC = () => {
     }
 
     let lastH = null, lastL = null;
-    let prevH = null, prevL = null;
     let lastBOSDir = "SIDEWAYS";
     let bosDetected = false;
     let chochDetected = false;
 
-    swings.forEach((s, idx) => {
+    swings.forEach((s) => {
         if (s.type === 'H') {
             if (lastH) {
-                // HH, LH Logic
                 if (s.price > lastH.price) {
                     markers.push({ time: s.time, position: 'aboveBar', color: '#00ff88', shape: 'arrowDown', text: 'HH' });
-                    // BOS Logic
                     if (lastBOSDir === "UPTREND") {
                         markers.push({ time: s.time, position: 'aboveBar', color: '#00f2ff', shape: 'arrowDown', text: 'BOS' });
                         bosDetected = true;
@@ -456,7 +453,6 @@ const calculateNeuralSMC = () => {
                     lastBOSDir = "UPTREND";
                 } else {
                     markers.push({ time: s.time, position: 'aboveBar', color: '#ff2e63', shape: 'arrowDown', text: 'LH' });
-                    // CHOCH Logic (If uptrend breaks)
                     if (lastBOSDir === "UPTREND") {
                         markers.push({ time: s.time, position: 'aboveBar', color: '#7000ff', shape: 'arrowDown', text: 'CHOCH' });
                         chochDetected = true;
@@ -464,11 +460,9 @@ const calculateNeuralSMC = () => {
                     }
                 }
             }
-            prevH = lastH;
             lastH = s;
         } else {
             if (lastL) {
-                // LL, HL Logic
                 if (s.price < lastL.price) {
                     markers.push({ time: s.time, position: 'belowBar', color: '#ff2e63', shape: 'arrowUp', text: 'LL' });
                     if (lastBOSDir === "DOWNTREND") {
@@ -478,7 +472,6 @@ const calculateNeuralSMC = () => {
                     lastBOSDir = "DOWNTREND";
                 } else {
                     markers.push({ time: s.time, position: 'belowBar', color: '#00ff88', shape: 'arrowUp', text: 'HL' });
-                    // CHOCH Logic (If downtrend breaks)
                     if (lastBOSDir === "DOWNTREND") {
                         markers.push({ time: s.time, position: 'belowBar', color: '#7000ff', shape: 'arrowUp', text: 'CHOCH' });
                         chochDetected = true;
@@ -486,12 +479,45 @@ const calculateNeuralSMC = () => {
                     }
                 }
             }
-            prevL = lastL;
             lastL = s;
         }
     });
 
-    // Auto S/R Lines (අවසාන ප්‍රධාන Swing High සහ Low මත)
+    // Loop through all history to keep ENG and FVG markers on chart
+    for (let i = 2; i < candles.length; i++) {
+        const curr = candles[i];
+        const prev = candles[i-1];
+        const prev2 = candles[i-2];
+
+        // Engulfing Detection
+        const isEngulfing = (curr.close > curr.open && prev.close < prev.open && curr.close > prev.open) || 
+                           (curr.close < curr.open && prev.close > prev.open && curr.close < prev.open);
+        
+        if (isEngulfing) {
+            markers.push({ 
+                time: curr.time, 
+                position: curr.close > curr.open ? 'belowBar' : 'aboveBar', 
+                color: '#ff9800', 
+                shape: 'circle', 
+                text: 'ENG' 
+            });
+        }
+
+        // FVG Detection
+        const isFVG_Up = prev2.high < curr.low;
+        const isFVG_Down = prev2.low > curr.high;
+
+        if (isFVG_Up || isFVG_Down) {
+            markers.push({ 
+                time: prev.time, 
+                position: isFVG_Up ? 'belowBar' : 'aboveBar', 
+                color: '#f471ff', 
+                shape: 'square', 
+                text: 'FVG' 
+            });
+        }
+    }
+
     if (lastH) {
         const resLine = candleSeries.createPriceLine({
             price: lastH.price, color: '#ff2e63', lineWidth: 2, lineStyle: 2, axisLabelVisible: true, title: 'RESISTANCE'
@@ -508,39 +534,18 @@ const calculateNeuralSMC = () => {
     const last = candles[candles.length - 1];
     const prev = candles[candles.length - 2];
     const prev2 = candles[candles.length - 3];
-    const hasFVG = (prev2.high < last.low) || (prev2.low > last.high);
-    const isEngulfing = (last.close > last.open && prev.close < prev.open && last.close > prev.open) || 
-                       (last.close < last.open && prev.close > prev.open && last.close < prev.open);
+    const hasFVGNow = (prev2.high < last.low) || (prev2.low > last.high);
+    const isEngNow = (last.close > last.open && prev.close < prev.open && last.close > prev.open) || 
+                     (last.close < last.open && prev.close > prev.open && last.close < prev.open);
 
-    // --- NEW LABELS ADDED HERE (ENG & FVG) ---
-    if (isEngulfing) {
-        markers.push({ 
-            time: last.time, 
-            position: last.close > last.open ? 'belowBar' : 'aboveBar', 
-            color: '#ff9800', 
-            shape: 'circle', 
-            text: 'ENG' 
-        });
-    }
-    if (hasFVG) {
-        markers.push({ 
-            time: prev.time, 
-            position: prev2.high < last.low ? 'belowBar' : 'aboveBar', 
-            color: '#f471ff', 
-            shape: 'square', 
-            text: 'FVG' 
-        });
-    }
-    // ----------------------------------------
-
-    let score = (bosDetected ? 40 : 0) + (hasFVG ? 20 : 0) + (isEngulfing ? 30 : 0) + (chochDetected ? 10 : 0);
+    let score = (bosDetected ? 40 : 0) + (hasFVGNow ? 20 : 0) + (isEngNow ? 30 : 0) + (chochDetected ? 10 : 0);
 
     document.getElementById("trend").innerText = lastBOSDir;
     document.getElementById("confidence").innerText = score + "%";
     document.getElementById("val_key").innerText = swings.length > 0 ? "YES" : "NO";
     document.getElementById("val_ob").innerText = score > 50 ? "DETECTED" : "NONE";
-    document.getElementById("val_fvg").innerText = hasFVG ? "YES" : "NO";
-    document.getElementById("val_eng").innerText = isEngulfing ? "YES" : "NO";
+    document.getElementById("val_fvg").innerText = hasFVGNow ? "YES" : "NO";
+    document.getElementById("val_eng").innerText = isEngNow ? "YES" : "NO";
     document.getElementById("val_bos").innerText = bosDetected ? "YES" : "NO";
     document.getElementById("val_choch").innerText = chochDetected ? "YES" : "NONE";
 
