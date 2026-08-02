@@ -77,6 +77,48 @@ body {
     border: 1px solid rgba(0, 242, 255, 0.2);
 }
 
+/* Alarm Toggle Styling */
+.alarm-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 6px 12px;
+    border-radius: 50px;
+    border: 1px solid var(--border);
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 18px;
+}
+
+.switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #334155;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 12px; width: 12px;
+    left: 3px; bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider { background-color: var(--success); }
+input:checked + .slider:before { transform: translateX(16px); }
+
 .top-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -198,7 +240,16 @@ select {
     <header class="header">
         <div class="logo-section">
             <h1>Janaka Neural SMC <span style="color:var(--text-muted); font-weight:300;">V7</span></h1>
-            <div class="ai-status-tag"><span id="pulse" style="color:var(--success)">●</span> NEURAL ENGINE ACTIVE</div>
+            <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
+                <div class="ai-status-tag"><span id="pulse" style="color:var(--success)">●</span> NEURAL ENGINE ACTIVE</div>
+                <div class="alarm-control">
+                    <span style="font-size: 10px; font-weight: bold; color: var(--text-muted);">ALARM</span>
+                    <label class="switch">
+                        <input type="checkbox" id="alarmToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
         </div>
         <div style="display: flex; gap: 20px; align-items: center;">
             <div style="text-align: right;">
@@ -329,7 +380,9 @@ let lastSignalTime = 0;
 let storage = {
     date: new Date().toLocaleDateString(),
     total: 0, wins: 0, losses: 0,
-    history: []
+    history: [],
+    market: "R_50",
+    alarmEnabled: true
 };
 
 const init = () => {
@@ -337,13 +390,28 @@ const init = () => {
     createChart();
     connectDeriv();
     startClock();
+
+    document.getElementById('alarmToggle').addEventListener('change', (e) => {
+        storage.alarmEnabled = e.target.checked;
+        saveStorage();
+    });
 };
 
 const loadStorage = () => {
     const saved = localStorage.getItem('janaka_neural_v7');
     if (saved) {
         let parsed = JSON.parse(saved);
-        if (parsed.date === new Date().toLocaleDateString()) storage = parsed;
+        if (parsed.date === new Date().toLocaleDateString()) {
+            storage = parsed;
+            if(storage.market) {
+                currentMarket = storage.market;
+                document.getElementById("market").value = currentMarket;
+                document.getElementById("marketName").innerText = document.getElementById("market").options[document.getElementById("market").selectedIndex].text;
+            }
+            if(storage.alarmEnabled !== undefined) {
+                document.getElementById("alarmToggle").checked = storage.alarmEnabled;
+            }
+        }
     }
     updateStatsUI();
     renderHistory();
@@ -409,7 +477,7 @@ const calculateNeuralSMC = () => {
     let swings = [];
     const windowSize = 8; 
 
-    // --- 1. HH, LH, LL, HL CALCULATION (UNCHANGED) ---
+    // --- 1. HH, LH, LL, HL CALCULATION ---
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true, isLow = true;
         for (let j = 1; j <= windowSize; j++) {
@@ -456,13 +524,13 @@ const calculateNeuralSMC = () => {
 
     candleSeries.setMarkers(markers);
 
-    // --- 2. S/R LINES (NOW SOLID) ---
+    // --- 2. SOLID S/R LINES ---
     srLines.forEach(line => candleSeries.removePriceLine(line));
     srLines = [];
     if (lastH) srLines.push(candleSeries.createPriceLine({ price: lastH.price, color: '#ff2e63', lineWidth: 1, lineStyle: 0, title: 'RES' }));
     if (lastL) srLines.push(candleSeries.createPriceLine({ price: lastL.price, color: '#00ff88', lineWidth: 1, lineStyle: 0, title: 'SUP' }));
 
-    // --- 3. NEURAL FACTORS (UNCHANGED) ---
+    // --- 3. NEURAL FACTORS ---
     const last = candles[candles.length - 1];
     const prev = candles[candles.length - 2];
     const prev2 = candles[candles.length - 3];
@@ -582,12 +650,22 @@ const renderHistory = () => {
 };
 
 const saveStorage = () => localStorage.setItem('janaka_neural_v7', JSON.stringify(storage));
-const playAlert = (t) => { const m = new SpeechSynthesisUtterance(`Neural Signal ${t}`); window.speechSynthesis.speak(m); };
+
+const playAlert = (t) => { 
+    if(storage.alarmEnabled) {
+        const m = new SpeechSynthesisUtterance(`Neural Signal ${t}`); 
+        window.speechSynthesis.speak(m); 
+    }
+};
 
 document.getElementById("market").addEventListener("change", (e) => {
     activeTradeLines.forEach(line => candleSeries.removePriceLine(line));
     activeTradeLines = [];
     currentMarket = e.target.value;
+    
+    storage.market = currentMarket;
+    saveStorage();
+    
     document.getElementById("marketName").innerText = e.target.options[e.target.selectedIndex].text;
     candles = []; 
     connectDeriv();
