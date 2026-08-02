@@ -248,7 +248,6 @@ select {
                     <div style="font-size:10px; color:var(--text-muted)">ACCURACY RATE</div>
                 </div>
             </div>
-            <!-- මුළු දත්ත පෙන්වන නව කොටස -->
             <div style="display: flex; justify-content: space-between; margin-top: 15px; border-top: 1px solid var(--border); padding-top: 10px;">
                 <div style="text-align: center;">
                     <div id="totalCount" style="color:var(--primary); font-family:'JetBrains Mono'; font-weight:700;">0</div>
@@ -279,7 +278,6 @@ select {
         <div class="glass-card">
             <div class="card-label">Neural Analysis & SMC Factors</div>
             <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; margin-top:15px;">
-                <!-- 5 TECHNIQUES SECTION -->
                 <ul class="info-list">
                     <li style="color: var(--primary); font-weight: bold; border-bottom: 2px solid var(--border); font-size: 11px;">5 TECHNIQUES</li>
                     <li><div class="led-container"><div id="led_color" class="led led-blue"></div> One Color Candles</div> <span id="val_color">-</span></li>
@@ -288,7 +286,6 @@ select {
                     <li><div class="led-container"><div id="led_fvg" class="led led-blue"></div> FVG Detected</div> <span id="val_fvg">-</span></li>
                     <li><div class="led-container"><div id="led_hop" class="led led-blue"></div> Hidden Open Point</div> <span id="val_hop">-</span></li>
                 </ul>
-                <!-- 3 MANDATORY SECTION -->
                 <ul class="info-list">
                     <li style="color: var(--accent); font-weight: bold; border-bottom: 2px solid var(--border); font-size: 11px;">3 MANDATORY FACTORS</li>
                     <li><div class="led-container"><div id="led_bos" class="led led-purple"></div> BOS Detected</div> <span id="val_bos">-</span></li>
@@ -325,11 +322,12 @@ select {
 
 <script>
 /**
- * JANAKA NEURAL SMC V7 ENGINE - ULTRA AI EDITION
+ * JANAKA NEURAL SMC V7 ENGINE - ULTRA AI EDITION (OPTIMIZED LOOKBACK 7)
  */
 
 const APP_ID = "1089";
 const TIMEFRAME = 60; 
+const SMCLookback = 7; // මනා ලෙස පැහැදිලි චාර්ට් එකක් සඳහා පරාසය 7 ලෙස සැකසූ වගයි.
 let ws, chart, candleSeries;
 let candles = [];
 let currentMarket = "R_50";
@@ -389,7 +387,7 @@ const connectDeriv = () => {
     ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
     ws.onopen = () => {
         document.getElementById("status").innerText = "CONNECTED";
-        ws.send(JSON.stringify({ ticks_history: currentMarket, count: 300, end: "latest", granularity: TIMEFRAME, style: "candles" }));
+        ws.send(JSON.stringify({ ticks_history: currentMarket, count: 500, end: "latest", granularity: TIMEFRAME, style: "candles" }));
         pingInterval = setInterval(() => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ ping: 1 })); }, 30000);
     };
     ws.onmessage = (msg) => {
@@ -405,14 +403,14 @@ const connectDeriv = () => {
             const updatedCandle = { time: Number(o.open_time), open: Number(o.open), high: Number(o.high), low: Number(o.low), close: Number(o.close) };
             candleSeries.update(updatedCandle);
             if (candles.length > 0 && candles[candles.length - 1].time === updatedCandle.time) candles[candles.length - 1] = updatedCandle;
-            else { candles.push(updatedCandle); if (candles.length > 500) candles.shift(); }
+            else { candles.push(updatedCandle); if (candles.length > 1000) candles.shift(); }
             calculateNeuralSMC();
         }
     };
     ws.onclose = () => setTimeout(connectDeriv, 3000);
 };
 
-// --- SMC VISUAL LOGIC (HH, LL, BOS, CHOCH & S/R) ---
+// --- OPTIMIZED SMC VISUAL LOGIC (RANGE 7) ---
 const updateSMCVisuals = () => {
     if (candles.length < 50) return;
     
@@ -420,49 +418,44 @@ const updateSMCVisuals = () => {
     let highPoints = [];
     let lowPoints = [];
 
-    // Clear old S/R lines
     srLines.forEach(line => candleSeries.removePriceLine(line));
     srLines = [];
 
-    for (let i = 5; i < candles.length - 5; i++) {
-        // Fractal High (HH/LH)
-        if (candles[i].high > candles[i-1].high && candles[i].high > candles[i-2].high && 
-            candles[i].high > candles[i+1].high && candles[i].high > candles[i+2].high) {
-            
-            let label = "LH";
-            if (highPoints.length > 0 && candles[i].high > highPoints[highPoints.length-1].price) label = "HH";
-            
+    for (let i = SMCLookback; i < candles.length - SMCLookback; i++) {
+        let isHigh = true;
+        let isLow = true;
+
+        for(let j=1; j<=SMCLookback; j++) {
+            if(candles[i].high <= candles[i-j].high || candles[i].high <= candles[i+j].high) isHigh = false;
+            if(candles[i].low >= candles[i-j].low || candles[i].low >= candles[i+j].low) isLow = false;
+        }
+
+        if (isHigh) {
+            let label = (highPoints.length > 0 && candles[i].high > highPoints[highPoints.length-1].price) ? "HH" : "LH";
             markers.push({ time: candles[i].time, position: 'aboveBar', color: '#00ff88', shape: 'arrowDown', text: label });
             highPoints.push({ price: candles[i].high, time: candles[i].time });
         }
 
-        // Fractal Low (LL/HL)
-        if (candles[i].low < candles[i-1].low && candles[i].low < candles[i-2].low && 
-            candles[i].low < candles[i+1].low && candles[i].low < candles[i+2].low) {
-            
-            let label = "HL";
-            if (lowPoints.length > 0 && candles[i].low < lowPoints[lowPoints.length-1].price) label = "LL";
-            
+        if (isLow) {
+            let label = (lowPoints.length > 0 && candles[i].low < lowPoints[lowPoints.length-1].price) ? "LL" : "HL";
             markers.push({ time: candles[i].time, position: 'belowBar', color: '#ff2e63', shape: 'arrowUp', text: label });
             lowPoints.push({ price: candles[i].low, time: candles[i].time });
         }
     }
 
-    // BOS & CHOCH Detection
     if (highPoints.length > 1 && lowPoints.length > 1) {
         const lastHigh = highPoints[highPoints.length-1];
         const lastLow = lowPoints[lowPoints.length-1];
-        const currentPrice = candles[candles.length-1].close;
+        const currentCandle = candles[candles.length-1];
 
-        if (currentPrice > lastHigh.price) {
-            markers.push({ time: candles[candles.length-1].time, position: 'aboveBar', color: '#FFD700', shape: 'circle', text: 'BOS' });
-        } else if (currentPrice < lastLow.price) {
-            markers.push({ time: candles[candles.length-1].time, position: 'belowBar', color: '#E040FB', shape: 'circle', text: 'CHOCH' });
+        if (currentCandle.close > lastHigh.price) {
+            markers.push({ time: currentCandle.time, position: 'aboveBar', color: '#FFD700', shape: 'circle', text: 'BOS' });
+        } else if (currentCandle.close < lastLow.price) {
+            markers.push({ time: currentCandle.time, position: 'belowBar', color: '#E040FB', shape: 'circle', text: 'CHOCH' });
         }
 
-        // Auto S/R Lines (Resistance at last High, Support at last Low)
-        const resLine = candleSeries.createPriceLine({ price: lastHigh.price, color: '#00f2ff', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'RESISTANCE' });
-        const supLine = candleSeries.createPriceLine({ price: lastLow.price, color: '#ff2e63', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'SUPPORT' });
+        const resLine = candleSeries.createPriceLine({ price: lastHigh.price, color: '#00f2ff', lineWidth: 2, lineStyle: 0, axisLabelVisible: true, title: 'RESISTANCE' });
+        const supLine = candleSeries.createPriceLine({ price: lastLow.price, color: '#ff2e63', lineWidth: 2, lineStyle: 0, axisLabelVisible: true, title: 'SUPPORT' });
         srLines.push(resLine, supLine);
     }
 
@@ -479,7 +472,7 @@ const calculateNeuralSMC = () => {
     const prev2 = candles[candles.length - 3];
     
     let techScore = 0;
-    const isUpTrend = last.close > candles[candles.length-10].close;
+    const isUpTrend = last.close > candles[candles.length-20].close;
 
     const t_color = (isUpTrend && last.close > last.open && prev.close > prev.open) || (!isUpTrend && last.close < last.open && prev.close < prev.open);
     if(t_color) techScore++;
@@ -497,7 +490,7 @@ const calculateNeuralSMC = () => {
     const t_hop = (last.low <= (prev.open + prev.close)/2 && last.close > prev.close);
     if(t_hop) techScore++;
 
-    let bosDetected = last.close > Math.max(...candles.slice(-15, -1).map(c => c.high)) || last.close < Math.min(...candles.slice(-15, -1).map(c => c.low));
+    let bosDetected = last.close > Math.max(...candles.slice(-30, -1).map(c => c.high)) || last.close < Math.min(...candles.slice(-30, -1).map(c => c.low));
     let chochDetected = (isUpTrend && last.close < prev2.low) || (!isUpTrend && last.close > prev2.high);
     let trendLineConf = (last.close > prev.close && isUpTrend) || (last.close < prev.close && !isUpTrend);
     
@@ -574,8 +567,6 @@ const updateStatsUI = () => {
     const rate = storage.total > 0 ? Math.round((storage.wins / (storage.wins + storage.losses)) * 100) : 0;
     document.getElementById("winRate").innerText = rate + "%";
     document.getElementById("winRateCircle").style.strokeDashoffset = 157 - (157 * rate / 100);
-    
-    // නව සංඛ්‍යාලේඛන යාවත්කාලීන කිරීම
     document.getElementById("totalCount").innerText = storage.total;
     document.getElementById("winCount").innerText = storage.wins;
     document.getElementById("lossCount").innerText = storage.losses;
