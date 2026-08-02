@@ -412,72 +412,102 @@ const connectDeriv = () => {
 
 
     // --- ඔබේ පින්තූරයේ ආකාරයටම නිවැරදි කළ SMC VISUAL LOGIC ---
-const updateSMCVisuals = () => {
-    if (candles.length < 50) return;
-    
-    let markers = [];
-    let highPoints = [];
-    let lowPoints = [];
-    const lb = 7; // Candle 7 ක පරතරය (Lookback)
+const calculateNeuralSMC = () => {
+    if (candles.length < 30) return;
 
-    // පැරණි S/R ලයින් ඉවත් කිරීම (පිරිසිදුව තබා ගැනීමට)
+    let markers = [];
+    let swings = [];
+    const windowSize = 6; // Major Swing points හඳුනා ගැනීමට අගය වැඩි කරන ලදී
+
+    // Clear old S/R lines
     srLines.forEach(line => candleSeries.removePriceLine(line));
     srLines = [];
 
-    // 1. Swing Highs/Lows (HH, LH, LL, HL) හඳුනා ගැනීම
-    for (let i = lb; i < candles.length - lb; i++) {
-        let isHigh = true;
-        let isLow = true;
-        for (let j = 1; j <= lb; j++) {
+    // Swing Points detection (Highs and Lows)
+    for (let i = windowSize; i < candles.length - windowSize; i++) {
+        let isHigh = true, isLow = true;
+        for (let j = 1; j <= windowSize; j++) {
             if (candles[i].high <= candles[i-j].high || candles[i].high <= candles[i+j].high) isHigh = false;
             if (candles[i].low >= candles[i-j].low || candles[i].low >= candles[i+j].low) isLow = false;
         }
-        if (isHigh) {
-            let label = (highPoints.length > 0 && candles[i].high > highPoints[highPoints.length-1].price) ? "HH" : "LH";
-            highPoints.push({ price: candles[i].high, time: candles[i].time });
-            markers.push({ time: candles[i].time, position: 'aboveBar', color: '#00ff88', shape: 'arrowDown', text: label });
-        }
-        if (isLow) {
-            let label = (lowPoints.length > 0 && candles[i].low < lowPoints[lowPoints.length-1].price) ? "LL" : "HL";
-            lowPoints.push({ price: candles[i].low, time: candles[i].time });
-            markers.push({ time: candles[i].time, position: 'belowBar', color: '#ff2e63', shape: 'arrowUp', text: label });
-        }
+        if (isHigh) swings.push({ type: 'H', price: candles[i].high, time: candles[i].time });
+        if (isLow) swings.push({ type: 'L', price: candles[i].low, time: candles[i].time });
     }
 
-    // 2. BOS සහ CHOCH හඳුනා ගැනීම (ඓතිහාසිකව චාර්ට් එකේ සේව් වී පෙනේ)
-    let lastHH = 0;
-    let lastLL = 0;
-    let currentDir = 0; 
+    let lastH = null, lastL = null;
+    let prevH = null, prevL = null;
+    let lastBOSDir = "SIDEWAYS";
+    let bosDetected = false;
+    let chochDetected = false;
 
-    for (let i = 20; i < candles.length; i++) {
-        let currentHighs = highPoints.filter(h => h.time < candles[i].time);
-        let currentLows = lowPoints.filter(l => l.time < candles[i].time);
+    swings.forEach((s, idx) => {
+        if (s.type === 'H') {
+            if (lastH) {
+                // HH, LH Logic
+                if (s.price > lastH.price) {
+                    markers.push({ time: s.time, position: 'aboveBar', color: '#00ff88', shape: 'arrowDown', text: 'HH' });
+                    // BOS Logic
+                    if (lastBOSDir === "UPTREND") {
+                        markers.push({ time: s.time, position: 'aboveBar', color: '#00f2ff', shape: 'arrowDown', text: 'BOS' });
+                        bosDetected = true;
+                    }
+                    lastBOSDir = "UPTREND";
+                } else {
+                    markers.push({ time: s.time, position: 'aboveBar', color: '#ff2e63', shape: 'arrowDown', text: 'LH' });
+                    // CHOCH Logic (If uptrend breaks)
+                    if (lastBOSDir === "UPTREND") {
+                        markers.push({ time: s.time, position: 'aboveBar', color: '#7000ff', shape: 'arrowDown', text: 'CHOCH' });
+                        chochDetected = true;
+                        lastBOSDir = "DOWNTREND";
+                    }
+                }
+            }
+            prevH = lastH;
+            lastH = s;
+        } else {
+            if (lastL) {
+                // LL, HL Logic
+                if (s.price < lastL.price) {
+                    markers.push({ time: s.time, position: 'belowBar', color: '#ff2e63', shape: 'arrowUp', text: 'LL' });
+                    if (lastBOSDir === "DOWNTREND") {
+                        markers.push({ time: s.time, position: 'belowBar', color: '#00f2ff', shape: 'arrowUp', text: 'BOS' });
+                        bosDetected = true;
+                    }
+                    lastBOSDir = "DOWNTREND";
+                } else {
+                    markers.push({ time: s.time, position: 'belowBar', color: '#00ff88', shape: 'arrowUp', text: 'HL' });
+                    // CHOCH Logic (If downtrend breaks)
+                    if (lastBOSDir === "DOWNTREND") {
+                        markers.push({ time: s.time, position: 'belowBar', color: '#7000ff', shape: 'arrowUp', text: 'CHOCH' });
+                        chochDetected = true;
+                        lastBOSDir = "UPTREND";
+                    }
+                }
+            }
+            prevL = lastL;
+            lastL = s;
+        }
+    });
+
+    // Auto S/R Lines (අවසාන ප්‍රධාන Swing High සහ Low මත)
+    if (lastH) {
+        const resLine = candleSeries.createPriceLine({
+            price: lastH.price, color: '#ff2e63', lineWidth: 2, lineStyle: 2, axisLabelVisible: true, title: 'RESISTANCE'
+        });
+        srLines.push(resLine);
+    }
+    if (lastL) {
+        const supLine = candleSeries.createPriceLine({
+            price: lastL.price, color: '#00ff88', lineWidth: 2, lineStyle: 2, axisLabelVisible: true, title: 'SUPPORT'
+        });
+        srLines.push(supLine);
+    }
+
+
+
+            
         
-        if(currentHighs.length > 0) lastHH = currentHighs[currentHighs.length-1].price;
-        if(currentLows.length > 0) lastLL = currentLows[currentLows.length-1].price;
-
-        if (lastHH > 0 && candles[i].close > lastHH) {
-            let type = (currentDir === -1) ? "CHOCH" : "BOS";
-            markers.push({ time: candles[i].time, position: 'aboveBar', color: '#FFD700', shape: 'circle', text: type });
-            currentDir = 1;
-            lastHH = candles[i].high; 
-        } 
-        else if (lastLL > 0 && candles[i].close < lastLL) {
-            let type = (currentDir === 1) ? "CHOCH" : "BOS";
-            markers.push({ time: candles[i].time, position: 'belowBar', color: '#E040FB', shape: 'circle', text: type });
-            currentDir = -1;
-            lastLL = candles[i].low; 
-        }
-    }
-
-    // 3. S/R Lines (ඔබේ පින්තූරයේ මෙන් පැහැදිලිව ඇඳීම)
-    if (highPoints.length > 0 && lowPoints.length > 0) {
-        const lastHigh = highPoints[highPoints.length-1];
-        const lastLow = lowPoints[lowPoints.length-1];
-        const resLine = candleSeries.createPriceLine({ price: lastHigh.price, color: '#00f2ff', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'RES' });
-        const supLine = candleSeries.createPriceLine({ price: lastLow.price, color: '#ff2e63', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'SUP' });
-        srLines.push(resLine, supLine);
-    }
+    
 
     candleSeries.setMarkers(markers);
 };
