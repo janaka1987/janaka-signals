@@ -10,8 +10,8 @@
 <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 :root {
-    --primary: #00f2ff; /* Cyber Blue */
-    --accent: #7000ff; /* Purple Glow */
+    --primary: #00f2ff;
+    --accent: #7000ff;
     --success: #00ff88;
     --danger: #ff2e63;
     --bg-dark: #020617;
@@ -42,7 +42,6 @@ body {
     gap: 20px;
 }
 
-/* HEADER SECTION */
 .header {
     display: flex;
     justify-content: space-between;
@@ -78,7 +77,6 @@ body {
     border: 1px solid rgba(0, 242, 255, 0.2);
 }
 
-/* TOP GRID STATS */
 .top-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -99,7 +97,6 @@ body {
 .card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 10px; font-weight: 600; }
 .card-value { font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 700; }
 
-/* SELECT STYLING */
 select {
     width: 100%;
     background: rgba(0,0,0,0.3);
@@ -112,7 +109,6 @@ select {
     cursor: pointer;
 }
 
-/* CHART SECTION */
 .chart-wrapper {
     position: relative;
     background: var(--glass);
@@ -124,7 +120,6 @@ select {
 
 #chart { width: 100%; height: 500px; border-radius: 20px; }
 
-/* AI ANALYSIS BOXES */
 .analysis-grid {
     display: grid;
     grid-template-columns: 1.5fr 1fr;
@@ -141,7 +136,6 @@ select {
     font-size: 13px;
 }
 
-/* LED STYLING */
 .led-container { display: flex; align-items: center; gap: 8px; }
 .led {
     width: 10px;
@@ -154,7 +148,6 @@ select {
 .led-blue.active { background: var(--primary); box-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary); }
 .led-purple.active { background: var(--accent); box-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent); }
 
-/* SIGNAL BOX SPECIAL */
 .signal-box {
     text-align: center;
     background: linear-gradient(145deg, rgba(0, 242, 255, 0.05), rgba(112, 0, 255, 0.05));
@@ -163,7 +156,6 @@ select {
 
 .signal-value { font-size: 38px; font-weight: 800; margin: 10px 0; }
 
-/* WIN RATE CIRCLE */
 .progress-container {
     display: flex;
     align-items: center;
@@ -174,7 +166,6 @@ select {
 .circle-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 4; }
 .circle-bar { fill: none; stroke: var(--primary); stroke-width: 4; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
 
-/* PULSE ANIMATION FOR SIGNALS */
 @keyframes signalPulse {
     0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4); }
     70% { box-shadow: 0 0 0 20px rgba(0, 255, 136, 0); }
@@ -184,7 +175,6 @@ select {
 .active-buy { animation: signalPulse 1.5s infinite; border-color: var(--success); }
 .active-sell { animation: signalPulse 1.5s infinite; border-color: var(--danger); }
 
-/* HISTORY TABLE */
 .history-container {
     max-height: 300px;
     overflow-y: auto;
@@ -322,7 +312,7 @@ select {
 
 <script>
 /**
- * JANAKA NEURAL SMC V7 ENGINE - FINALIZED
+ * JANAKA NEURAL SMC V7 ENGINE - FINALIZED WITH 3MIN ENTRY LINE & SOLID SR
  */
 
 const APP_ID = "1089";
@@ -333,7 +323,8 @@ let candles = [];
 let currentMarket = "R_50";
 let pingInterval;
 let srLines = []; 
-let lastSignalTime = 0; // To prevent multiple signals on same candle
+let activeTradeLines = []; 
+let lastSignalTime = 0; 
 
 let storage = {
     date: new Date().toLocaleDateString(),
@@ -418,7 +409,7 @@ const calculateNeuralSMC = () => {
     let swings = [];
     const windowSize = 8; 
 
-    // --- 1. HH, LH, LL, HL LABELS (ඔබේ පැරණි තාක්ෂණය එලෙසම ඇත) ---
+    // --- 1. HH, LH, LL, HL CALCULATION (UNCHANGED) ---
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true, isLow = true;
         for (let j = 1; j <= windowSize; j++) {
@@ -465,19 +456,18 @@ const calculateNeuralSMC = () => {
 
     candleSeries.setMarkers(markers);
 
-    // --- 2. SUPPORT & RESISTANCE LINES (ඔබේ පැරණි තාක්ෂණය එලෙසම ඇත) ---
+    // --- 2. S/R LINES (NOW SOLID) ---
     srLines.forEach(line => candleSeries.removePriceLine(line));
     srLines = [];
-    if (lastH) srLines.push(candleSeries.createPriceLine({ price: lastH.price, color: '#ff2e63', lineWidth: 1, lineStyle: 2, title: 'RES' }));
-    if (lastL) srLines.push(candleSeries.createPriceLine({ price: lastL.price, color: '#00ff88', lineWidth: 1, lineStyle: 2, title: 'SUP' }));
+    if (lastH) srLines.push(candleSeries.createPriceLine({ price: lastH.price, color: '#ff2e63', lineWidth: 1, lineStyle: 0, title: 'RES' }));
+    if (lastL) srLines.push(candleSeries.createPriceLine({ price: lastL.price, color: '#00ff88', lineWidth: 1, lineStyle: 0, title: 'SUP' }));
 
-    // --- 3. NEW SIGNAL LOGIC (4/5 TECHNIQUES & 1/3 MANDATORY) ---
+    // --- 3. NEURAL FACTORS (UNCHANGED) ---
     const last = candles[candles.length - 1];
     const prev = candles[candles.length - 2];
     const prev2 = candles[candles.length - 3];
     const isUpTrend = last.close > candles[candles.length - 20].close;
 
-    // 5 Techniques
     const t_color = (isUpTrend ? (last.close > last.open) : (last.close < last.open));
     const t_eng = Math.abs(last.close - last.open) > Math.abs(prev.close - prev.open);
     const t_key = (lastH && Math.abs(last.close - lastH.price) < last.close * 0.002) || (lastL && Math.abs(last.close - lastL.price) < last.close * 0.002);
@@ -485,12 +475,9 @@ const calculateNeuralSMC = () => {
     const t_hop = Math.abs(last.open - prev.close) < (last.high - last.low) * 0.1;
 
     const techScore = [t_color, t_eng, t_key, t_fvg, t_hop].filter(x => x).length;
-
-    // 3 Mandatory
     const t_tl = isUpTrend ? (last.close > prev.close) : (last.close < prev.close);
     const mandScore = [bosDetected, chochDetected, t_tl].filter(x => x).length;
 
-    // UI LED Updates
     updateLED("led_color", "val_color", t_color);
     updateLED("led_eng", "val_eng", t_eng);
     updateLED("led_key", "val_key", t_key);
@@ -504,18 +491,16 @@ const calculateNeuralSMC = () => {
     const confidence = Math.round(((techScore + mandScore) / 8) * 100);
     document.getElementById("confidence").innerText = confidence + "%";
 
-    // --- SIGNAL TRIGGER ---
     const sigBox = document.getElementById("signalBox");
     const sigText = document.getElementById("signal");
     
-    // කොන්දේසිය: 5න් 4ක් හරි විය යුතුයි AND 3න් 1ක් හරි විය යුතුයි AND Trend එක පැත්තට විය යුතුයි
     if (techScore >= 4 && mandScore >= 1 && last.time !== lastSignalTime) {
         const type = isUpTrend ? "BUY" : "SELL";
         sigText.innerText = `STRONG ${type}`;
         sigText.style.color = type === "BUY" ? "var(--success)" : "var(--danger)";
         sigBox.className = `glass-card signal-box active-${type.toLowerCase()}`;
         executeSignal(type, confidence, last.close);
-        lastSignalTime = last.time; // එකම කැන්ඩල් එකේ සිග්නල් කිහිපයක් ඒම වැලැක්වීම
+        lastSignalTime = last.time; 
     } else {
         if (last.time !== lastSignalTime) {
             sigText.innerText = "SCANNING";
@@ -541,21 +526,40 @@ const updateLED = (ledId, valId, isActive, isPurple = false) => {
 
 const executeSignal = (type, conf, price) => {
     const id = Date.now();
+    
+    // Create White Dashed Entry Line
+    const entryLine = candleSeries.createPriceLine({
+        price: price,
+        color: '#ffffff',
+        lineWidth: 2,
+        lineStyle: 2, 
+        axisLabelVisible: true,
+        title: ''
+    });
+    activeTradeLines.push(entryLine);
+
     const newSig = { id, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), market: currentMarket, type, conf, result: "PENDING" };
     storage.history.push(newSig);
     storage.total++;
     saveStorage();
     renderHistory();
     playAlert(type);
+
+    // Results & Cleanup after 3 Minutes
     setTimeout(() => {
+        candleSeries.removePriceLine(entryLine);
+        activeTradeLines = activeTradeLines.filter(l => l !== entryLine);
+
         const win = (type === "BUY" && candles[candles.length-1].close > price) || (type === "SELL" && candles[candles.length-1].close < price);
         const idx = storage.history.findIndex(s => s.id === id);
         if(idx !== -1) {
             storage.history[idx].result = win ? "WIN" : "LOSS";
             if(win) storage.wins++; else storage.losses++;
-            saveStorage(); updateStatsUI(); renderHistory();
+            saveStorage(); 
+            updateStatsUI(); 
+            renderHistory();
         }
-    }, 60000);
+    }, 180000); 
 };
 
 const updateStatsUI = () => {
@@ -581,9 +585,12 @@ const saveStorage = () => localStorage.setItem('janaka_neural_v7', JSON.stringif
 const playAlert = (t) => { const m = new SpeechSynthesisUtterance(`Neural Signal ${t}`); window.speechSynthesis.speak(m); };
 
 document.getElementById("market").addEventListener("change", (e) => {
+    activeTradeLines.forEach(line => candleSeries.removePriceLine(line));
+    activeTradeLines = [];
     currentMarket = e.target.value;
     document.getElementById("marketName").innerText = e.target.options[e.target.selectedIndex].text;
-    candles = []; connectDeriv();
+    candles = []; 
+    connectDeriv();
 });
 
 init();
