@@ -411,175 +411,135 @@ const connectDeriv = () => {
 };
 
 
-    // --- ඔබේ පින්තූරයේ ආකාරයටම නිවැරදි කළ SMC VISUAL LOGIC ---
+    // --- SMC VISUAL LOGIC & ANALYSIS ENGINE ---
 const calculateNeuralSMC = () => {
-    if (candles.length < 30) return;
+    if (candles.length < 50) return;
 
     let markers = [];
     let swings = [];
-    const windowSize = 6; // Major Swing points හඳුනා ගැනීමට අගය වැඩි කරන ලදී
+    const windowSize = 5; // Swing Points හඳුනාගැනීමේ සංවේදීතාව
 
-    // Clear old S/R lines
-    srLines.forEach(line => candleSeries.removePriceLine(line));
-    srLines = [];
-
-    // Swing Points detection (Highs and Lows)
+    // 1. Swing Points (Highs/Lows) හඳුනාගැනීම
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true, isLow = true;
         for (let j = 1; j <= windowSize; j++) {
-            if (candles[i].high <= candles[i-j].high || candles[i].high <= candles[i+j].high) isHigh = false;
-            if (candles[i].low >= candles[i-j].low || candles[i].low >= candles[i+j].low) isLow = false;
+            if (candles[i].high <= candles[i - j].high || candles[i].high <= candles[i + j].high) isHigh = false;
+            if (candles[i].low >= candles[i - j].low || candles[i].low >= candles[i + j].low) isLow = false;
         }
         if (isHigh) swings.push({ type: 'H', price: candles[i].high, time: candles[i].time });
         if (isLow) swings.push({ type: 'L', price: candles[i].low, time: candles[i].time });
     }
 
     let lastH = null, lastL = null;
-    let prevH = null, prevL = null;
-    let lastBOSDir = "SIDEWAYS";
+    let currentTrend = "SCANNING";
     let bosDetected = false;
     let chochDetected = false;
 
+    // 2. HH, LH, LL, HL සහ BOS/CHOCH Logic
     swings.forEach((s, idx) => {
         if (s.type === 'H') {
             if (lastH) {
-                // HH, LH Logic
                 if (s.price > lastH.price) {
                     markers.push({ time: s.time, position: 'aboveBar', color: '#00ff88', shape: 'arrowDown', text: 'HH' });
-                    // BOS Logic
-                    if (lastBOSDir === "UPTREND") {
+                    if (currentTrend === "UP") {
                         markers.push({ time: s.time, position: 'aboveBar', color: '#00f2ff', shape: 'arrowDown', text: 'BOS' });
                         bosDetected = true;
                     }
-                    lastBOSDir = "UPTREND";
+                    currentTrend = "UP";
                 } else {
                     markers.push({ time: s.time, position: 'aboveBar', color: '#ff2e63', shape: 'arrowDown', text: 'LH' });
-                    // CHOCH Logic (If uptrend breaks)
-                    if (lastBOSDir === "UPTREND") {
+                    if (currentTrend === "UP") {
                         markers.push({ time: s.time, position: 'aboveBar', color: '#7000ff', shape: 'arrowDown', text: 'CHOCH' });
                         chochDetected = true;
-                        lastBOSDir = "DOWNTREND";
                     }
+                    currentTrend = "DOWN";
                 }
             }
-            prevH = lastH;
             lastH = s;
         } else {
             if (lastL) {
-                // LL, HL Logic
                 if (s.price < lastL.price) {
                     markers.push({ time: s.time, position: 'belowBar', color: '#ff2e63', shape: 'arrowUp', text: 'LL' });
-                    if (lastBOSDir === "DOWNTREND") {
+                    if (currentTrend === "DOWN") {
                         markers.push({ time: s.time, position: 'belowBar', color: '#00f2ff', shape: 'arrowUp', text: 'BOS' });
                         bosDetected = true;
                     }
-                    lastBOSDir = "DOWNTREND";
+                    currentTrend = "DOWN";
                 } else {
                     markers.push({ time: s.time, position: 'belowBar', color: '#00ff88', shape: 'arrowUp', text: 'HL' });
-                    // CHOCH Logic (If downtrend breaks)
-                    if (lastBOSDir === "DOWNTREND") {
+                    if (currentTrend === "DOWN") {
                         markers.push({ time: s.time, position: 'belowBar', color: '#7000ff', shape: 'arrowUp', text: 'CHOCH' });
                         chochDetected = true;
-                        lastBOSDir = "UPTREND";
                     }
+                    currentTrend = "UP";
                 }
             }
-            prevL = lastL;
             lastL = s;
         }
     });
 
-    // Auto S/R Lines (අවසාන ප්‍රධාන Swing High සහ Low මත)
+    // Chart එකට Markers ඇතුළත් කිරීම
+    candleSeries.setMarkers(markers);
+
+    // 3. Support/Resistance Lines ඇඳීම
+    srLines.forEach(line => candleSeries.removePriceLine(line));
+    srLines = [];
     if (lastH) {
         const resLine = candleSeries.createPriceLine({
-            price: lastH.price, color: '#ff2e63', lineWidth: 2, lineStyle: 2, axisLabelVisible: true, title: 'RESISTANCE'
+            price: lastH.price, color: '#ff2e63', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'RES'
         });
         srLines.push(resLine);
     }
     if (lastL) {
         const supLine = candleSeries.createPriceLine({
-            price: lastL.price, color: '#00ff88', lineWidth: 2, lineStyle: 2, axisLabelVisible: true, title: 'SUPPORT'
+            price: lastL.price, color: '#00ff88', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'SUP'
         });
         srLines.push(supLine);
     }
 
-
-
-            
-        
-    
-
-    candleSeries.setMarkers(markers);
-};
-        
-            
-
-
-
-    updateSMCVisuals();
-
+    // 4. Neural Analysis (AI Signals)
     const last = candles[candles.length - 1];
     const prev = candles[candles.length - 2];
     const prev2 = candles[candles.length - 3];
-    
-    let techScore = 0;
-    const isUpTrend = last.close > candles[candles.length-20].close;
+    const isUpTrend = last.close > candles[candles.length - 20].close;
 
-    const t_color = (isUpTrend && last.close > last.open && prev.close > prev.open) || (!isUpTrend && last.close < last.open && prev.close < prev.open);
-    if(t_color) techScore++;
-
-    const t_eng = (last.close > prev.open && prev.close < prev.open) || (last.close < prev.open && prev.close > prev.open);
-    if(t_eng) techScore++;
-
-    let swingHighs = candles.slice(-20).map(c => c.high);
-    const t_key = Math.abs(last.close - Math.max(...swingHighs)) < (last.close * 0.001);
-    if(t_key) techScore++;
-
+    // Teknikal Check
+    const t_color = (isUpTrend && last.close > last.open) || (!isUpTrend && last.close < last.open);
+    const t_eng = Math.abs(last.close - last.open) > Math.abs(prev.close - prev.open);
     const t_fvg = (prev2.high < last.low) || (prev2.low > last.high);
-    if(t_fvg) techScore++;
+    const trendLineConf = (isUpTrend && last.close > prev.close) || (!isUpTrend && last.close < prev.close);
 
-    const t_hop = (last.low <= (prev.open + prev.close)/2 && last.close > prev.close);
-    if(t_hop) techScore++;
-
-    let bosDetected = last.close > Math.max(...candles.slice(-30, -1).map(c => c.high)) || last.close < Math.min(...candles.slice(-30, -1).map(c => c.low));
-    let chochDetected = (isUpTrend && last.close < prev2.low) || (!isUpTrend && last.close > prev2.high);
-    let trendLineConf = (last.close > prev.close && isUpTrend) || (last.close < prev.close && !isUpTrend);
-    
-    const mandatoryDetected = bosDetected || chochDetected || trendLineConf;
-
+    // UI Updates
     updateLED("led_color", "val_color", t_color);
     updateLED("led_eng", "val_eng", t_eng);
-    updateLED("led_key", "val_key", t_key);
     updateLED("led_fvg", "val_fvg", t_fvg);
-    updateLED("led_hop", "val_hop", t_hop);
-    
     updateLED("led_bos", "val_bos", bosDetected, true);
     updateLED("led_choch", "val_choch", chochDetected, true);
     updateLED("led_tl", "val_tl", trendLineConf, true);
 
     document.getElementById("trend").innerText = isUpTrend ? "UPTREND" : "DOWNTREND";
-    let finalProb = Math.round((techScore / 5) * 100);
-    document.getElementById("confidence").innerText = finalProb + "%";
-
+    
+    // AI Signal Box Update
     const sigBox = document.getElementById("signalBox");
     const sigText = document.getElementById("signal");
-    sigBox.classList.remove("active-buy", "active-sell");
-
-    if (techScore >= 4 && mandatoryDetected) {
+    if ((bosDetected || chochDetected) && trendLineConf) {
         const type = isUpTrend ? "BUY" : "SELL";
         sigText.innerText = `STRONG ${type}`;
         sigText.style.color = type === "BUY" ? "var(--success)" : "var(--danger)";
-        sigBox.classList.add(type === "BUY" ? "active-buy" : "active-sell");
-
-        const lastSig = storage.history[storage.history.length - 1];
-        if (!lastSig || (Date.now() - lastSig.id > 120000)) {
-            executeSignal(type, finalProb, last.close);
-        }
+        sigBox.className = `glass-card signal-box active-${type.toLowerCase()}`;
     } else {
         sigText.innerText = "SCANNING";
         sigText.style.color = "white";
+        sigBox.className = "glass-card signal-box";
     }
 };
+
+
+    
+            
+
+
+    
 
 const updateLED = (ledId, valId, isActive, isPurple = false) => {
     const led = document.getElementById(ledId);
