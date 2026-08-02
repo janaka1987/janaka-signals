@@ -322,7 +322,7 @@ select {
 
 <script>
 /**
- * JANAKA NEURAL SMC V7 ENGINE - ULTRA AI EDITION
+ * JANAKA NEURAL SMC V7 ENGINE - FINALIZED
  */
 
 const APP_ID = "1089";
@@ -333,7 +333,7 @@ let candles = [];
 let currentMarket = "R_50";
 let pingInterval;
 let srLines = []; 
-let lastSignalTime = 0; // Prevent repetitive signals on same candle
+let lastSignalTime = 0; // To prevent multiple signals on same candle
 
 let storage = {
     date: new Date().toLocaleDateString(),
@@ -411,20 +411,14 @@ const connectDeriv = () => {
     ws.onclose = () => setTimeout(connectDeriv, 3000);
 };
 
-// --- UPDATED NEURAL SMC ENGINE ---
 const calculateNeuralSMC = () => {
     if (candles.length < 30) return;
 
-    const last = candles[candles.length - 1];
-    const prev = candles[candles.length - 2];
-    const prev2 = candles[candles.length - 3];
-    
-    let score = 0;
     let markers = [];
-
-    // --- SWING POINTS (For BOS/CHOCH/SR) ---
-    const windowSize = 8;
     let swings = [];
+    const windowSize = 8; 
+
+    // --- 1. HH, LH, LL, HL LABELS (ඔබේ පැරණි තාක්ෂණය එලෙසම ඇත) ---
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true, isLow = true;
         for (let j = 1; j <= windowSize; j++) {
@@ -435,82 +429,100 @@ const calculateNeuralSMC = () => {
         if (isLow) swings.push({ type: 'L', price: candles[i].low, time: candles[i].time });
     }
 
-    const lastH = swings.filter(s => s.type === 'H').pop();
-    const lastL = swings.filter(s => s.type === 'L').pop();
+    let lastH = null, lastL = null;
+    let bosDetected = false;
+    let chochDetected = false;
 
-    // --- MANDATORY FACTORS (60 Points Total) ---
-    
-    // 1 & 2. BOS & CHOCH (30 Points)
-    let bosDetected = last.close > (lastH ? lastH.price : 999999) || last.close < (lastL ? lastL.price : 0);
-    let chochDetected = (last.close > (lastH ? lastH.price : 999999) && prev.close < (lastH ? lastH.price : 999999)) || (last.close < (lastL ? lastL.price : 0) && prev.close > (lastL ? lastL.price : 0));
-    if (bosDetected || chochDetected) score += 30;
+    swings.forEach((s) => {
+        if (s.type === 'H') {
+            if (lastH) {
+                if (s.price > lastH.price) {
+                    markers.push({ time: s.time, position: 'aboveBar', color: '#00ff88', shape: 'arrowDown', text: 'HH' });
+                    markers.push({ time: s.time, position: 'aboveBar', color: '#00f2ff', shape: 'arrowDown', text: 'BOS' });
+                    bosDetected = true;
+                } else {
+                    markers.push({ time: s.time, position: 'aboveBar', color: '#ff2e63', shape: 'arrowDown', text: 'LH' });
+                    markers.push({ time: s.time, position: 'aboveBar', color: '#7000ff', shape: 'arrowDown', text: 'CHOCH' });
+                    chochDetected = true;
+                }
+            }
+            lastH = s;
+        } else {
+            if (lastL) {
+                if (s.price < lastL.price) {
+                    markers.push({ time: s.time, position: 'belowBar', color: '#ff2e63', shape: 'arrowUp', text: 'LL' });
+                    markers.push({ time: s.time, position: 'belowBar', color: '#00f2ff', shape: 'arrowUp', text: 'BOS' });
+                    bosDetected = true;
+                } else {
+                    markers.push({ time: s.time, position: 'belowBar', color: '#00ff88', shape: 'arrowUp', text: 'HL' });
+                    markers.push({ time: s.time, position: 'belowBar', color: '#7000ff', shape: 'arrowUp', text: 'CHOCH' });
+                    chochDetected = true;
+                }
+            }
+            lastL = s;
+        }
+    });
 
-    // 3. Trend Line Confirmation (20 Points)
-    let isUpTrend = last.close > candles[candles.length - 15].close;
-    let trendLineConf = (isUpTrend && last.close > prev.close) || (!isUpTrend && last.close < prev.close);
-    if (trendLineConf) score += 20;
+    candleSeries.setMarkers(markers);
 
-    // Implicit Current Trend Score (10 Points)
-    score += 10; 
-
-    // --- 5 TECHNIQUES (40 Points Total) ---
-
-    // 4. Key Levels SR (15 Points)
-    let keyLevelMet = (lastH && Math.abs(last.close - lastH.price) < last.close * 0.001) || (lastL && Math.abs(last.close - lastL.price) < last.close * 0.001);
-    if (keyLevelMet) score += 15;
-
-    // 5. FVG Detected (10 Points)
-    let fvgDetected = (prev2.high < last.low) || (prev2.low > last.high);
-    if (fvgDetected) score += 10;
-
-    // 6. Engulfing Read (10 Points)
-    let isEngulfing = Math.abs(last.close - last.open) > Math.abs(prev.close - prev.open);
-    if (isEngulfing) score += 10;
-
-    // 7. One Color Candles (5 Points)
-    let oneColor = (last.close > last.open && prev.close > prev.open && prev2.close > prev2.open) || (last.close < last.open && prev.close < prev.open && prev2.close < prev2.open);
-    if (oneColor) score += 5;
-
-    // 8. Hidden Open Point (Test Case 5 Points)
-    let hiddenPoint = Math.abs(last.open - prev2.close) < (last.open * 0.0005);
-    if (hiddenPoint) score += 5;
-
-    // --- UPDATE UI ---
-    updateLED("led_bos", "val_bos", bosDetected, true);
-    updateLED("led_choch", "val_choch", chochDetected, true);
-    updateLED("led_tl", "val_tl", trendLineConf, true);
-    updateLED("led_color", "val_color", oneColor);
-    updateLED("led_eng", "val_eng", isEngulfing);
-    updateLED("led_key", "val_key", keyLevelMet);
-    updateLED("led_fvg", "val_fvg", fvgDetected);
-    updateLED("led_hop", "val_hop", hiddenPoint);
-
-    document.getElementById("trend").innerText = isUpTrend ? "UPTREND" : "DOWNTREND";
-    document.getElementById("confidence").innerText = score + "%";
-
-    // --- SIGNAL TRIGGER (Logic: Score >= 70% + Mandatory Check) ---
-    const sigBox = document.getElementById("signalBox");
-    const sigText = document.getElementById("signal");
-
-    if (score >= 70 && (bosDetected || chochDetected) && last.time !== lastSignalTime) {
-        const type = isUpTrend ? "BUY" : "SELL";
-        sigText.innerText = `STRONG ${type}`;
-        sigText.style.color = type === "BUY" ? "var(--success)" : "var(--danger)";
-        sigBox.className = `glass-card signal-box active-${type.toLowerCase()}`;
-        
-        lastSignalTime = last.time;
-        executeSignal(type, score, last.close); // Add to history
-    } else if (last.time !== lastSignalTime) {
-        sigText.innerText = "SCANNING";
-        sigText.style.color = "white";
-        sigBox.className = "glass-card signal-box";
-    }
-
-    // Update SR Lines on Chart
+    // --- 2. SUPPORT & RESISTANCE LINES (ඔබේ පැරණි තාක්ෂණය එලෙසම ඇත) ---
     srLines.forEach(line => candleSeries.removePriceLine(line));
     srLines = [];
     if (lastH) srLines.push(candleSeries.createPriceLine({ price: lastH.price, color: '#ff2e63', lineWidth: 1, lineStyle: 2, title: 'RES' }));
     if (lastL) srLines.push(candleSeries.createPriceLine({ price: lastL.price, color: '#00ff88', lineWidth: 1, lineStyle: 2, title: 'SUP' }));
+
+    // --- 3. NEW SIGNAL LOGIC (4/5 TECHNIQUES & 1/3 MANDATORY) ---
+    const last = candles[candles.length - 1];
+    const prev = candles[candles.length - 2];
+    const prev2 = candles[candles.length - 3];
+    const isUpTrend = last.close > candles[candles.length - 20].close;
+
+    // 5 Techniques
+    const t_color = (isUpTrend ? (last.close > last.open) : (last.close < last.open));
+    const t_eng = Math.abs(last.close - last.open) > Math.abs(prev.close - prev.open);
+    const t_key = (lastH && Math.abs(last.close - lastH.price) < last.close * 0.002) || (lastL && Math.abs(last.close - lastL.price) < last.close * 0.002);
+    const t_fvg = isUpTrend ? (prev2.high < last.low) : (prev2.low > last.high);
+    const t_hop = Math.abs(last.open - prev.close) < (last.high - last.low) * 0.1;
+
+    const techScore = [t_color, t_eng, t_key, t_fvg, t_hop].filter(x => x).length;
+
+    // 3 Mandatory
+    const t_tl = isUpTrend ? (last.close > prev.close) : (last.close < prev.close);
+    const mandScore = [bosDetected, chochDetected, t_tl].filter(x => x).length;
+
+    // UI LED Updates
+    updateLED("led_color", "val_color", t_color);
+    updateLED("led_eng", "val_eng", t_eng);
+    updateLED("led_key", "val_key", t_key);
+    updateLED("led_fvg", "val_fvg", t_fvg);
+    updateLED("led_hop", "val_hop", t_hop);
+    updateLED("led_bos", "val_bos", bosDetected, true);
+    updateLED("led_choch", "val_choch", chochDetected, true);
+    updateLED("led_tl", "val_tl", t_tl, true);
+
+    document.getElementById("trend").innerText = isUpTrend ? "UPTREND" : "DOWNTREND";
+    const confidence = Math.round(((techScore + mandScore) / 8) * 100);
+    document.getElementById("confidence").innerText = confidence + "%";
+
+    // --- SIGNAL TRIGGER ---
+    const sigBox = document.getElementById("signalBox");
+    const sigText = document.getElementById("signal");
+    
+    // කොන්දේසිය: 5න් 4ක් හරි විය යුතුයි AND 3න් 1ක් හරි විය යුතුයි AND Trend එක පැත්තට විය යුතුයි
+    if (techScore >= 4 && mandScore >= 1 && last.time !== lastSignalTime) {
+        const type = isUpTrend ? "BUY" : "SELL";
+        sigText.innerText = `STRONG ${type}`;
+        sigText.style.color = type === "BUY" ? "var(--success)" : "var(--danger)";
+        sigBox.className = `glass-card signal-box active-${type.toLowerCase()}`;
+        executeSignal(type, confidence, last.close);
+        lastSignalTime = last.time; // එකම කැන්ඩල් එකේ සිග්නල් කිහිපයක් ඒම වැලැක්වීම
+    } else {
+        if (last.time !== lastSignalTime) {
+            sigText.innerText = "SCANNING";
+            sigText.style.color = "white";
+            sigBox.className = "glass-card signal-box";
+        }
+    }
 };
 
 const updateLED = (ledId, valId, isActive, isPurple = false) => {
@@ -518,7 +530,6 @@ const updateLED = (ledId, valId, isActive, isPurple = false) => {
     const val = document.getElementById(valId);
     if (isActive) {
         led.classList.add("active");
-        if (isPurple) led.classList.add("led-purple"); else led.classList.add("led-blue");
         val.innerText = "YES";
         val.style.color = isPurple ? "var(--accent)" : "var(--primary)";
     } else {
@@ -536,8 +547,6 @@ const executeSignal = (type, conf, price) => {
     saveStorage();
     renderHistory();
     playAlert(type);
-    
-    // Auto-resolve signal result after 1 min (demo purpose)
     setTimeout(() => {
         const win = (type === "BUY" && candles[candles.length-1].close > price) || (type === "SELL" && candles[candles.length-1].close < price);
         const idx = storage.history.findIndex(s => s.id === id);
