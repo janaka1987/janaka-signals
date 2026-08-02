@@ -412,42 +412,45 @@ const connectDeriv = () => {
 
 // --- OPTIMIZED SMC VISUAL LOGIC (RANGE 7) - FIXED BOS/CHOCH SAVING ---
 const updateSMCVisuals = () => {
+    // --- ඔබේ පින්තූරයේ ආකාරයටම නිවැරදි කළ SMC VISUAL LOGIC ---
+const updateSMCVisuals = () => {
     if (candles.length < 50) return;
     
     let markers = [];
     let highPoints = [];
     let lowPoints = [];
+    const lb = 7; // Candle 7 ක පරතරය (Lookback)
 
+    // පැරණි S/R ලයින් ඉවත් කිරීම (පිරිසිදුව තබා ගැනීමට)
     srLines.forEach(line => candleSeries.removePriceLine(line));
     srLines = [];
 
-    // Find all Swings First
-    for (let i = SMCLookback; i < candles.length - SMCLookback; i++) {
+    // 1. Swing Highs/Lows (HH, LH, LL, HL) හඳුනා ගැනීම
+    for (let i = lb; i < candles.length - lb; i++) {
         let isHigh = true;
         let isLow = true;
-        for(let j=1; j<=SMCLookback; j++) {
-            if(candles[i].high <= candles[i-j].high || candles[i].high <= candles[i+j].high) isHigh = false;
-            if(candles[i].low >= candles[i-j].low || candles[i].low >= candles[i+j].low) isLow = false;
+        for (let j = 1; j <= lb; j++) {
+            if (candles[i].high <= candles[i-j].high || candles[i].high <= candles[i+j].high) isHigh = false;
+            if (candles[i].low >= candles[i-j].low || candles[i].low >= candles[i+j].low) isLow = false;
         }
         if (isHigh) {
             let label = (highPoints.length > 0 && candles[i].high > highPoints[highPoints.length-1].price) ? "HH" : "LH";
-            markers.push({ time: candles[i].time, position: 'aboveBar', color: '#00ff88', shape: 'arrowDown', text: label });
             highPoints.push({ price: candles[i].high, time: candles[i].time });
+            markers.push({ time: candles[i].time, position: 'aboveBar', color: '#00ff88', shape: 'arrowDown', text: label });
         }
         if (isLow) {
             let label = (lowPoints.length > 0 && candles[i].low < lowPoints[lowPoints.length-1].price) ? "LL" : "HL";
-            markers.push({ time: candles[i].time, position: 'belowBar', color: '#ff2e63', shape: 'arrowUp', text: label });
             lowPoints.push({ price: candles[i].low, time: candles[i].time });
+            markers.push({ time: candles[i].time, position: 'belowBar', color: '#ff2e63', shape: 'arrowUp', text: label });
         }
     }
 
-    // BOS and CHOCH Historical Detection (Saves on Chart)
+    // 2. BOS සහ CHOCH හඳුනා ගැනීම (ඓතිහාසිකව චාර්ට් එකේ සේව් වී පෙනේ)
     let lastHH = 0;
     let lastLL = 0;
-    let currentDir = 0; // 1 for UP, -1 for DOWN
+    let currentDir = 0; 
 
     for (let i = 20; i < candles.length; i++) {
-        // Track the recent validated structure
         let currentHighs = highPoints.filter(h => h.time < candles[i].time);
         let currentLows = lowPoints.filter(l => l.time < candles[i].time);
         
@@ -455,22 +458,20 @@ const updateSMCVisuals = () => {
         if(currentLows.length > 0) lastLL = currentLows[currentLows.length-1].price;
 
         if (lastHH > 0 && candles[i].close > lastHH) {
-            // If it breaks High, it's either BOS or CHOCH
             let type = (currentDir === -1) ? "CHOCH" : "BOS";
             markers.push({ time: candles[i].time, position: 'aboveBar', color: '#FFD700', shape: 'circle', text: type });
             currentDir = 1;
-            lastHH = candles[i].high; // Reset break point
+            lastHH = candles[i].high; 
         } 
         else if (lastLL > 0 && candles[i].close < lastLL) {
-            // If it breaks Low
             let type = (currentDir === 1) ? "CHOCH" : "BOS";
             markers.push({ time: candles[i].time, position: 'belowBar', color: '#E040FB', shape: 'circle', text: type });
             currentDir = -1;
-            lastLL = candles[i].low; // Reset break point
+            lastLL = candles[i].low; 
         }
     }
 
-    // Resistance/Support Lines
+    // 3. S/R Lines (ඔබේ පින්තූරයේ මෙන් පැහැදිලිව ඇඳීම)
     if (highPoints.length > 0 && lowPoints.length > 0) {
         const lastHigh = highPoints[highPoints.length-1];
         const lastLow = lowPoints[lowPoints.length-1];
@@ -481,6 +482,8 @@ const updateSMCVisuals = () => {
 
     candleSeries.setMarkers(markers);
 };
+        
+            
 
 const calculateNeuralSMC = () => {
     if (candles.length < 30) return;
