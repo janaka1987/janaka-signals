@@ -410,8 +410,7 @@ const connectDeriv = () => {
     ws.onclose = () => setTimeout(connectDeriv, 3000);
 };
 
-// --- OPTIMIZED SMC VISUAL LOGIC (RANGE 7) - FIXED BOS/CHOCH SAVING ---
-const updateSMCVisuals = () => {
+
     // --- ඔබේ පින්තූරයේ ආකාරයටම නිවැරදි කළ SMC VISUAL LOGIC ---
 const updateSMCVisuals = () => {
     if (candles.length < 50) return;
