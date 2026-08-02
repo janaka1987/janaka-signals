@@ -410,7 +410,7 @@ const connectDeriv = () => {
     ws.onclose = () => setTimeout(connectDeriv, 3000);
 };
 
-// --- OPTIMIZED SMC VISUAL LOGIC (RANGE 7) ---
+// --- OPTIMIZED SMC VISUAL LOGIC (RANGE 7) - FIXED BOS/CHOCH SAVING ---
 const updateSMCVisuals = () => {
     if (candles.length < 50) return;
     
@@ -421,21 +421,19 @@ const updateSMCVisuals = () => {
     srLines.forEach(line => candleSeries.removePriceLine(line));
     srLines = [];
 
+    // Find all Swings First
     for (let i = SMCLookback; i < candles.length - SMCLookback; i++) {
         let isHigh = true;
         let isLow = true;
-
         for(let j=1; j<=SMCLookback; j++) {
             if(candles[i].high <= candles[i-j].high || candles[i].high <= candles[i+j].high) isHigh = false;
             if(candles[i].low >= candles[i-j].low || candles[i].low >= candles[i+j].low) isLow = false;
         }
-
         if (isHigh) {
             let label = (highPoints.length > 0 && candles[i].high > highPoints[highPoints.length-1].price) ? "HH" : "LH";
             markers.push({ time: candles[i].time, position: 'aboveBar', color: '#00ff88', shape: 'arrowDown', text: label });
             highPoints.push({ price: candles[i].high, time: candles[i].time });
         }
-
         if (isLow) {
             let label = (lowPoints.length > 0 && candles[i].low < lowPoints[lowPoints.length-1].price) ? "LL" : "HL";
             markers.push({ time: candles[i].time, position: 'belowBar', color: '#ff2e63', shape: 'arrowUp', text: label });
@@ -443,19 +441,41 @@ const updateSMCVisuals = () => {
         }
     }
 
-    if (highPoints.length > 1 && lowPoints.length > 1) {
+    // BOS and CHOCH Historical Detection (Saves on Chart)
+    let lastHH = 0;
+    let lastLL = 0;
+    let currentDir = 0; // 1 for UP, -1 for DOWN
+
+    for (let i = 20; i < candles.length; i++) {
+        // Track the recent validated structure
+        let currentHighs = highPoints.filter(h => h.time < candles[i].time);
+        let currentLows = lowPoints.filter(l => l.time < candles[i].time);
+        
+        if(currentHighs.length > 0) lastHH = currentHighs[currentHighs.length-1].price;
+        if(currentLows.length > 0) lastLL = currentLows[currentLows.length-1].price;
+
+        if (lastHH > 0 && candles[i].close > lastHH) {
+            // If it breaks High, it's either BOS or CHOCH
+            let type = (currentDir === -1) ? "CHOCH" : "BOS";
+            markers.push({ time: candles[i].time, position: 'aboveBar', color: '#FFD700', shape: 'circle', text: type });
+            currentDir = 1;
+            lastHH = candles[i].high; // Reset break point
+        } 
+        else if (lastLL > 0 && candles[i].close < lastLL) {
+            // If it breaks Low
+            let type = (currentDir === 1) ? "CHOCH" : "BOS";
+            markers.push({ time: candles[i].time, position: 'belowBar', color: '#E040FB', shape: 'circle', text: type });
+            currentDir = -1;
+            lastLL = candles[i].low; // Reset break point
+        }
+    }
+
+    // Resistance/Support Lines
+    if (highPoints.length > 0 && lowPoints.length > 0) {
         const lastHigh = highPoints[highPoints.length-1];
         const lastLow = lowPoints[lowPoints.length-1];
-        const currentCandle = candles[candles.length-1];
-
-        if (currentCandle.close > lastHigh.price) {
-            markers.push({ time: currentCandle.time, position: 'aboveBar', color: '#FFD700', shape: 'circle', text: 'BOS' });
-        } else if (currentCandle.close < lastLow.price) {
-            markers.push({ time: currentCandle.time, position: 'belowBar', color: '#E040FB', shape: 'circle', text: 'CHOCH' });
-        }
-
-        const resLine = candleSeries.createPriceLine({ price: lastHigh.price, color: '#00f2ff', lineWidth: 2, lineStyle: 0, axisLabelVisible: true, title: 'RESISTANCE' });
-        const supLine = candleSeries.createPriceLine({ price: lastLow.price, color: '#ff2e63', lineWidth: 2, lineStyle: 0, axisLabelVisible: true, title: 'SUPPORT' });
+        const resLine = candleSeries.createPriceLine({ price: lastHigh.price, color: '#00f2ff', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'RES' });
+        const supLine = candleSeries.createPriceLine({ price: lastLow.price, color: '#ff2e63', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'SUP' });
         srLines.push(resLine, supLine);
     }
 
