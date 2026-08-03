@@ -331,7 +331,7 @@ select {
                     <li><div class="led-container"><div id="led_bos" class="led led-purple"></div> BOS Detected</div> <span id="val_bos">-</span></li>
                     <li><div class="led-container"><div id="led_choch" class="led led-purple"></div> CHOCH Detected</div> <span id="val_choch">-</span></li>
                     <li><div class="led-container"><div id="led_tl" class="led led-purple"></div> Trend Line Conf.</div> <span id="val_tl">-</span></li>
-                    <li style="margin-top: 10px; color: var(--text-muted);">Current Trend <span id="trend" style="color:white; font-weight:bold;">SCANNING</span></li>
+                    <li style="margin-top: 10px; color: var(--text-muted);">Current Trend <span id="trend" style="font-weight:bold;">SCANNING</span></li>
                     <li>Neural Probability <span id="confidence" style="color:var(--primary); font-weight:bold;">0%</span></li>
                 </ul>
             </div>
@@ -553,7 +553,14 @@ const calculateNeuralSMC = () => {
     updateLED("led_choch", "val_choch", chochDetected, true);
     updateLED("led_tl", "val_tl", t_tl, true);
 
-    document.getElementById("trend").innerText = isUpTrend ? "UPTREND" : "DOWNTREND";
+    const trendElement = document.getElementById("trend");
+if (isUpTrend) {
+    trendElement.innerText = "UPTREND";
+    trendElement.style.color = "var(--success)"; // කොළ පාට
+} else {
+    trendElement.innerText = "DOWNTREND";
+    trendElement.style.color = "var(--danger)";  // රතු පාට
+}
     const confidence = Math.round(((techScore + mandScore) / 8) * 100);
     document.getElementById("confidence").innerText = confidence + "%";
 
