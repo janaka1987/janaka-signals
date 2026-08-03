@@ -467,7 +467,7 @@ const calculateNeuralSMC = () => {
     let swings = [];
     const windowSize = 8; 
 
-    // --- 1. SWING CALCULATION (HH, LH, LL, HL) ---
+    // --- 1. SWING CALCULATION (HH, LH, LL, HL) - ඔබේ පැරණි logic එක එලෙසම ---
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true, isLow = true;
         for (let j = 1; j <= windowSize; j++) {
@@ -514,43 +514,53 @@ const calculateNeuralSMC = () => {
 
     candleSeries.setMarkers(markers);
 
-    // --- 2. SUPPORT/RESISTANCE ---
+    // --- 2. SUPPORT/RESISTANCE (පැරණි රේඛා එලෙසම) ---
     srLines.forEach(line => candleSeries.removePriceLine(line));
     srLines = [];
     if (lastH) srLines.push(candleSeries.createPriceLine({ price: lastH.price, color: '#ff2e63', lineWidth: 1, lineStyle: 0, title: 'RES' }));
     if (lastL) srLines.push(candleSeries.createPriceLine({ price: lastL.price, color: '#00ff88', lineWidth: 1, lineStyle: 0, title: 'SUP' }));
 
-    // --- 3. NEURAL FACTORS & AIM LEVEL ---
+    // --- 3. NEURAL FACTORS & AIM LEVEL (මෙහිදී තමයි පාලනය දමා ඇත්තේ) ---
     const last = candles[candles.length - 1];
     const prev = candles[candles.length - 2];
     const prev2 = candles[candles.length - 3];
     const isUpTrend = last.close > candles[candles.length - 20].close;
 
-    // AIM LOGIC
+    // සාමාන්‍ය කැන්ඩල් එකක විශාලත්වය ගණනය කිරීම
+    let avgMove = candles.slice(-10).reduce((acc, c) => acc + Math.abs(c.close - c.open), 0) / 10;
+    let maxAimDist = avgMove * 6; // කැන්ඩල් 6 ක උපරිම දුර
+
     let nearestAim = null;
     let estCandles = 0;
+
     if (isUpTrend) {
         let targets = swings.filter(s => s.type === 'H' && s.price > last.close);
         if (targets.length > 0) {
             targets.sort((a, b) => a.price - b.price);
-            nearestAim = targets[0].price;
+            let dist = targets[0].price - last.close;
+            // දුර කැන්ඩල් 6කට වඩා අඩු නම් පමණක් Aim එක තෝරාගනී
+            if (dist <= maxAimDist) nearestAim = targets[0].price;
         }
     } else {
         let targets = swings.filter(s => s.type === 'L' && s.price < last.close);
         if (targets.length > 0) {
             targets.sort((a, b) => b.price - a.price);
-            nearestAim = targets[0].price;
+            let dist = last.close - targets[0].price;
+            if (dist <= maxAimDist) nearestAim = targets[0].price;
         }
     }
 
+    // UI UPDATE
     if (nearestAim) {
-        let dist = Math.abs(nearestAim - last.close);
-        let avgMove = candles.slice(-10).reduce((acc, c) => acc + Math.abs(c.close - c.open), 0) / 10;
-        estCandles = Math.ceil(dist / (avgMove || 1));
+        estCandles = Math.ceil(Math.abs(nearestAim - last.close) / (avgMove || 1));
         document.getElementById("aimValue").innerText = nearestAim.toFixed(2);
         document.getElementById("estTime").innerText = `ESTIMATED: ${estCandles} CANDLES`;
+    } else {
+        document.getElementById("aimValue").innerText = "SCANNING...";
+        document.getElementById("estTime").innerText = "WAITING FOR TARGET (<6C)";
     }
 
+    // --- 4. ඉතිරි පැරණි තාක්ෂණික දර්ශක (LED) ---
     const t_color = (isUpTrend ? (last.close > last.open) : (last.close < last.open));
     const t_eng = Math.abs(last.close - last.open) > Math.abs(prev.close - prev.open);
     const t_key = (lastH && Math.abs(last.close - lastH.price) < last.close * 0.002) || (lastL && Math.abs(last.close - lastL.price) < last.close * 0.002);
@@ -577,8 +587,8 @@ const calculateNeuralSMC = () => {
     const sigBox = document.getElementById("signalBox");
     const sigText = document.getElementById("signal");
     
-    // AI Decision with Aim Room Check
-    if (techScore >= 4 && mandScore >= 1 && estCandles >= 1 && estCandles <= 5 && last.time !== lastSignalTime) {
+    // AI Decision (Signal එකක් ගන්නේ Aim එකක් තියෙනවා නම් පමණයි)
+    if (techScore >= 4 && mandScore >= 1 && nearestAim !== null && last.time !== lastSignalTime) {
         const type = isUpTrend ? "BUY" : "SELL";
         sigText.innerText = `STRONG ${type}`;
         sigText.style.color = type === "BUY" ? "var(--success)" : "var(--danger)";
@@ -594,6 +604,11 @@ const calculateNeuralSMC = () => {
         }
     }
 };
+    
+            
+
+    
+    
 
 const updateLED = (ledId, valId, isActive, isPurple = false) => {
     const led = document.getElementById(ledId);
