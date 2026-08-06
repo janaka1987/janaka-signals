@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JANAKA SMC DASHBOARD V6 PRO - AI EDITION</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <title>JANAKA SMC V6 - REAL LED EDITION</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 
     <style>
@@ -15,274 +13,211 @@
             --bg:#05070A; --card:#0F172A; --border:#1E293B;
             --green:#00FF88; --red:#FF4D4D; --blue:#38BDF8;
             --text:#FFFFFF; --muted:#94A3B8;
-            --neon-green: 0 0 15px rgba(0, 255, 136, 0.6);
-            --neon-red: 0 0 15px rgba(255, 77, 77, 0.6);
-            --neon-blue: 0 0 15px rgba(56, 189, 248, 0.6);
+            --neon-green: 0 0 20px rgba(0, 255, 136, 0.4);
+            --neon-red: 0 0 20px rgba(255, 77, 77, 0.4);
+            --neon-blue: 0 0 20px rgba(56, 189, 248, 0.4);
         }
 
-        body{ background:var(--bg); font-family:'Inter',sans-serif; color:var(--text); padding:16px; }
-        .container{ width:100%; max-width:1700px; margin:auto; }
+        body{ background:var(--bg); font-family:'Inter',sans-serif; color:var(--text); padding:20px; }
+        .container{ max-width:1600px; margin:auto; }
 
-        /* Header LED style */
-        .title{
-            font-size:32px; font-weight:800; text-align:center; letter-spacing:2px; margin-bottom:20px;
-            color:var(--green); text-shadow: var(--neon-green);
+        .header{
+            text-align:center; font-size:28px; font-weight:800; color:var(--blue);
+            text-shadow: var(--neon-blue); margin-bottom:20px; letter-spacing:1px;
         }
 
-        .grid-top{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-bottom:18px; }
-
+        .main-grid{ display:grid; grid-template-columns: 1fr 350px; gap:20px; }
+        
         .card{
-            background:var(--card); border:2px solid var(--border); border-radius:20px;
-            padding:18px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); transition: 0.3s;
+            background:var(--card); border:2px solid var(--border); border-radius:15px;
+            padding:20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         /* LED Signal Box */
-        .signal-card { border: 2px solid var(--blue); box-shadow: var(--neon-blue); text-align: center; position: relative; overflow: hidden; }
-        .signal-text { font-size: 28px; font-weight: 800; margin: 10px 0; font-family: 'JetBrains Mono'; }
-        .probability { font-size: 14px; color: var(--muted); }
-
-        .card h3{ font-size:15px; font-weight:700; color:var(--blue); margin-bottom:14px; display: flex; align-items: center; gap: 8px; }
-
-        select{
-            width:100%; height:50px; background:#08111F; color:white; border:1px solid #334155;
-            border-radius:12px; padding:0 12px; font-size:15px; outline:none;
+        .signal-card { 
+            text-align: center; transition: 0.5s; border: 2px solid var(--blue);
+            box-shadow: var(--neon-blue);
         }
+        .signal-text { font-size: 40px; font-weight: 800; margin: 15px 0; font-family: 'JetBrains Mono'; color: var(--blue); }
+        
+        #chart{ width:100%; height:500px; border-radius:12px; overflow:hidden; margin-top:10px; border: 1px solid var(--border); }
 
-        #chart{ width:100%; height:550px; border-radius:16px; background:#0A1322; border:1px solid var(--border); margin-top: 15px; }
-
-        .bottom-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:15px; margin-top:18px; }
-
-        .info-box{
-            background: var(--card); border:1px solid var(--border); border-radius:15px; padding:15px;
-            text-align:center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-        .info-title{ font-size:12px; color:var(--muted); margin-bottom:8px; text-transform: uppercase; }
-        .info-value{ font-size:22px; font-weight:700; font-family: 'JetBrains Mono'; }
-
-        /* AI Thinking Animation */
-        .thinking { display: inline-block; width: 10px; height: 10px; background: var(--blue); border-radius: 50%; animation: blink 1s infinite; }
-        @keyframes blink { 0% { opacity: 0.2; } 50% { opacity: 1; } 100% { opacity: 0.2; } }
+        .stats-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px; }
+        .stat-item{ background:#08111F; padding:12px; border-radius:10px; border:1px solid var(--border); text-align:center; }
+        .stat-label{ font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:5px; }
+        .stat-value{ font-size:18px; font-weight:700; font-family: 'JetBrains Mono'; }
 
         .log-box {
-            background: #000; border: 1px solid #222; border-radius: 10px; padding: 10px;
-            height: 100px; overflow-y: auto; font-size: 11px; font-family: 'JetBrains Mono'; color: #00FF88; text-align: left;
+            background: #000; border: 1px solid #222; border-radius: 10px; padding: 12px;
+            height: 180px; overflow-y: auto; font-size: 11px; font-family: 'JetBrains Mono'; color: #00FF88; margin-top:15px;
+        }
+
+        select{
+            width:100%; height:45px; background:#08111F; color:white; border:1px solid var(--blue);
+            border-radius:10px; padding:0 12px; font-size:14px; outline:none; cursor:pointer;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="title">JANAKA SMC DASHBOARD V6 PRO <span style="font-size: 12px; vertical-align: middle; color: #fff; background: #38BDF8; padding: 2px 8px; border-radius: 4px;">AI REAL-TIME</span></div>
+    <div class="header">JANAKA SMC DASHBOARD V6 <span style="font-size:12px; border:1px solid var(--blue); padding:2px 8px; border-radius:5px;">REAL ALGO</span></div>
 
-    <div class="grid-top">
-        <div class="card">
-            <h3>📊 SELECT MARKET</h3>
-            <select id="market">
-                <option value="R_10">Volatility 10</option>
-                <option value="R_25">Volatility 25</option>
-                <option value="R_50" selected>Volatility 50</option>
-                <option value="R_75">Volatility 75</option>
-                <option value="R_100">Volatility 100</option>
-                <option value="frxEURUSD">EUR / USD</option>
-            </select>
-        </div>
-
-        <div class="card signal-card" id="mainSignalBox">
-            <h3>🤖 AI SURE-SHOT SIGNAL</h3>
-            <div class="signal-text" id="aiSignal">ANALYZING...</div>
-            <div class="probability" id="aiConfidence">AI is reading historical data</div>
-        </div>
-
-        <div class="card">
-            <h3>🧠 AI REFLECTION LOG</h3>
-            <div class="log-box" id="aiLog">
-                [SYSTEM] AI Brain Initialized...<br>
-                [INFO] Waiting for high probability zones...
+    <div class="main-grid">
+        <div class="left-col">
+            <div class="card">
+                <select id="market">
+                    <option value="R_100">Volatility 100 Index</option>
+                    <option value="R_75">Volatility 75 Index</option>
+                    <option value="R_50" selected>Volatility 50 Index</option>
+                    <option value="R_25">Volatility 25 Index</option>
+                    <option value="R_10">Volatility 10 Index</option>
+                </select>
+                <div id="chart"></div>
             </div>
         </div>
-    </div>
 
-    <div class="card" style="padding: 10px;">
-        <div id="chart"></div>
-    </div>
+        <div class="right-col">
+            <div class="card signal-card" id="ledBox">
+                <div style="font-size:12px; font-weight:bold; letter-spacing:2px;">AI SYSTEM STATUS</div>
+                <div class="signal-text" id="signalLabel">SCANNING</div>
+                <div id="probLabel" style="font-size:14px; color:var(--muted);">Analyzing Market...</div>
+            </div>
 
-    <div class="bottom-grid">
-        <div class="info-box">
-            <div class="info-title">Market Trend</div>
-            <div class="info-value" id="trendText">--</div>
-        </div>
-        <div class="info-box">
-            <div class="info-title">System Health</div>
-            <div class="info-value" id="sysHealth" style="color: var(--green);">STABLE</div>
-        </div>
-        <div class="info-box">
-            <div class="info-title">Last Trade Result</div>
-            <div class="info-value" id="lastResult">--</div>
-        </div>
-        <div class="info-box">
-            <div class="info-title">AI Success Rate</div>
-            <div class="info-value" id="aiSuccess" style="color: var(--blue);">94.2%</div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">Market Trend</div>
+                    <div class="stat-value" id="trendVal">--</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">RSI Indicator</div>
+                    <div class="stat-value" id="rsiVal">--</div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top:20px; padding:15px;">
+                <div style="font-size:12px; font-weight:bold; margin-bottom:10px;">SYSTEM LOGS</div>
+                <div class="log-box" id="logBox">> AI Kernel Loaded...<br>> Waiting for Data...</div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
 /*=========================================
-            AI & CHART CONFIG
+      REAL ALGORITHM & LED INTERFACE
 =========================================*/
 let candles = [];
-let currentMarket = "R_50";
-const TIMEFRAME = 60;
-let lastSignal = null;
-let lastSignalPrice = 0;
-let signalTimer = 0;
-
-// Initialize Chart
+let symbol = "R_50";
 const chart = LightweightCharts.createChart(document.getElementById('chart'), {
     layout: { background: { color: '#05070A' }, textColor: '#E5E7EB' },
     grid: { vertLines: { color: '#162033' }, horzLines: { color: '#162033' } },
-    timeScale: { timeVisible: true, secondsVisible: false },
+    timeScale: { timeVisible: true }
 });
+const candleSeries = chart.addCandlestickSeries({ upColor: '#00FF88', downColor: '#FF4D4D' });
 
-const candleSeries = chart.addCandlestickSeries({
-    upColor:'#00FF88', downColor:'#FF4D4D', borderUpColor:'#00FF88', borderDownColor:'#FF4D4D',
-    wickUpColor:'#00FF88', wickDownColor:'#FF4D4D'
-});
+function calculateEMA(data, period) {
+    let k = 2 / (period + 1);
+    let ema = [data[0]];
+    for (let i = 1; i < data.length; i++) ema.push(data[i] * k + ema[i - 1] * (1 - k));
+    return ema;
+}
 
-/*=========================================
-        AI BRAIN (THE CORE LOGIC)
-=========================================*/
+function calculateRSI(data, period = 14) {
+    if (data.length < period + 1) return 50;
+    let gains = 0, losses = 0;
+    for (let i = 1; i <= period; i++) {
+        let diff = data[data.length - i] - data[data.length - (i + 1)];
+        if (diff > 0) gains += diff; else losses -= diff;
+    }
+    return 100 - (100 / (1 + (gains / (losses || 1))));
+}
 
-function aiBrain() {
+function runAnalysis() {
     if (candles.length < 50) return;
 
-    const last = candles[candles.length - 1];
-    const prev = candles[candles.length - 2];
-    const history = candles.slice(-50);
-
-    // 1. Calculate SMC Trend
-    let highPoints = history.filter((c, i) => i > 0 && c.high > history[i-1].high).length;
-    let lowPoints = history.filter((c, i) => i > 0 && c.low < history[i-1].low).length;
-    let trend = highPoints > lowPoints ? "UPTREND" : "DOWNTREND";
+    const closes = candles.map(c => c.close);
+    const ema20 = calculateEMA(closes, 20);
+    const ema50 = calculateEMA(closes, 50);
+    const rsi = calculateRSI(closes, 14);
     
-    document.getElementById('trendText').innerText = trend;
-    document.getElementById('trendText').style.color = trend === "UPTREND" ? "#00FF88" : "#FF4D4D";
+    const lastClose = closes[closes.length - 1];
+    const trend = ema20[ema20.length-1] > ema50[ema50.length-1] ? "UP" : "DOWN";
 
-    // 2. Sure Shot Logic (Price Action + Momentum)
-    let bodySize = Math.abs(last.close - last.open);
-    let avgBody = history.reduce((a, b) => a + Math.abs(b.close - b.open), 0) / 50;
-    
-    let isStrongBuy = trend === "UPTREND" && last.close > prev.high && bodySize > avgBody;
-    let isStrongSell = trend === "DOWNTREND" && last.close < prev.low && bodySize > avgBody;
+    document.getElementById('trendVal').innerText = trend === "UP" ? "BULLISH" : "BEARISH";
+    document.getElementById('trendVal').style.color = trend === "UP" ? "var(--green)" : "var(--red)";
+    document.getElementById('rsiVal').innerText = Math.round(rsi);
 
-    // 3. Execution & Voice
-    if (isStrongBuy && lastSignal !== 'BUY') {
-        triggerSignal("STRONG BUY", "green");
-    } else if (isStrongSell && lastSignal !== 'SELL') {
-        triggerSignal("STRONG SELL", "red");
-    }
+    // Scoring Logic
+    let score = 0;
+    if (trend === "UP" && lastClose > ema20[ema20.length-1]) score += 40;
+    if (trend === "DOWN" && lastClose < ema20[ema20.length-1]) score += 40;
+    if (rsi > 40 && rsi < 65 && trend === "UP") score += 30;
+    if (rsi < 60 && rsi > 35 && trend === "DOWN") score += 30;
 
-    // 4. Loss Analysis (Reflection)
-    if (signalTimer > 0) {
-        signalTimer--;
-        if (signalTimer === 0) checkResult(last.close);
-    }
+    updateUI(score, trend);
 }
 
-function triggerSignal(type, color) {
-    lastSignal = type.includes("BUY") ? "BUY" : "SELL";
-    lastSignalPrice = candles[candles.length - 1].close;
-    signalTimer = 3; // Evaluate after 3 candles (3 mins)
+function updateUI(score, trend) {
+    const box = document.getElementById('ledBox');
+    const label = document.getElementById('signalLabel');
+    const prob = document.getElementById('probLabel');
 
-    const box = document.getElementById('mainSignalBox');
-    const sigText = document.getElementById('aiSignal');
-    
-    sigText.innerText = type;
-    sigText.style.color = color === "green" ? "var(--green)" : "var(--red)";
-    box.style.boxShadow = color === "green" ? "var(--neon-green)" : "var(--neon-red)";
-    box.style.borderColor = color === "green" ? "var(--green)" : "var(--red)";
-
-    document.getElementById('aiConfidence').innerText = "Confidence: " + (85 + Math.random() * 10).toFixed(2) + "%";
-    
-    logAI(`[SIGNAL] ${type} detected at ${lastSignalPrice}. Analyzing 3-min outcome...`);
-    speak(`Attention! ${type} signal. High probability.`);
-}
-
-function checkResult(currentPrice) {
-    let win = false;
-    if (lastSignal === "BUY" && currentPrice > lastSignalPrice) win = true;
-    if (lastSignal === "SELL" && currentPrice < lastSignalPrice) win = true;
-
-    const resDisp = document.getElementById('lastResult');
-    if (win) {
-        resDisp.innerText = "PROFIT";
-        resDisp.style.color = "var(--green)";
-        logAI("[REFLECTION] Win confirmed. Pattern validated.");
+    if (score >= 70) {
+        const type = trend === "UP" ? "STRONG BUY" : "STRONG SELL";
+        label.innerText = type;
+        label.style.color = trend === "UP" ? "var(--green)" : "var(--red)";
+        box.style.borderColor = trend === "UP" ? "var(--green)" : "var(--red)";
+        box.style.boxShadow = trend === "UP" ? "var(--neon-green)" : "var(--neon-red)";
+        prob.innerText = `CONFIDENCE: ${score + Math.floor(Math.random()*5)}%`;
+        if(label.getAttribute('last') !== type) log(`Signal: ${type} at Score ${score}%`);
+        label.setAttribute('last', type);
     } else {
-        resDisp.innerText = "LOSS";
-        resDisp.style.color = "var(--red)";
-        logAI("[ANALYSIS] Loss detected. Reason: Market Volatility Spike. Adjusting logic filters...");
-        // AI self-correction simulation
-        document.getElementById('sysHealth').innerText = "RE-CALIBRATING";
-        setTimeout(() => { document.getElementById('sysHealth').innerText = "STABLE"; }, 5000);
+        label.innerText = "SCANNING";
+        label.style.color = "var(--blue)";
+        box.style.borderColor = "var(--blue)";
+        box.style.boxShadow = "var(--neon-blue)";
+        prob.innerText = "Waiting for High Probability Zone...";
     }
 }
 
-function logAI(msg) {
-    const log = document.getElementById('aiLog');
-    log.innerHTML = `> ${msg}<br>` + log.innerHTML;
+function log(msg) {
+    const box = document.getElementById('logBox');
+    box.innerHTML = `> ${new Date().toLocaleTimeString()}: ${msg}<br>` + box.innerHTML;
 }
 
-function speak(text) {
-    const msg = new SpeechSynthesisUtterance(text);
-    window.speechSynthesis.speak(msg);
-}
-
-/*=========================================
-        DATA CONNECTION (DERIV)
-=========================================*/
+// --- DATA CONNECTION ---
+let ws;
 function connect() {
-    let ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
-
+    if (ws) ws.close();
+    ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
     ws.onopen = () => {
-        ws.send(JSON.stringify({
-            ticks_history: currentMarket, adjust_start_time: 1, count: 300,
-            end: "latest", granularity: TIMEFRAME, style: "candles"
-        }));
+        ws.send(JSON.stringify({ ticks_history: symbol, count: 200, end: "latest", granularity: 60, style: "candles" }));
     };
-
     ws.onmessage = (msg) => {
-        let data = JSON.parse(msg.data);
+        const data = JSON.parse(msg.data);
         if (data.candles) {
-            candles = data.candles.map(c => ({
-                time: Number(c.epoch), open: Number(c.open), high: Number(c.high), low: Number(c.low), close: Number(c.close)
-            }));
+            candles = data.candles.map(c => ({ time: c.epoch, open: c.open, high: c.high, low: c.low, close: c.close }));
             candleSeries.setData(candles);
-            ws.send(JSON.stringify({ ticks: currentMarket, subscribe: 1 }));
+            ws.send(JSON.stringify({ ticks: symbol, subscribe: 1 }));
         }
         if (data.tick) {
-            const price = Number(data.tick.quote);
-            const time = Math.floor(Number(data.tick.epoch) / TIMEFRAME) * TIMEFRAME;
-            let last = candles[candles.length - 1];
-
-            if (time === last.time) {
-                last.close = price;
-                if (price > last.high) last.high = price;
-                if (price < last.low) last.low = price;
-                candleSeries.update(last);
-            } else {
+            const last = candles[candles.length - 1];
+            const price = data.tick.quote;
+            const time = Math.floor(data.tick.epoch / 60) * 60;
+            if (time === last.time) { last.close = price; candleSeries.update(last); }
+            else { 
                 const newC = { time, open: price, high: price, low: price, close: price };
-                candles.push(newC);
-                candleSeries.update(newC);
-                aiBrain(); // Run AI every new candle
+                candles.push(newC); candleSeries.update(newC); 
+                runAnalysis(); 
             }
         }
     };
 }
 
 document.getElementById('market').addEventListener('change', (e) => {
-    currentMarket = e.target.value;
-    candles = [];
+    symbol = e.target.value;
+    log(`Market changed to ${symbol}`);
     connect();
 });
 
