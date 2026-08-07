@@ -142,9 +142,9 @@ const chartContainer = document.getElementById("chart");
 const rsiContainer = document.getElementById("rsi-chart");
 
 function calculateEMA(data, period) {
+    if(data.length === 0) return [];
     let k = 2 / (period + 1);
     let emaArray = [];
-    if(data.length === 0) return [];
     let prevEma = data[0].close;
     emaArray.push({ time: data[0].time, value: prevEma });
     for (let i = 1; i < data.length; i++) {
@@ -155,7 +155,6 @@ function calculateEMA(data, period) {
     return emaArray;
 }
 
-// RSI ප්‍රස්ථාරය සඳහා සම්පූර්ණ දත්ත මාලාව ගණනය කිරීම
 function calculateRSISeries(data, period = 14) {
     if (data.length <= period) return [];
     let rsiData = [];
@@ -166,7 +165,8 @@ function calculateRSISeries(data, period = 14) {
             if (diff >= 0) gains += diff; else losses -= diff;
         }
         let rs = (gains / period) / (losses / period);
-        rsiData.push({ time: data[i].time, value: 100 - (100 / (1 + rs)) });
+        let rsiValue = 100 - (100 / (1 + rs));
+        rsiData.push({ time: data[i].time, value: rsiValue });
     }
     return rsiData;
 }
@@ -178,6 +178,7 @@ function calculateSMC() {
     let swings = [];
     const windowSize = 4;
 
+    // Swing Points (Highs and Lows)
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true; let isLow = true;
         for (let j = 1; j <= windowSize; j++) {
@@ -212,6 +213,7 @@ function calculateSMC() {
             } else if (lastL && s.price > lastL.price) {
                 label = "HL"; color = "#00FF88";
                 if(currentDir === "DOWNTREND") markers.push({ time: s.time, position: 'belowBar', color: '#FF00FF', shape: 'arrowUp', text: 'CHOCH' });
+                currentDir = "UPTREND";
             }
             lastL = s;
         }
@@ -219,14 +221,32 @@ function calculateSMC() {
         lineData.push({ time: s.time, value: s.price });
     });
 
-    // Indicators Update
+    // Auto S/R Lines
+    if (resistanceLine) candleSeries.removePriceLine(resistanceLine);
+    if (supportLine) candleSeries.removePriceLine(supportLine);
+    const highSwings = swings.filter(s => s.type === 'H');
+    const lowSwings = swings.filter(s => s.type === 'L');
+    if (highSwings.length >= 2) resistanceLine = candleSeries.createPriceLine({ price: highSwings[highSwings.length-1].price, color: '#FF4D4D', lineWidth: 2, lineStyle: 2, title: 'RES' });
+    if (lowSwings.length >= 2) supportLine = candleSeries.createPriceLine({ price: lowSwings[lowSwings.length-1].price, color: '#00FF88', lineWidth: 2, lineStyle: 2, title: 'SUP' });
+
+    // Update Series
+    candleSeries.setMarkers(markers);
+    trendSeries.setData(lineData);
+    trend.innerText = currentDir || "ANALYZING";
+    trend.style.color = currentDir === "UPTREND" ? "#00FF88" : "#FF4D4D";
+
+    updateIndicators();
+}
+
+function updateIndicators() {
+    if (candles.length < 25) return;
+    
     let ema9Data = calculateEMA(candles, 9);
     let ema21Data = calculateEMA(candles, 21);
+    let rsiDataArray = calculateRSISeries(candles, 14);
+
     ema9Series.setData(ema9Data);
     ema21Series.setData(ema21Data);
-
-    // RSI Chart Update
-    let rsiDataArray = calculateRSISeries(candles, 14);
     rsiLineSeries.setData(rsiDataArray);
 
     let lastRsi = rsiDataArray.length > 0 ? rsiDataArray[rsiDataArray.length-1].value : 50;
@@ -243,23 +263,9 @@ function calculateSMC() {
         signalValue.innerText = "NEUTRAL"; signalValue.className = "info-value cyan";
         led.className = "led-indicator";
     }
-
-    candleSeries.setMarkers(markers);
-    trendSeries.setData(lineData);
-    trend.innerText = currentDir || "ANALYZING";
-    trend.style.color = currentDir === "UPTREND" ? "#00FF88" : "#FF4D4D";
-
-    // Auto S/R
-    if (resistanceLine) candleSeries.removePriceLine(resistanceLine);
-    if (supportLine) candleSeries.removePriceLine(supportLine);
-    const highSwings = swings.filter(s => s.type === 'H');
-    const lowSwings = swings.filter(s => s.type === 'L');
-    if (highSwings.length >= 2) resistanceLine = candleSeries.createPriceLine({ price: highSwings[highSwings.length-1].price, color: '#FF4D4D', lineWidth: 2, title: 'RES' });
-    if (lowSwings.length >= 2) supportLine = candleSeries.createPriceLine({ price: lowSwings[lowSwings.length-1].price, color: '#00FF88', lineWidth: 2, title: 'SUP' });
 }
 
 function createChart(){
-    // Main Candle Chart
     chart = LightweightCharts.createChart(chartContainer,{
         layout:{ background:{ color:"#05070A" }, textColor:"#E5E7EB" },
         grid:{ vertLines:{ color:"#162033" }, horzLines:{ color:"#162033" } },
@@ -269,25 +275,21 @@ function createChart(){
 
     candleSeries = chart.addCandlestickSeries({ upColor:"#00FF88", downColor:"#FF4D4D", borderUpColor:"#00FF88", borderDownColor:"#FF4D4D", wickUpColor:"#00FF88", wickDownColor:"#FF4D4D" });
     trendSeries = chart.addLineSeries({ color: 'rgba(56, 189, 248, 0.4)', lineWidth: 1, lineStyle: 2 });
-    ema9Series = chart.addLineSeries({ color: '#38BDF8', lineWidth: 2, title: 'EMA 9' });
-    ema21Series = chart.addLineSeries({ color: '#F59E0B', lineWidth: 2, title: 'EMA 21' });
+    ema9Series = chart.addLineSeries({ color: '#38BDF8', lineWidth: 2 });
+    ema21Series = chart.addLineSeries({ color: '#F59E0B', lineWidth: 2 });
 
-    // RSI Chart - New
     rsiChart = LightweightCharts.createChart(rsiContainer, {
         layout:{ background:{ color:"#05070A" }, textColor:"#E5E7EB" },
         grid:{ vertLines:{ color:"#162033" }, horzLines:{ color:"#162033" } },
-        timeScale:{ visible: false }, // උඩ chart එකත් එක්ක sync වෙන්න
+        timeScale:{ visible: false }, 
         width:rsiContainer.clientWidth, height:150
     });
 
-    rsiLineSeries = rsiChart.addLineSeries({ color: '#F59E0B', lineWidth: 2, title: 'RSI' });
-
-    // RSI 30, 50, 70 රේඛා ඇතුළත් කිරීම
+    rsiLineSeries = rsiChart.addLineSeries({ color: '#F59E0B', lineWidth: 2 });
     rsiLineSeries.createPriceLine({ price: 70, color: '#FF4D4D', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '70' });
     rsiLineSeries.createPriceLine({ price: 50, color: '#38BDF8', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '50' });
     rsiLineSeries.createPriceLine({ price: 30, color: '#00FF88', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '30' });
 
-    // Chart දෙක එකට sync කිරීම
     chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
         rsiChart.timeScale().setVisibleRange(range);
     });
@@ -301,11 +303,13 @@ function createChart(){
 function connectDeriv() {
     status.innerHTML = "CONNECTING...";
     if (ws) ws.close();
-    ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
+    ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=" + APP_ID);
+
     ws.onopen = () => {
         status.innerHTML = "ONLINE";
         ws.send(JSON.stringify({ ticks_history: currentMarket, count: 300, end: "latest", granularity: TIMEFRAME, style: "candles" }));
     };
+
     ws.onmessage = (msg) => {
         const data = JSON.parse(msg.data);
         if (data.candles) {
@@ -328,11 +332,12 @@ function connectDeriv() {
                 candleSeries.update(lastCandle);
             } else {
                 let newCandle = { time: candleTime, open: price, high: price, low: price, close: price };
-                candles.push(newCndle);
+                candles.push(newCandle);
                 if (candles.length > 300) candles.shift();
                 candleSeries.update(newCandle);
                 calculateSMC();
             }
+            updateIndicators();
         }
     };
 }
