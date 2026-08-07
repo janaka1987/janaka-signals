@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JANAKA SMC DASHBOARD V6 PRO + LED SIGNALS</title>
+<title>JANAKA SMC DASHBOARD V6 PRO + RSI CHART</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -20,7 +20,6 @@
     --blue:#38BDF8;
     --text:#FFFFFF;
     --muted:#94A3B8;
-    --neon-glow: 0 0 15px rgba(0, 255, 136, 0.4);
 }
 
 body{ background:var(--bg); font-family:'Inter',sans-serif; color:var(--text); padding:16px; overflow-x:hidden; }
@@ -43,7 +42,8 @@ select:focus{ border-color:var(--green); box-shadow: 0 0 12px rgba(0,255,136,.3)
 
 .chart-card{ padding:14px; }
 .chart-title{ font-size:18px; font-weight:700; color:var(--blue); margin-bottom:12px; }
-#chart{ width:100%; height:560px; border-radius:16px; overflow:hidden; background:#0A1322; border:1px solid var(--border); }
+#chart{ width:100%; height:450px; border-radius:16px 16px 0 0; overflow:hidden; background:#0A1322; border:1px solid var(--border); border-bottom:none; }
+#rsi-chart{ width:100%; height:150px; border-radius:0 0 16px 16px; overflow:hidden; background:#0A1322; border:1px solid var(--border); }
 
 .bottom-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:18px; }
 
@@ -55,26 +55,18 @@ select:focus{ border-color:var(--green); box-shadow: 0 0 12px rgba(0,255,136,.3)
 .info-title{ font-size:14px; font-weight:600; letter-spacing:1px; color:var(--muted); margin-bottom:12px; }
 .info-value{ font-size:26px; font-weight:700; font-family: 'JetBrains Mono', monospace; }
 
-/* LED Effect */
-.led-box {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
-.led-indicator {
-    width: 20px; height: 20px; border-radius: 50%; margin-bottom: 10px;
-    background: #334155; box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
-}
+.led-box { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.led-indicator { width: 20px; height: 20px; border-radius: 50%; margin-bottom: 10px; background: #334155; }
 .led-active-buy { background: var(--green); box-shadow: 0 0 20px var(--green); }
 .led-active-sell { background: var(--red); box-shadow: 0 0 20px var(--red); }
 
-.green{ color:var(--green); }
-.cyan{ color:var(--blue); }
-.red{ color:var(--red); }
+.green{ color:var(--green); } .cyan{ color:var(--blue); } .red{ color:var(--red); }
 
 @media(max-width:900px){
     .title{ font-size:26px; }
     .grid-top{ grid-template-columns:1fr; }
     .bottom-grid{ grid-template-columns:1fr; }
-    #chart{ height:520px; }
+    #chart{ height:350px; }
 }
 </style>
 </head>
@@ -92,17 +84,6 @@ select:focus{ border-color:var(--green); box-shadow: 0 0 12px rgba(0,255,136,.3)
                 <option value="R_50" selected>Volatility 50</option>
                 <option value="R_75">Volatility 75</option>
                 <option value="R_100">Volatility 100</option>
-                <option value="JD10">Jump 10</option>
-                <option value="JD25">Jump 25</option>
-                <option value="JD50">Jump 50</option>
-                <option value="JD75">Jump 75</option>
-                <option value="JD100">Jump 100</option>
-                <option value="RDBEAR">Bear Market</option>
-                <option value="RDBULL">Bull Market</option>
-                <option value="frxEURUSD">EUR / USD</option>
-                <option value="frxGBPUSD">GBP / USD</option>
-                <option value="frxUSDJPY">USD / JPY</option>
-                <option value="frxAUDUSD">AUD / USD</option>
             </select>
         </div>
 
@@ -116,8 +97,9 @@ select:focus{ border-color:var(--green); box-shadow: 0 0 12px rgba(0,255,136,.3)
     </div>
 
     <div class="card chart-card">
-        <div class="chart-title">📈 LIVE MARKET CHART</div>
+        <div class="chart-title">📈 LIVE MARKET CHART & RSI</div>
         <div id="chart"></div>
+        <div id="rsi-chart"></div>
     </div>
 
     <div class="bottom-grid">
@@ -125,13 +107,11 @@ select:focus{ border-color:var(--green); box-shadow: 0 0 12px rgba(0,255,136,.3)
             <div class="info-title">📈 SMC TREND</div>
             <div class="info-value green" id="trend">WAIT</div>
         </div>
-
         <div class="info-box led-box">
             <div class="info-title">⚡ SIGNAL LED</div>
             <div id="led" class="led-indicator"></div>
             <div class="info-value" id="signalValue">NEUTRAL</div>
         </div>
-
         <div class="info-box">
             <div class="info-title">🛠 SYSTEM</div>
             <div class="info-value cyan" id="systemStatus">READY</div>
@@ -140,30 +120,17 @@ select:focus{ border-color:var(--green); box-shadow: 0 0 12px rgba(0,255,136,.3)
 </div>
 
 <script>
-/*=========================================
-            CONFIG
-=========================================*/
 const APP_ID = "1089";
 const TIMEFRAME = 60;
 const MAX_CANDLES = 300;
 
-/*=========================================
-        GLOBAL VARIABLES
-=========================================*/
 let ws = null;
-let chart = null;
-let candleSeries = null;
-let trendSeries = null; 
-let ema9Series = null;
-let ema21Series = null;
+let chart = null, rsiChart = null;
+let candleSeries = null, trendSeries = null, ema9Series = null, ema21Series = null, rsiLineSeries = null;
 let candles = [];
 let currentMarket = "R_50";
-let resistanceLine = null;
-let supportLine = null;
+let resistanceLine = null, supportLine = null;
 
-/*=========================================
-            DOM
-=========================================*/
 const marketSelect = document.getElementById("market");
 const marketName = document.getElementById("marketName");
 const status = document.getElementById("status");
@@ -172,16 +139,14 @@ const systemStatus = document.getElementById("systemStatus");
 const signalValue = document.getElementById("signalValue");
 const led = document.getElementById("led");
 const chartContainer = document.getElementById("chart");
+const rsiContainer = document.getElementById("rsi-chart");
 
-/*=========================================
-        NEW: TECHNICAL CALCULATIONS
-=========================================*/
 function calculateEMA(data, period) {
     let k = 2 / (period + 1);
     let emaArray = [];
+    if(data.length === 0) return [];
     let prevEma = data[0].close;
     emaArray.push({ time: data[0].time, value: prevEma });
-
     for (let i = 1; i < data.length; i++) {
         let currentEma = (data[i].close - prevEma) * k + prevEma;
         emaArray.push({ time: data[i].time, value: currentEma });
@@ -190,20 +155,22 @@ function calculateEMA(data, period) {
     return emaArray;
 }
 
-function calculateRSI(data, period = 14) {
-    if (data.length < period + 1) return 50;
-    let gains = 0, losses = 0;
-    for (let i = 1; i <= period; i++) {
-        let diff = data[data.length - i].close - data[data.length - i - 1].close;
-        if (diff >= 0) gains += diff; else losses -= diff;
+// RSI ප්‍රස්ථාරය සඳහා සම්පූර්ණ දත්ත මාලාව ගණනය කිරීම
+function calculateRSISeries(data, period = 14) {
+    if (data.length <= period) return [];
+    let rsiData = [];
+    for (let i = period; i < data.length; i++) {
+        let gains = 0, losses = 0;
+        for (let j = 0; j < period; j++) {
+            let diff = data[i - j].close - data[i - j - 1].close;
+            if (diff >= 0) gains += diff; else losses -= diff;
+        }
+        let rs = (gains / period) / (losses / period);
+        rsiData.push({ time: data[i].time, value: 100 - (100 / (1 + rs)) });
     }
-    let rs = (gains / period) / (losses / period);
-    return 100 - (100 / (1 + rs));
+    return rsiData;
 }
 
-/*=========================================
-        SMC LOGIC (AUTOMATIC)
-=========================================*/
 function calculateSMC() {
     if (candles.length < 20) return;
 
@@ -252,29 +219,28 @@ function calculateSMC() {
         lineData.push({ time: s.time, value: s.price });
     });
 
-    // --- INTEGRATING EMA 9/21 SIGNAL LOGIC ---
+    // Indicators Update
     let ema9Data = calculateEMA(candles, 9);
     let ema21Data = calculateEMA(candles, 21);
     ema9Series.setData(ema9Data);
     ema21Series.setData(ema21Data);
 
+    // RSI Chart Update
+    let rsiDataArray = calculateRSISeries(candles, 14);
+    rsiLineSeries.setData(rsiDataArray);
+
+    let lastRsi = rsiDataArray.length > 0 ? rsiDataArray[rsiDataArray.length-1].value : 50;
     let lastEma9 = ema9Data[ema9Data.length - 1].value;
     let lastEma21 = ema21Data[ema21Data.length - 1].value;
-    let currentRsi = calculateRSI(candles, 14);
 
-    if (lastEma9 > lastEma21 && currentRsi > 50) {
-        signalValue.innerText = "BUY";
-        signalValue.className = "info-value green";
+    if (lastEma9 > lastEma21 && lastRsi > 50) {
+        signalValue.innerText = "BUY"; signalValue.className = "info-value green";
         led.className = "led-indicator led-active-buy";
-        markers.push({ time: candles[candles.length-1].time, position: 'belowBar', color: '#00FF88', shape: 'arrowUp', text: '★ BUY' });
-    } else if (lastEma9 < lastEma21 && currentRsi < 50) {
-        signalValue.innerText = "SELL";
-        signalValue.className = "info-value red";
+    } else if (lastEma9 < lastEma21 && lastRsi < 50) {
+        signalValue.innerText = "SELL"; signalValue.className = "info-value red";
         led.className = "led-indicator led-active-sell";
-        markers.push({ time: candles[candles.length-1].time, position: 'aboveBar', color: '#FF4D4D', shape: 'arrowDown', text: '★ SELL' });
     } else {
-        signalValue.innerText = "NEUTRAL";
-        signalValue.className = "info-value cyan";
+        signalValue.innerText = "NEUTRAL"; signalValue.className = "info-value cyan";
         led.className = "led-indicator";
     }
 
@@ -288,40 +254,49 @@ function calculateSMC() {
     if (supportLine) candleSeries.removePriceLine(supportLine);
     const highSwings = swings.filter(s => s.type === 'H');
     const lowSwings = swings.filter(s => s.type === 'L');
-    if (highSwings.length >= 2) {
-        resistanceLine = candleSeries.createPriceLine({ price: highSwings[highSwings.length-1].price, color: '#FF4D4D', lineWidth: 2, title: 'RESISTANCE' });
-    }
-    if (lowSwings.length >= 2) {
-        supportLine = candleSeries.createPriceLine({ price: lowSwings[lowSwings.length-1].price, color: '#00FF88', lineWidth: 2, title: 'SUPPORT' });
-    }
+    if (highSwings.length >= 2) resistanceLine = candleSeries.createPriceLine({ price: highSwings[highSwings.length-1].price, color: '#FF4D4D', lineWidth: 2, title: 'RES' });
+    if (lowSwings.length >= 2) supportLine = candleSeries.createPriceLine({ price: lowSwings[lowSwings.length-1].price, color: '#00FF88', lineWidth: 2, title: 'SUP' });
 }
 
-/*=========================================
-        CREATE CHART
-=========================================*/
 function createChart(){
+    // Main Candle Chart
     chart = LightweightCharts.createChart(chartContainer,{
         layout:{ background:{ color:"#05070A" }, textColor:"#E5E7EB" },
         grid:{ vertLines:{ color:"#162033" }, horzLines:{ color:"#162033" } },
-        rightPriceScale:{ borderColor:"#253244" },
         timeScale:{ borderColor:"#253244", timeVisible:true },
-        width:chartContainer.clientWidth, height:560
+        width:chartContainer.clientWidth, height:450
     });
 
     candleSeries = chart.addCandlestickSeries({ upColor:"#00FF88", downColor:"#FF4D4D", borderUpColor:"#00FF88", borderDownColor:"#FF4D4D", wickUpColor:"#00FF88", wickDownColor:"#FF4D4D" });
     trendSeries = chart.addLineSeries({ color: 'rgba(56, 189, 248, 0.4)', lineWidth: 1, lineStyle: 2 });
-    
-    // Adding EMA lines visually
     ema9Series = chart.addLineSeries({ color: '#38BDF8', lineWidth: 2, title: 'EMA 9' });
     ema21Series = chart.addLineSeries({ color: '#F59E0B', lineWidth: 2, title: 'EMA 21' });
 
-    window.addEventListener("resize",()=>{ chart.applyOptions({ width:chartContainer.clientWidth }); });
-}
+    // RSI Chart - New
+    rsiChart = LightweightCharts.createChart(rsiContainer, {
+        layout:{ background:{ color:"#05070A" }, textColor:"#E5E7EB" },
+        grid:{ vertLines:{ color:"#162033" }, horzLines:{ color:"#162033" } },
+        timeScale:{ visible: false }, // උඩ chart එකත් එක්ක sync වෙන්න
+        width:rsiContainer.clientWidth, height:150
+    });
 
-/*=========================================
-        START APP & CONNECT
-=========================================*/
-createChart();
+    rsiLineSeries = rsiChart.addLineSeries({ color: '#F59E0B', lineWidth: 2, title: 'RSI' });
+
+    // RSI 30, 50, 70 රේඛා ඇතුළත් කිරීම
+    rsiLineSeries.createPriceLine({ price: 70, color: '#FF4D4D', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '70' });
+    rsiLineSeries.createPriceLine({ price: 50, color: '#38BDF8', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '50' });
+    rsiLineSeries.createPriceLine({ price: 30, color: '#00FF88', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '30' });
+
+    // Chart දෙක එකට sync කිරීම
+    chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
+        rsiChart.timeScale().setVisibleRange(range);
+    });
+
+    window.addEventListener("resize",()=>{ 
+        chart.applyOptions({ width:chartContainer.clientWidth }); 
+        rsiChart.applyOptions({ width:rsiContainer.clientWidth });
+    });
+}
 
 function connectDeriv() {
     status.innerHTML = "CONNECTING...";
@@ -353,14 +328,13 @@ function connectDeriv() {
                 candleSeries.update(lastCandle);
             } else {
                 let newCandle = { time: candleTime, open: price, high: price, low: price, close: price };
-                candles.push(newCandle);
+                candles.push(newCndle);
                 if (candles.length > 300) candles.shift();
                 candleSeries.update(newCandle);
                 calculateSMC();
             }
         }
     };
-    ws.onclose = () => { status.innerHTML = "OFFLINE"; setTimeout(connectDeriv, 2000); };
 }
 
 marketSelect.addEventListener("change", () => {
@@ -370,6 +344,7 @@ marketSelect.addEventListener("change", () => {
     connectDeriv();
 });
     
+createChart();
 connectDeriv();
 </script>
 </body>
