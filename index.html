@@ -42,8 +42,17 @@ select:focus{ border-color:var(--green); box-shadow: 0 0 12px rgba(0,255,136,.3)
 
 .chart-card{ padding:14px; }
 .chart-title{ font-size:18px; font-weight:700; color:var(--blue); margin-bottom:12px; }
-#chart{ width:100%; height:450px; border-radius:16px 16px 0 0; overflow:hidden; background:#0A1322; border:1px solid var(--border); border-bottom:none; }
-#rsi-chart{ width:100%; height:150px; border-radius:0 0 16px 16px; overflow:hidden; background:#0A1322; border:1px solid var(--border); }
+
+/* ප්‍රස්ථාර දෙක සම්බන්ධ කර ඇති ආකාරය */
+#chart-wrapper { 
+    display: flex; 
+    flex-direction: column; 
+    border: 1px solid var(--border); 
+    border-radius: 16px; 
+    overflow: hidden; 
+}
+#chart{ width:100%; height:450px; background:#0A1322; }
+#rsi-chart{ width:100%; height:130px; background:#0A1322; border-top: 1px solid var(--border); }
 
 .bottom-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:18px; }
 
@@ -98,8 +107,10 @@ select:focus{ border-color:var(--green); box-shadow: 0 0 12px rgba(0,255,136,.3)
 
     <div class="card chart-card">
         <div class="chart-title">📈 LIVE MARKET CHART & RSI</div>
-        <div id="chart"></div>
-        <div id="rsi-chart"></div>
+        <div id="chart-wrapper">
+            <div id="chart"></div>
+            <div id="rsi-chart"></div>
+        </div>
     </div>
 
     <div class="bottom-grid">
@@ -178,7 +189,6 @@ function calculateSMC() {
     let swings = [];
     const windowSize = 4;
 
-    // Swing Points (Highs and Lows)
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true; let isLow = true;
         for (let j = 1; j <= windowSize; j++) {
@@ -221,7 +231,6 @@ function calculateSMC() {
         lineData.push({ time: s.time, value: s.price });
     });
 
-    // Auto S/R Lines
     if (resistanceLine) candleSeries.removePriceLine(resistanceLine);
     if (supportLine) candleSeries.removePriceLine(supportLine);
     const highSwings = swings.filter(s => s.type === 'H');
@@ -229,7 +238,6 @@ function calculateSMC() {
     if (highSwings.length >= 2) resistanceLine = candleSeries.createPriceLine({ price: highSwings[highSwings.length-1].price, color: '#FF4D4D', lineWidth: 2, lineStyle: 2, title: 'RES' });
     if (lowSwings.length >= 2) supportLine = candleSeries.createPriceLine({ price: lowSwings[lowSwings.length-1].price, color: '#00FF88', lineWidth: 2, lineStyle: 2, title: 'SUP' });
 
-    // Update Series
     candleSeries.setMarkers(markers);
     trendSeries.setData(lineData);
     trend.innerText = currentDir || "ANALYZING";
@@ -282,7 +290,7 @@ function createChart(){
         layout:{ background:{ color:"#05070A" }, textColor:"#E5E7EB" },
         grid:{ vertLines:{ color:"#162033" }, horzLines:{ color:"#162033" } },
         timeScale:{ visible: false }, 
-        width:rsiContainer.clientWidth, height:150
+        width:rsiContainer.clientWidth, height:130
     });
 
     rsiLineSeries = rsiChart.addLineSeries({ color: '#F59E0B', lineWidth: 2 });
@@ -290,6 +298,7 @@ function createChart(){
     rsiLineSeries.createPriceLine({ price: 50, color: '#38BDF8', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '50' });
     rsiLineSeries.createPriceLine({ price: 30, color: '#00FF88', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '30' });
 
+    // Sync charts
     chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
         rsiChart.timeScale().setVisibleRange(range);
     });
