@@ -3,132 +3,145 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JANAKA SMC DASHBOARD V6 PRO - FULL LABELS</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<title>JANAKA SMC AI PRO - FULL LABELS + CONFIDENCE</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 
 <style>
-*{ margin:0; padding:0; box-sizing:border-box; }
-:root{
-    --bg:#05070A; --card:#111827; --border:#233044;
-    --green:#00FF88; --red:#FF4D4D; --blue:#38BDF8; --text:#FFFFFF; --muted:#94A3B8;
-}
-body{ background:var(--bg); font-family:'Inter',sans-serif; color:var(--text); padding:16px; overflow-x:hidden; }
-.container{ width:100%; max-width:1700px; margin:auto; }
-.title{ font-size:32px; font-weight:800; text-align:center; letter-spacing:2px; margin-bottom:20px; color:var(--green); text-shadow: 0 0 8px rgba(0,255,136,.6); }
-.grid-top{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px; }
-.card{ background:linear-gradient(180deg, #111827, #0B1220); border:1px solid var(--border); border-radius:20px; padding:18px; position:relative; }
-.card h3{ font-size:17px; font-weight:700; color:var(--blue); margin-bottom:14px; }
-select{ width:100%; height:50px; background:#08111F; color:white; border:1px solid #334155; border-radius:14px; padding:0 16px; font-size:17px; outline:none; }
-#chart { width:100%; height:500px; }
-#rsi-chart { width:100%; height:180px; }
-.bottom-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:18px; }
-.info-box{ background: #111827; border:1px solid var(--border); border-radius:18px; padding:22px; text-align:center; }
-.info-title{ font-size:14px; font-weight:600; color:var(--muted); margin-bottom:12px; }
-.info-value{ font-size:26px; font-weight:700; font-family: 'JetBrains Mono', monospace; }
-.led-indicator { width: 20px; height: 20px; border-radius: 50%; margin: 0 auto 10px; background: #334155; }
-.led-buy { background: var(--green); box-shadow: 0 0 15px var(--green); }
-.led-sell { background: var(--red); box-shadow: 0 0 15px var(--red); }
-@media(max-width:900px){ .grid-top, .bottom-grid{ grid-template-columns:1fr; } }
+    *{ margin:0; padding:0; box-sizing:border-box; }
+    :root{
+        --bg:#05070A; --card:#111827; --border:#233044;
+        --green:#00FF88; --red:#FF4D4D; --blue:#38BDF8; --text:#FFFFFF; --muted:#94A3B8;
+    }
+    body{ background:var(--bg); font-family:'Inter',sans-serif; color:var(--text); padding:16px; overflow-x:hidden; }
+    .container{ width:100%; max-width:1700px; margin:auto; }
+    .title{ font-size:28px; font-weight:800; text-align:center; margin-bottom:20px; color:var(--green); text-shadow: 0 0 10px rgba(0,255,136,0.4); }
+    
+    .grid-top{ display:grid; grid-template-columns: 2fr 1fr; gap:15px; margin-bottom:15px; }
+    .card{ background:#111827; border:1px solid var(--border); border-radius:15px; padding:15px; position:relative; }
+    .card h3{ font-size:15px; color:var(--blue); margin-bottom:10px; text-transform:uppercase; }
+    
+    #chart { width:100%; height:500px; }
+    
+    .bottom-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap:15px; margin-top:15px; }
+    .info-box{ background:#111827; border:1px solid var(--border); border-radius:15px; padding:18px; text-align:center; }
+    .info-title{ font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:8px; }
+    .info-value{ font-size:20px; font-weight:700; font-family:'JetBrains Mono'; }
+
+    /* AI Confidence Meter */
+    .conf-box { text-align: center; padding: 20px; background: #0D1525; border-radius: 15px; border: 1px solid var(--blue); }
+    .confidence-bar-bg { width: 100%; background: #1a2638; height: 15px; border-radius: 20px; margin: 15px 0; overflow: hidden; }
+    #confidence-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--blue), var(--green)); transition: width 0.6s ease; }
+    #logic-msg { font-size: 12px; color: var(--muted); line-height: 1.5; min-height: 40px; }
+    
+    select { width:100%; padding:12px; background:#08111F; color:white; border:1px solid #334155; border-radius:10px; outline:none; }
+    @media(max-width:900px){ .grid-top, .bottom-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="title">JANAKA SMC DASHBOARD V6 PRO</div>
+    <div class="title">JANAKA SMC AI PRO - FULL SYSTEM V8</div>
+    
     <div class="grid-top">
         <div class="card">
-            <h3>📊 SELECT MARKET</h3>
-            <select id="market">
-                <option value="R_10">Volatility 10</option>
-                <option value="R_25">Volatility 25</option>
-                <option value="R_50" selected>Volatility 50</option>
-                <option value="R_75">Volatility 75</option>
-                <option value="R_100">Volatility 100</option>
-            </select>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3>📊 LIVE MARKET ANALYSIS</h3>
+                <select id="market" style="width:200px;">
+                    <option value="R_10">Volatility 10</option>
+                    <option value="R_50" selected>Volatility 50</option>
+                    <option value="R_100">Volatility 100</option>
+                </select>
+            </div>
+            <div id="chart"></div>
         </div>
-        <div class="card">
-            <h3>🌐 CONNECTION STATUS</h3>
-            <div style="line-height:25px;">
-                Status : <span id="status" style="color:var(--red)">Disconnected</span><br>
-                Market : <span id="marketName" style="color:var(--blue)">Volatility 50</span>
+        
+        <div class="card" style="display:flex; flex-direction:column; justify-content:center; gap:15px;">
+            <div class="conf-box">
+                <div class="info-title">Signal Confidence Score</div>
+                <div id="conf-text" style="font-size: 45px; font-weight: 800; color: var(--green);">0%</div>
+                <div class="confidence-bar-bg">
+                    <div id="confidence-bar"></div>
+                </div>
+                <div id="logic-msg">Waiting for market data...</div>
+            </div>
+            <div class="info-box" style="border-color: var(--blue);">
+                <div class="info-title">Current Decision</div>
+                <div id="action-val" class="info-value">ANALYZING</div>
             </div>
         </div>
     </div>
 
-    <div class="card" style="margin-bottom:20px;">
-        <h3>📈 LIVE SMC CANDLESTICK CHART (SMC LABELS ON)</h3>
-        <div id="chart"></div>
-    </div>
-
-    <div class="card" style="margin-bottom:20px;">
-        <h3>📊 RSI INDICATOR (14)</h3>
-        <div id="rsi-chart"></div>
-    </div>
-
     <div class="bottom-grid">
         <div class="info-box">
-            <div class="info-title">📈 SMC TREND</div>
-            <div class="info-value" id="trend" style="color:var(--green)">ANALYZING</div>
+            <div class="info-title">SMC Trend</div>
+            <div id="trend-val" class="info-value">--</div>
         </div>
         <div class="info-box">
-            <div class="info-title">⚡ SIGNAL</div>
-            <div id="led" class="led-indicator"></div>
-            <div class="info-value" id="signalValue">NEUTRAL</div>
+            <div class="info-title">EMA Cross</div>
+            <div id="ema-val" class="info-value" style="font-size:16px;">STABLE</div>
         </div>
         <div class="info-box">
-            <div class="info-title">🛠 SYSTEM</div>
-            <div class="info-value" id="lastTick" style="color:var(--blue)">WAITING...</div>
+            <div class="info-title">RSI (14)</div>
+            <div id="rsi-val" class="info-value">0.00</div>
+        </div>
+        <div class="info-box">
+            <div class="info-title">Last Tick</div>
+            <div id="price-val" class="info-value" style="color:var(--blue)">0.00</div>
         </div>
     </div>
 </div>
 
 <script>
-const APP_ID = "1089";
-const TIMEFRAME = 60;
-let ws = null, mainChart = null, rsiChart = null;
-let candleSeries = null, ema9Series = null, ema21Series = null, rsiSeries = null, resSeries = null, supSeries = null;
-let candles = [];
-let currentMarket = "R_50";
-let pingInterval = null;
+let candles = [], currentMarket = "R_50", globalTrend = "NEUTRAL";
+let chart, candleSeries, ema9Series, ema21Series, resSeries, supSeries, ws;
 
-function initCharts() {
-    const chartOptions = {
-        layout: { background: { color: "#05070A" }, textColor: "#94A3B8" },
-        grid: { vertLines: { color: "#162033" }, horzLines: { color: "#162033" } },
-        timeScale: { borderColor: "#233044", timeVisible: true, secondsVisible: false },
-        priceScale: { autoScale: true },
-        crosshair: { mode: 0 }
-    };
-
-    if(mainChart) { document.getElementById("chart").innerHTML = ""; document.getElementById("rsi-chart").innerHTML = ""; }
-
-    mainChart = LightweightCharts.createChart(document.getElementById("chart"), chartOptions);
-    candleSeries = mainChart.addCandlestickSeries({ upColor: "#00FF88", downColor: "#FF4D4D", borderVisible: false, wickUpColor: "#00FF88", wickDownColor: "#FF4D4D" });
+function init() {
+    chart = LightweightCharts.createChart(document.getElementById('chart'), {
+        layout: { background: { color: '#05070A' }, textColor: '#94A3B8' },
+        grid: { vertLines: { color: '#162033' }, horzLines: { color: '#162033' } },
+        crosshair: { mode: 0 },
+        timeScale: { timeVisible: true, borderColor: '#233044' },
+    });
     
-    ema9Series = mainChart.addLineSeries({ color: '#38BDF8', lineWidth: 1, priceLineVisible: false });
-    ema21Series = mainChart.addLineSeries({ color: '#F59E0B', lineWidth: 1, priceLineVisible: false });
-    
-    // Resistance Line Series
-    resSeries = mainChart.addLineSeries({ color: '#FF4D4D', lineWidth: 2, lineStyle: 0, priceLineVisible: false });
-    // Support Line Series
-    supSeries = mainChart.addLineSeries({ color: '#00FF88', lineWidth: 2, lineStyle: 0, priceLineVisible: false });
+    candleSeries = chart.addCandlestickSeries({ upColor: '#00FF88', downColor: '#FF4D4D', borderVisible: false, wickUpColor: '#00FF88', wickDownColor: '#FF4D4D' });
+    ema9Series = chart.addLineSeries({ color: '#38BDF8', lineWidth: 2, priceLineVisible: false });
+    ema21Series = chart.addLineSeries({ color: '#F59E0B', lineWidth: 2, priceLineVisible: false });
+    resSeries = chart.addLineSeries({ color: '#FF4D4D', lineWidth: 1, lineStyle: 2, priceLineVisible: false });
+    supSeries = chart.addLineSeries({ color: '#00FF88', lineWidth: 1, lineStyle: 2, priceLineVisible: false });
 
-    rsiChart = LightweightCharts.createChart(document.getElementById("rsi-chart"), chartOptions);
-    rsiSeries = rsiChart.addLineSeries({ color: '#F59E0B', lineWidth: 2, priceLineVisible: false });
-    
-    rsiSeries.createPriceLine({ price: 70, color: '#FF4D4D', lineWidth: 1, lineStyle: 0, title: '70' });
-    rsiSeries.createPriceLine({ price: 50, color: '#94A3B8', lineWidth: 1, lineStyle: 0, title: '50' });
-    rsiSeries.createPriceLine({ price: 30, color: '#00FF88', lineWidth: 1, lineStyle: 0, title: '30' });
+    connect();
 }
 
-function calculateSMC() {
-    if (candles.length < 30) return;
+function calcEMA(data, p) {
+    let k = 2/(p+1), ema = [{time: data[0].time, value: data[0].close}];
+    for(let i=1; i<data.length; i++) ema.push({time: data[i].time, value: (data[i].close - ema[i-1].value) * k + ema[i-1].value});
+    return ema;
+}
+
+function calcRSI(data, p) {
+    if(data.length < p) return [];
+    let results = [];
+    for (let i = p; i < data.length; i++) {
+        let up = 0, down = 0;
+        for (let j = 0; j < p; j++) {
+            let diff = data[i-j].close - data[i-j-1].close;
+            if (diff > 0) up += diff; else down -= diff;
+        }
+        let rs = (up/p) / (down/p || 1);
+        results.push({ time: data[i].time, value: 100 - (100 / (1 + rs)) });
+    }
+    return results;
+}
+
+function calculateSMCAndLogic() {
+    if (candles.length < 40) return;
+    
     let markers = [];
     let swings = [];
     let windowSize = 5;
 
+    // 1. HH, LL, LH, HL හඳුනාගැනීම
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true, isLow = true;
         for (let j = 1; j <= windowSize; j++) {
@@ -139,138 +152,115 @@ function calculateSMC() {
         if (isLow) swings.push({ type: 'L', price: candles[i].low, time: candles[i].time });
     }
 
-    let lastH = null, lastL = null, currentDir = "";
-    
+    let lastH = null, lastL = null, currentDir = "NEUTRAL";
     swings.forEach((s) => {
-        let label = "", color = "#FFFFFF";
+        let label = "";
         if (s.type === 'H') {
             if (lastH && s.price > lastH.price) {
-                label = "HH"; color = "#00FF88";
-                markers.push({ time: s.time, position: 'aboveBar', color: '#FFD700', shape: 'arrowDown', text: 'BOS' });
+                label = "HH"; markers.push({ time: s.time, position: 'aboveBar', color: '#FFD700', shape: 'arrowDown', text: 'BOS' });
                 currentDir = "UPTREND";
             } else if (lastH && s.price < lastH.price) {
-                label = "LH"; color = "#FF4D4D";
-                if(currentDir === "UPTREND") markers.push({ time: s.time, position: 'aboveBar', color: '#FF00FF', shape: 'arrowDown', text: 'CHOCH' });
+                label = "LH"; if(currentDir === "UPTREND") markers.push({ time: s.time, position: 'aboveBar', color: '#FF00FF', shape: 'arrowDown', text: 'CHOCH' });
                 currentDir = "DOWNTREND";
-            }
+            } else { label = "H"; }
             lastH = s;
         } else {
             if (lastL && s.price < lastL.price) {
-                label = "LL"; color = "#FF4D4D";
-                markers.push({ time: s.time, position: 'belowBar', color: '#FFD700', shape: 'arrowUp', text: 'BOS' });
+                label = "LL"; markers.push({ time: s.time, position: 'belowBar', color: '#FFD700', shape: 'arrowUp', text: 'BOS' });
                 currentDir = "DOWNTREND";
             } else if (lastL && s.price > lastL.price) {
-                label = "HL"; color = "#00FF88";
-                if(currentDir === "DOWNTREND") markers.push({ time: s.time, position: 'belowBar', color: '#FF00FF', shape: 'arrowUp', text: 'CHOCH' });
+                label = "HL"; if(currentDir === "DOWNTREND") markers.push({ time: s.time, position: 'belowBar', color: '#FF00FF', shape: 'arrowUp', text: 'CHOCH' });
                 currentDir = "UPTREND";
-            }
+            } else { label = "L"; }
             lastL = s;
         }
-        if (label !== "") markers.push({ time: s.time, position: s.type === 'H' ? 'aboveBar' : 'belowBar', color: color, shape: 'text', text: label });
+        if(label) markers.push({ time: s.time, position: s.type==='H'?'aboveBar':'belowBar', color: label.includes('H')?'#00FF88':'#FF4D4D', shape: 'text', text: label });
     });
 
-    // Drawing Clear Single S/R Lines from the pivot point to the current candle
+    // S/R Lines ඇඳීම
     if (lastH && lastL) {
-        const lastCandleTime = candles[candles.length - 1].time;
-        resSeries.setData([
-            { time: lastH.time, value: lastH.price },
-            { time: lastCandleTime, value: lastH.price }
-        ]);
-        supSeries.setData([
-            { time: lastL.time, value: lastL.price },
-            { time: lastCandleTime, value: lastL.price }
-        ]);
+        const lastT = candles[candles.length - 1].time;
+        resSeries.setData([{ time: lastH.time, value: lastH.price }, { time: lastT, value: lastH.price }]);
+        supSeries.setData([{ time: lastL.time, value: lastL.price }, { time: lastT, value: lastL.price }]);
     }
-
     candleSeries.setMarkers(markers);
-    const trendEl = document.getElementById("trend");
-    trendEl.innerText = currentDir || "ANALYZING";
-    trendEl.style.color = currentDir === "UPTREND" ? "#00FF88" : "#FF4D4D";
-}
+    globalTrend = currentDir;
 
-function updateIndicators() {
-    if (candles.length < 25) return;
+    // AI Logic Updates
+    let ema9 = calcEMA(candles, 9);
+    let ema21 = calcEMA(candles, 21);
+    let rsi = calcRSI(candles, 14);
+    ema9Series.setData(ema9);
+    ema21Series.setData(ema21);
+
+    const lastRSI = rsi.length > 0 ? rsi[rsi.length-1].value : 50;
+    const cEMA9 = ema9[ema9.length-1].value;
+    const cEMA21 = ema21[ema21.length-1].value;
+    const pEMA9 = ema9[ema9.length-2].value;
+    const pEMA21 = ema21[ema21.length-2].value;
+
+    let score = 0;
+    let msg = [];
+
+    // Score Calculation
+    if(globalTrend === "UPTREND") { score += 25; msg.push("SMC: Bullish"); }
+    if(globalTrend === "DOWNTREND") { score += 25; msg.push("SMC: Bearish"); }
     
-    const calcEMA = (data, p) => {
-        let k = 2/(p+1), ema = [{time: data[0].time, value: data[0].close}];
-        for(let i=1; i<data.length; i++) {
-            ema.push({time: data[i].time, value: (data[i].close - ema[i-1].value) * k + ema[i-1].value});
-        }
-        return ema;
-    };
-
-    const calcRSI = (data, p) => {
-        let results = [];
-        for (let i = p; i < data.length; i++) {
-            let up = 0, down = 0;
-            for (let j = 0; j < p; j++) {
-                let diff = data[i-j].close - data[i-j-1].close;
-                if (diff > 0) up += diff; else down -= diff;
-            }
-            let rs = (up/p) / (down/p || 1);
-            results.push({ time: data[i].time, value: 100 - (100 / (1 + rs)) });
-        }
-        return results;
-    };
-
-    ema9Series.setData(calcEMA(candles, 9));
-    ema21Series.setData(calcEMA(candles, 21));
-    const rsiVal = calcRSI(candles, 14);
-    rsiSeries.setData(rsiVal);
-
-    if(rsiVal.length > 0) {
-        const lastR = rsiVal[rsiVal.length-1].value;
-        const sig = document.getElementById("signalValue"), led = document.getElementById("led");
-        if(lastR > 60) { sig.innerText = "BUY"; sig.style.color = "var(--green)"; led.className = "led-indicator led-buy"; }
-        else if(lastR < 40) { sig.innerText = "SELL"; sig.style.color = "var(--red)"; led.className = "led-indicator led-sell"; }
-        else { sig.innerText = "NEUTRAL"; sig.style.color = "white"; led.className = "led-indicator"; }
+    if(cEMA9 > cEMA21) { 
+        score += 25; 
+        if(pEMA9 <= pEMA21) { score += 15; msg.push("EMA: Golden Cross!"); } 
+    } else {
+        score += 25;
+        if(pEMA9 >= pEMA21) { score += 15; msg.push("EMA: Death Cross!"); }
     }
-    
-    calculateSMC();
+
+    if((globalTrend==="UPTREND" && lastRSI > 55) || (globalTrend==="DOWNTREND" && lastRSI < 45)) {
+        score += 20; msg.push("RSI: Strong");
+    }
+
+    // UI Updates
+    document.getElementById("conf-text").innerText = score + "%";
+    document.getElementById("confidence-bar").style.width = score + "%";
+    document.getElementById("trend-val").innerText = globalTrend;
+    document.getElementById("trend-val").style.color = globalTrend==="UPTREND"?"var(--green)":"var(--red)";
+    document.getElementById("rsi-val").innerText = lastRSI.toFixed(2);
+    document.getElementById("logic-msg").innerText = msg.join(" | ");
+    document.getElementById("price-val").innerText = candles[candles.length-1].close;
+
+    const act = document.getElementById("action-val");
+    if(score >= 80) { act.innerText = globalTrend==="UPTREND"?"STRONG BUY":"STRONG SELL"; act.style.color = globalTrend==="UPTREND"?"var(--green)":"var(--red)"; }
+    else if(score >= 60) { act.innerText = "WAIT CONFIRM"; act.style.color = "var(--blue)"; }
+    else { act.innerText = "NO SIGNAL"; act.style.color = "var(--muted)"; }
 }
 
 function connect() {
-    if (ws) { ws.close(); clearInterval(pingInterval); }
-    ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=" + APP_ID);
-
-    ws.onopen = () => {
-        document.getElementById("status").innerText = "ONLINE";
-        document.getElementById("status").style.color = "var(--green)";
-        pingInterval = setInterval(() => { if(ws.readyState === 1) ws.send(JSON.stringify({ping: 1})); }, 30000);
-        ws.send(JSON.stringify({ ticks_history: currentMarket, count: 500, end: "latest", granularity: TIMEFRAME, style: "candles" }));
-    };
-
+    ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
+    ws.onopen = () => ws.send(JSON.stringify({ ticks_history: currentMarket, count: 500, end: "latest", granularity: 60, style: "candles" }));
     ws.onmessage = (msg) => {
-        const res = JSON.parse(msg.data);
-        if (res.candles) {
-            candles = res.candles.map(c => ({ time: Number(c.epoch), open: Number(c.open), high: Number(c.high), low: Number(c.low), close: Number(c.close) }));
+        let res = JSON.parse(msg.data);
+        if(res.candles) {
+            candles = res.candles.map(c => ({ time: c.epoch, open: +c.open, high: +c.high, low: +c.low, close: +c.close }));
             candleSeries.setData(candles);
-            updateIndicators();
-            ws.send(JSON.stringify({ ohlc: currentMarket, granularity: TIMEFRAME, subscribe: 1 }));
+            calculateSMCAndLogic();
+            ws.send(JSON.stringify({ ohlc: currentMarket, granularity: 60, subscribe: 1 }));
         }
-        if (res.ohlc) {
-            const o = res.ohlc;
-            const newC = { time: Number(o.open_time), open: Number(o.open), high: Number(o.high), low: Number(o.low), close: Number(o.close) };
+        if(res.ohlc) {
+            let o = res.ohlc, newC = { time: o.open_time, open: +o.open, high: +o.high, low: +o.low, close: +o.close };
             candleSeries.update(newC);
-            document.getElementById("lastTick").innerText = "PRICE: " + newC.close;
-            const lastIdx = candles.length - 1;
-            if (lastIdx >= 0 && newC.time === candles[lastIdx].time) { candles[lastIdx] = newC; } 
-            else { candles.push(newC); if (candles.length > 500) candles.shift(); }
-            updateIndicators();
+            if(newC.time === candles[candles.length-1].time) candles[candles.length-1] = newC;
+            else candles.push(newC);
+            calculateSMCAndLogic();
         }
     };
-
-    ws.onclose = () => { setTimeout(connect, 3000); };
 }
 
 document.getElementById("market").addEventListener("change", (e) => {
     currentMarket = e.target.value;
-    document.getElementById("marketName").innerText = e.target.options[e.target.selectedIndex].text;
-    initCharts(); connect();
+    ws.close();
+    init();
 });
 
-initCharts();
-connect();
+init();
 </script>
 </body>
 </html>
