@@ -24,7 +24,6 @@ select{ width:100%; height:50px; background:#08111F; color:white; border:1px sol
 #chart { width:100%; height:500px; }
 #rsi-chart { width:100%; height:180px; }
 
-/* --- NEW SMART SIGNAL SYSTEM STYLE --- */
 .bottom-grid{ display:grid; grid-template-columns: 1fr 400px; gap:18px; margin-top:18px; }
 .checklist-card { background: #0B1220; border: 1px solid var(--border); border-radius: 20px; padding: 20px; }
 .check-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #1e293b; }
@@ -38,9 +37,15 @@ select{ width:100%; height:50px; background:#08111F; color:white; border:1px sol
 .led-green { background: var(--green); box-shadow: 0 0 10px var(--green); }
 .led-red { background: var(--red); box-shadow: 0 0 10px var(--red); }
 
-.final-signal-box { background: #111827; border: 2px solid var(--border); border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.final-signal-box { background: #111827; border: 2px solid var(--border); border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: 0.3s; }
 .main-signal-text { font-size: 42px; font-weight: 900; margin-top: 10px; letter-spacing: 2px; }
 .signal-desc { color: var(--muted); font-size: 13px; margin-top: 5px; padding: 0 10px; }
+
+/* NEW SIGNAL FLASH ANIMATIONS */
+@keyframes flash-green { 0% { box-shadow: 0 0 0px var(--green); } 50% { box-shadow: 0 0 30px var(--green); } 100% { box-shadow: 0 0 0px var(--green); } }
+@keyframes flash-red { 0% { box-shadow: 0 0 0px var(--red); } 50% { box-shadow: 0 0 30px var(--red); } 100% { box-shadow: 0 0 0px var(--red); } }
+.signal-active-buy { animation: flash-green 1s infinite; border-color: var(--green) !important; }
+.signal-active-sell { animation: flash-red 1s infinite; border-color: var(--red) !important; }
 
 @media(max-width:900px){ .grid-top, .bottom-grid{ grid-template-columns:1fr; } }
 </style>
@@ -79,7 +84,6 @@ select{ width:100%; height:50px; background:#08111F; color:white; border:1px sol
         <div id="rsi-chart"></div>
     </div>
 
-    <!-- NEW SMART SIGNAL SECTION -->
     <div class="bottom-grid">
         <div class="checklist-card">
             <h3 style="color:var(--gold); margin-bottom:15px; font-size:16px;">🔍 SMART ANALYSIS CHECKLIST</h3>
@@ -157,6 +161,7 @@ let candleSeries = null, ema9Series = null, ema21Series = null, rsiSeries = null
 let candles = [];
 let currentMarket = "R_50";
 let pingInterval = null;
+let lastSignal = "NEUTRAL"; // To track signal changes
 
 function initCharts() {
     const chartOptions = {
@@ -185,7 +190,6 @@ function initCharts() {
     rsiSeries.createPriceLine({ price: 30, color: '#00FF88', lineWidth: 1, lineStyle: 0, title: '30' });
 }
 
-// Global variables for analysis
 let analysis = { trend: "", bos: "", ema: "", rsi: 50, sr: "" };
 
 function calculateSMC() {
@@ -239,7 +243,6 @@ function calculateSMC() {
         resSeries.setData([{ time: lastH.time, value: lastH.price }, { time: lastCandleTime, value: lastH.price }]);
         supSeries.setData([{ time: lastL.time, value: lastL.price }, { time: lastCandleTime, value: lastL.price }]);
         
-        // S/R Logic for Checklist
         const curPrice = candles[candles.length-1].close;
         if(curPrice >= lastH.price - (lastH.price*0.001)) analysis.sr = "AT RESISTANCE";
         else if(curPrice <= lastL.price + (lastL.price*0.001)) analysis.sr = "AT SUPPORT";
@@ -271,7 +274,7 @@ function updateIndicators() {
                 let diff = data[i-j].close - data[i-j-1].close;
                 if (diff > 0) up += diff; else down -= diff;
             }
-            let rs = (up/p) / (down/p || 1);
+            let rs = (up/p) / (down/p || 0.00001);
             results.push({ time: data[i].time, value: 100 - (100 / (1 + rs)) });
         }
         return results;
@@ -285,14 +288,33 @@ function updateIndicators() {
     const rsiVal = calcRSI(candles, 14);
     rsiSeries.setData(rsiVal);
 
-    // EMA Logic
-    const lastE9 = ema9[ema9.length-1].value;
-    const lastE21 = ema21[ema21.length-1].value;
-    analysis.ema = lastE9 > lastE21 ? "BULLISH" : "BEARISH";
+    // EMA CROSS LOGIC
+    if (ema9.length > 2) {
+        const currE9 = ema9[ema9.length-1].value;
+        const currE21 = ema21[ema21.length-1].value;
+        const prevE9 = ema9[ema9.length-2].value;
+        const prevE21 = ema21[ema21.length-2].value;
+
+        if (prevE9 <= prevE21 && currE9 > currE21) analysis.ema = "CROSS BUY";
+        else if (prevE9 >= prevE21 && currE9 < currE21) analysis.ema = "CROSS SELL";
+        else analysis.ema = currE9 > currE21 ? "BULLISH" : "BEARISH";
+    }
 
     if(rsiVal.length > 0) analysis.rsi = rsiVal[rsiVal.length-1].value;
-    
     calculateSMC();
+}
+
+function playAlert(type) {
+    const context = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = context.createOscillator();
+    const gain = context.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(type === "BUY" ? 880 : 440, context.currentTime);
+    gain.gain.setValueAtTime(0.1, context.currentTime);
+    osc.connect(gain);
+    gain.connect(context.destination);
+    osc.start();
+    osc.stop(context.currentTime + 0.5);
 }
 
 function updateSmartUI() {
@@ -303,50 +325,56 @@ function updateSmartUI() {
     const srEl = document.getElementById("status-sr"), srLed = document.getElementById("led-sr");
     const mainSig = document.getElementById("main-signal-text"), mainDesc = document.getElementById("signal-desc"), mainBg = document.getElementById("main-signal-bg");
 
-    // 1. Trend
+    // UI Updating
     trendEl.innerText = analysis.trend || "WAITING";
     trendEl.style.color = analysis.trend === "UPTREND" ? "var(--green)" : "var(--red)";
     trendLed.className = "led-small " + (analysis.trend === "UPTREND" ? "led-green" : "led-red");
 
-    // 2. BOS
     bosEl.innerText = analysis.bos;
-    bosEl.style.color = analysis.bos.includes("BULL") || analysis.bos.includes("BUY") ? "var(--green)" : "var(--red)";
-    bosLed.className = "led-small " + (analysis.bos.includes("BULL") || analysis.bos.includes("BUY") ? "led-green" : "led-red");
+    bosEl.style.color = (analysis.bos.includes("BULL") || analysis.bos.includes("BUY")) ? "var(--green)" : "var(--red)";
+    bosLed.className = "led-small " + ((analysis.bos.includes("BULL") || analysis.bos.includes("BUY")) ? "led-green" : "led-red");
 
-    // 3. EMA
     emaEl.innerText = analysis.ema;
-    emaEl.style.color = analysis.ema === "BULLISH" ? "var(--green)" : "var(--red)";
-    emaLed.className = "led-small " + (analysis.ema === "BULLISH" ? "led-green" : "led-red");
+    emaEl.style.color = (analysis.ema.includes("BULL") || analysis.ema.includes("BUY")) ? "var(--green)" : "var(--red)";
+    emaLed.className = "led-small " + ((analysis.ema.includes("BULL") || analysis.ema.includes("BUY")) ? "led-green" : "led-red");
 
-    // 4. RSI
     rsiEl.innerText = analysis.rsi.toFixed(2);
     rsiLed.className = "led-small " + (analysis.rsi > 50 ? "led-green" : "led-red");
 
-    // 5. SR
     srEl.innerText = analysis.sr;
     srLed.className = "led-small " + (analysis.sr === "AT SUPPORT" ? "led-green" : analysis.sr === "AT RESISTANCE" ? "led-red" : "");
 
-    // FINAL BRAIN LOGIC
+    // BALANCED DECISION LOGIC
     let buyPoints = 0, sellPoints = 0;
-    if(analysis.trend === "UPTREND") buyPoints++; else sellPoints++;
-    if(analysis.ema === "BULLISH") buyPoints++; else sellPoints++;
-    if(analysis.rsi > 50) buyPoints++; else sellPoints++;
-    if(analysis.bos.includes("BULLISH")) buyPoints++;
-    if(analysis.sr === "AT SUPPORT") buyPoints++;
+    if(analysis.trend === "UPTREND") buyPoints++; else if(analysis.trend === "DOWNTREND") sellPoints++;
+    if(analysis.ema.includes("BUY") || analysis.ema === "BULLISH") buyPoints++; else sellPoints++;
+    if(analysis.rsi > 55) buyPoints++; else if(analysis.rsi < 45) sellPoints++;
+    if(analysis.bos.includes("BULLISH") || analysis.bos.includes("BUY")) buyPoints++; else if(analysis.bos.includes("BEARISH") || analysis.bos.includes("SELL")) sellPoints++;
+    if(analysis.sr === "AT SUPPORT") buyPoints++; else if(analysis.sr === "AT RESISTANCE") sellPoints++;
 
-    if(buyPoints >= 4) {
-        mainSig.innerText = "STRONG BUY"; mainSig.style.color = "var(--green)";
-        mainDesc.innerText = "All systems aligned for Bullish move.";
-        mainBg.style.borderColor = "var(--green)";
-    } else if(sellPoints >= 3 && analysis.rsi < 45) {
-        mainSig.innerText = "STRONG SELL"; mainSig.style.color = "var(--red)";
-        mainDesc.innerText = "Market structure indicates Bearish pressure.";
-        mainBg.style.borderColor = "var(--red)";
-    } else {
-        mainSig.innerText = "NEUTRAL"; mainSig.style.color = "var(--muted)";
-        mainDesc.innerText = "Waiting for all 5 indicators to align...";
-        mainBg.style.borderColor = "var(--border)";
+    let currentSignal = "NEUTRAL";
+    if(buyPoints >= 4) currentSignal = "STRONG BUY";
+    else if(sellPoints >= 4) currentSignal = "STRONG SELL";
+
+    // SIGNAL ALERT SYSTEM
+    if (currentSignal !== lastSignal) {
+        if (currentSignal !== "NEUTRAL") {
+            playAlert(currentSignal.includes("BUY") ? "BUY" : "SELL");
+            const now = new Date();
+            mainDesc.innerText = "NEW SIGNAL @ " + now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
+            mainBg.classList.remove("signal-active-buy", "signal-active-sell");
+            mainBg.classList.add(currentSignal.includes("BUY") ? "signal-active-buy" : "signal-active-sell");
+        } else {
+            mainBg.classList.remove("signal-active-buy", "signal-active-sell");
+            mainDesc.innerText = "Waiting for alignment... (B:" + buyPoints + " S:" + sellPoints + ")";
+        }
+        lastSignal = currentSignal;
     }
+
+    mainSig.innerText = currentSignal;
+    if(currentSignal === "STRONG BUY") { mainSig.style.color = "var(--green)"; mainBg.style.borderColor = "var(--green)"; }
+    else if(currentSignal === "STRONG SELL") { mainSig.style.color = "var(--red)"; mainBg.style.borderColor = "var(--red)"; }
+    else { mainSig.style.color = "var(--muted)"; mainBg.style.borderColor = "var(--border)"; }
 }
 
 function connect() {
