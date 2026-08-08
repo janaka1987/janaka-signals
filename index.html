@@ -114,6 +114,7 @@ function initCharts() {
     rsiChart = LightweightCharts.createChart(document.getElementById("rsi-chart"), chartOptions);
     rsiSeries = rsiChart.addLineSeries({ color: '#F59E0B', lineWidth: 2 });
     rsiSeries.createPriceLine({ price: 70, color: '#FF4D4D', lineWidth: 1, lineStyle: 2, title: '70' });
+    rsiSeries.createPriceLine({ price: 50, color: '#94A3B8', lineWidth: 1, lineStyle: 2, title: '50' });
     rsiSeries.createPriceLine({ price: 30, color: '#00FF88', lineWidth: 1, lineStyle: 2, title: '30' });
 }
 
