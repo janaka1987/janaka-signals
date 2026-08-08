@@ -88,7 +88,7 @@ select{ width:100%; height:50px; background:#08111F; color:white; border:1px sol
 const APP_ID = "1089";
 const TIMEFRAME = 60;
 let ws = null, mainChart = null, rsiChart = null;
-let candleSeries = null, ema9Series = null, ema21Series = null, rsiSeries = null, trendSeries = null;
+let candleSeries = null, ema9Series = null, ema21Series = null, rsiSeries = null, resSeries = null, supSeries = null;
 let candles = [];
 let currentMarket = "R_50";
 let pingInterval = null;
@@ -107,19 +107,17 @@ function initCharts() {
     mainChart = LightweightCharts.createChart(document.getElementById("chart"), chartOptions);
     candleSeries = mainChart.addCandlestickSeries({ upColor: "#00FF88", downColor: "#FF4D4D", borderVisible: false, wickUpColor: "#00FF88", wickDownColor: "#FF4D4D" });
     
-    // EMA Lines
     ema9Series = mainChart.addLineSeries({ color: '#38BDF8', lineWidth: 1, priceLineVisible: false });
     ema21Series = mainChart.addLineSeries({ color: '#F59E0B', lineWidth: 1, priceLineVisible: false });
     
-    // SMC S/R Line - Solid Style
-    trendSeries = mainChart.addLineSeries({ color: 'rgba(255, 255, 255, 0.4)', lineWidth: 1, lineStyle: 0, priceLineVisible: false });
+    // Resistance Line Series
+    resSeries = mainChart.addLineSeries({ color: '#FF4D4D', lineWidth: 2, lineStyle: 0, priceLineVisible: false });
+    // Support Line Series
+    supSeries = mainChart.addLineSeries({ color: '#00FF88', lineWidth: 2, lineStyle: 0, priceLineVisible: false });
 
     rsiChart = LightweightCharts.createChart(document.getElementById("rsi-chart"), chartOptions);
-    
-    // RSI Main Line - Dashed price line hidden
     rsiSeries = rsiChart.addLineSeries({ color: '#F59E0B', lineWidth: 2, priceLineVisible: false });
     
-    // 30, 50, 70 Levels - Solid lines as requested
     rsiSeries.createPriceLine({ price: 70, color: '#FF4D4D', lineWidth: 1, lineStyle: 0, title: '70' });
     rsiSeries.createPriceLine({ price: 50, color: '#94A3B8', lineWidth: 1, lineStyle: 0, title: '50' });
     rsiSeries.createPriceLine({ price: 30, color: '#00FF88', lineWidth: 1, lineStyle: 0, title: '30' });
@@ -141,7 +139,7 @@ function calculateSMC() {
         if (isLow) swings.push({ type: 'L', price: candles[i].low, time: candles[i].time });
     }
 
-    let lastH = null, lastL = null, currentDir = "", lineData = [];
+    let lastH = null, lastL = null, currentDir = "";
     
     swings.forEach((s) => {
         let label = "", color = "#FFFFFF";
@@ -168,13 +166,23 @@ function calculateSMC() {
             }
             lastL = s;
         }
-        // ALL LABELS KEPT HERE
         if (label !== "") markers.push({ time: s.time, position: s.type === 'H' ? 'aboveBar' : 'belowBar', color: color, shape: 'text', text: label });
-        lineData.push({ time: s.time, value: s.price });
     });
 
+    // Drawing Clear Single S/R Lines from the pivot point to the current candle
+    if (lastH && lastL) {
+        const lastCandleTime = candles[candles.length - 1].time;
+        resSeries.setData([
+            { time: lastH.time, value: lastH.price },
+            { time: lastCandleTime, value: lastH.price }
+        ]);
+        supSeries.setData([
+            { time: lastL.time, value: lastL.price },
+            { time: lastCandleTime, value: lastL.price }
+        ]);
+    }
+
     candleSeries.setMarkers(markers);
-    trendSeries.setData(lineData);
     const trendEl = document.getElementById("trend");
     trendEl.innerText = currentDir || "ANALYZING";
     trendEl.style.color = currentDir === "UPTREND" ? "#00FF88" : "#FF4D4D";
