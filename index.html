@@ -47,11 +47,11 @@ select{ width:100%; height:50px; background:#08111F; color:white; border:1px sol
 .signal-active-buy { animation: flash-green 1s infinite; border-color: var(--green) !important; }
 .signal-active-sell { animation: flash-red 1s infinite; border-color: var(--red) !important; }
 
-/* HISTORY STYLES ADDED */
+/* HISTORY LOG CSS - NO CHANGES TO CHART */
 .history-card { margin-top: 20px; background: #0B1220; border: 1px solid var(--border); border-radius: 20px; padding: 20px; }
 .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
 .stat-pills { display: flex; gap: 10px; }
-.pill { padding: 5px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; font-family: 'JetBrains Mono'; border: 1px solid #1e293b; }
+.pill { padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: bold; font-family: 'JetBrains Mono'; border: 1px solid #1e293b; }
 .pill.blue { color: var(--blue); border-color: var(--blue); }
 .pill.green { color: var(--green); border-color: var(--green); }
 .pill.red { color: var(--red); border-color: var(--red); }
@@ -59,7 +59,7 @@ select{ width:100%; height:50px; background:#08111F; color:white; border:1px sol
 table { width: 100%; border-collapse: collapse; font-size: 13px; color: var(--text); }
 th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border); color: var(--muted); position: sticky; top: 0; background: #0B1220; }
 td { padding: 12px; border-bottom: 1px solid #1e293b; font-family: 'JetBrains Mono'; }
-.res-pending { color: var(--gold); animation: blink 1s infinite; }
+.res-pending { color: var(--gold); animation: blink 1s infinite; font-weight: bold; }
 .res-win { color: var(--green); font-weight: bold; }
 .res-loss { color: var(--red); font-weight: bold; }
 @keyframes blink { 50% { opacity: 0.3; } }
@@ -169,10 +169,10 @@ td { padding: 12px; border-bottom: 1px solid #1e293b; font-family: 'JetBrains Mo
         </div>
     </div>
 
-    <!-- NEW HISTORY SECTION -->
+    <!-- SIGNAL HISTORY LOG SECTION -->
     <div class="history-card">
         <div class="history-header">
-            <h3 style="color:var(--text); font-size:16px;">📜 SIGNAL HISTORY (LAST 24H)</h3>
+            <h3 style="color:var(--text); font-size:16px;">📊 SIGNAL HISTORY (3M EXPIRY)</h3>
             <div class="stat-pills">
                 <div class="pill blue">TOTAL: <span id="h-total">0</span></div>
                 <div class="pill green">WINS: <span id="h-wins">0</span></div>
@@ -185,12 +185,12 @@ td { padding: 12px; border-bottom: 1px solid #1e293b; font-family: 'JetBrains Mo
                     <tr>
                         <th>TIME</th>
                         <th>SIGNAL</th>
-                        <th>ENTRY</th>
-                        <th>RESULT (3M)</th>
+                        <th>ENTRY PRICE</th>
+                        <th>RESULT (3 MIN)</th>
                     </tr>
                 </thead>
                 <tbody id="history-body">
-                    <!-- Data will be injected here -->
+                    <!-- History records will appear here -->
                 </tbody>
             </table>
         </div>
@@ -207,7 +207,7 @@ let currentMarket = "R_50";
 let pingInterval = null;
 let lastSignal = "NEUTRAL"; 
 
-// History Management
+// --- HISTORY LOGIC START ---
 let historyData = JSON.parse(localStorage.getItem('janaka_history') || '[]');
 let stats = JSON.parse(localStorage.getItem('janaka_stats') || '{"total":0, "wins":0, "loss":0}');
 
@@ -232,11 +232,12 @@ function saveHistory() {
 function updateHistoryTable() {
     const body = document.getElementById("history-body");
     body.innerHTML = "";
-    historyData.slice().reverse().forEach(item => {
+    // Show only the latest 20 for performance
+    historyData.slice(-20).reverse().forEach(item => {
         const row = `<tr>
             <td>${item.time}</td>
             <td style="color:${item.type.includes('BUY') ? 'var(--green)' : 'var(--red)'}">${item.type}</td>
-            <td>${item.entry.toFixed(2)}</td>
+            <td>${Number(item.entry).toFixed(2)}</td>
             <td class="res-${item.status.toLowerCase()}">${item.status}</td>
         </tr>`;
         body.innerHTML += row;
@@ -246,30 +247,37 @@ function updateHistoryTable() {
     document.getElementById("h-loss").innerText = stats.loss;
 }
 
-function addSignal(type, entry) {
+function logSignalToHistory(type, entryPrice) {
     const id = Date.now();
-    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const newSignal = { id, time, type, entry, status: "PENDING" };
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const entry = parseFloat(entryPrice);
     
-    historyData.push(newSignal);
+    const newRecord = { id, time, type, entry, status: "PENDING" };
+    historyData.push(newRecord);
     stats.total++;
     saveHistory();
 
-    // Set 3 minute timer (180000 ms)
+    // 3 Minutes Wait
     setTimeout(() => {
-        const currentPrice = parseFloat(document.getElementById("lastTick").innerText.replace("PRICE: ", ""));
-        const signalObj = historyData.find(s => s.id === id);
-        if (signalObj) {
+        const currentPriceText = document.getElementById("lastTick").innerText.replace("PRICE: ", "");
+        const currentPrice = parseFloat(currentPriceText);
+        
+        const recordIndex = historyData.findIndex(r => r.id === id);
+        if (recordIndex !== -1) {
             let win = false;
-            if (type.includes("BUY")) win = currentPrice > entry;
-            else win = currentPrice < entry;
+            if (type.includes("BUY")) {
+                win = currentPrice > entry;
+            } else if (type.includes("SELL")) {
+                win = currentPrice < entry;
+            }
 
-            signalObj.status = win ? "WIN" : "LOSS";
+            historyData[recordIndex].status = win ? "WIN" : "LOSS";
             if (win) stats.wins++; else stats.loss++;
             saveHistory();
         }
-    }, 180000); 
+    }, 180000); // 3 Minutes = 180,000ms
 }
+// --- HISTORY LOGIC END ---
 
 function initCharts() {
     const chartOptions = {
@@ -471,12 +479,12 @@ function updateSmartUI() {
             mainBg.classList.remove("signal-active-buy", "signal-active-sell");
             mainBg.classList.add(currentSignal.includes("BUY") ? "signal-active-buy" : "signal-active-sell");
             
-            // LOG TO HISTORY
-            const priceVal = parseFloat(document.getElementById("lastTick").innerText.replace("PRICE: ", ""));
-            addSignal(currentSignal, priceVal);
+            // Log this new signal for History tracking
+            const entryPrice = parseFloat(document.getElementById("lastTick").innerText.replace("PRICE: ", ""));
+            logSignalToHistory(currentSignal, entryPrice);
         } else {
             mainBg.classList.remove("signal-active-buy", "signal-active-sell");
-            mainDesc.innerText = "Waiting for market alignment... (B:" + buyPoints + " S:" + sellPoints + ")";
+            mainDesc.innerText = "Waiting for alignment... (B:" + buyPoints + " S:" + sellPoints + ")";
         }
         lastSignal = currentSignal;
     }
