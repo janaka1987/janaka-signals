@@ -37,7 +37,7 @@ select{ width:100%; height:50px; background:#08111F; color:white; border:1px sol
 .led-green { background: var(--green); box-shadow: 0 0 10px var(--green); }
 .led-red { background: var(--red); box-shadow: 0 0 10px var(--red); }
 
-.final-signal-box { background: #111827; border: 2px solid var(--border); border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: 0.3s; }
+.final-signal-box { background: #111827; border: 2px solid var(--border); border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: 0.3s; min-height: 200px; }
 .main-signal-text { font-size: 42px; font-weight: 900; margin-top: 10px; letter-spacing: 2px; }
 .signal-desc { color: var(--muted); font-size: 13px; margin-top: 5px; padding: 0 10px; }
 
@@ -53,7 +53,7 @@ select{ width:100%; height:50px; background:#08111F; color:white; border:1px sol
 .pill.blue { color: var(--blue); border-color: var(--blue); }
 .pill.green { color: var(--green); border-color: var(--green); }
 .pill.red { color: var(--red); border-color: var(--red); }
-.history-table-container { overflow-x: auto; max-height: 300px; }
+.history-table-container { overflow-x: auto; max-height: 350px; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; color: var(--text); }
 th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border); color: var(--muted); position: sticky; top: 0; background: #0B1220; }
 td { padding: 12px; border-bottom: 1px solid #1e293b; font-family: 'JetBrains Mono'; }
@@ -201,28 +201,15 @@ let candles = [];
 let currentMarket = "R_50";
 let pingInterval = null;
 let lastSignal = "NEUTRAL"; 
-let currentPriceRealtime = 0; // නව Variable එක මිල ගබඩා කිරීමට
+let currentPriceRealtime = 0; 
 
 // --- HISTORY LOGIC ---
-let historyData = JSON.parse(localStorage.getItem('janaka_history') || '[]');
-let stats = JSON.parse(localStorage.getItem('janaka_stats') || '{"total":0, "wins":0, "loss":0}');
-
-function checkDailyReset() {
-    const lastDate = localStorage.getItem('last_active_date');
-    const today = new Date().toLocaleDateString();
-    if (lastDate !== today) {
-        historyData = [];
-        stats = {total:0, wins:0, loss:0};
-        localStorage.setItem('last_active_date', today);
-        saveHistory();
-    }
-}
-checkDailyReset();
+let historyData = JSON.parse(localStorage.getItem('janaka_history_v6') || '[]');
+let stats = JSON.parse(localStorage.getItem('janaka_stats_v6') || '{"total":0, "wins":0, "loss":0}');
 
 function saveHistory() {
-    localStorage.setItem('janaka_history', JSON.stringify(historyData));
-    localStorage.setItem('janaka_stats', JSON.stringify(stats));
-    updateHistoryTable();
+    localStorage.setItem('janaka_history_v6', JSON.stringify(historyData));
+    localStorage.setItem('janaka_stats_v6', JSON.stringify(stats));
 }
 
 function updateHistoryTable() {
@@ -243,47 +230,56 @@ function updateHistoryTable() {
 }
 
 function logSignalToHistory(type, entryPrice) {
-    if(!entryPrice || entryPrice <= 0) return; // මිල නැතිනම් ගණන් නොගන්න
+    if(!entryPrice || entryPrice <= 0) return;
 
     const id = Date.now();
-    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const time = new Date().toLocaleTimeString();
     const entry = parseFloat(entryPrice);
     
     const newRecord = { id, time, type, entry, status: "PENDING" };
     historyData.push(newRecord);
     stats.total++;
     saveHistory();
+    updateHistoryTable();
 
-    // විනාඩි 3 කට පසුව පරීක්ෂා කිරීම
     setTimeout(() => {
-        const exitPrice = currentPriceRealtime; // Variable එකෙන් අවසාන මිල ගන්න
+        const exitPrice = currentPriceRealtime;
         const recordIndex = historyData.findIndex(r => r.id === id);
-        
         if (recordIndex !== -1) {
             let win = false;
-            if (type.includes("BUY")) {
-                win = exitPrice > entry;
-            } else if (type.includes("SELL")) {
-                win = exitPrice < entry;
-            }
-
+            if (type.includes("BUY")) win = exitPrice > entry;
+            else if (type.includes("SELL")) win = exitPrice < entry;
             historyData[recordIndex].status = win ? "WIN" : "LOSS";
             if (win) stats.wins++; else stats.loss++;
             saveHistory();
+            updateHistoryTable();
         }
     }, 180000); 
+}
+
+function playAlert(type) {
+    try {
+        const context = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = context.createOscillator();
+        const gain = context.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(type === "BUY" ? 880 : 440, context.currentTime);
+        gain.gain.setValueAtTime(0.1, context.currentTime);
+        osc.connect(gain); gain.connect(context.destination);
+        osc.start(); osc.stop(context.currentTime + 0.5);
+    } catch(e) {}
 }
 
 function initCharts() {
     const chartOptions = {
         layout: { background: { color: "#05070A" }, textColor: "#94A3B8" },
         grid: { vertLines: { color: "#162033" }, horzLines: { color: "#162033" } },
-        timeScale: { borderColor: "#233044", timeVisible: true, secondsVisible: false },
-        priceScale: { autoScale: true },
+        timeScale: { borderColor: "#233044", timeVisible: true },
         crosshair: { mode: 0 }
     };
 
-    if(mainChart) { document.getElementById("chart").innerHTML = ""; document.getElementById("rsi-chart").innerHTML = ""; }
+    document.getElementById("chart").innerHTML = "";
+    document.getElementById("rsi-chart").innerHTML = "";
 
     mainChart = LightweightCharts.createChart(document.getElementById("chart"), chartOptions);
     candleSeries = mainChart.addCandlestickSeries({ upColor: "#00FF88", downColor: "#FF4D4D", borderVisible: false, wickUpColor: "#00FF88", wickDownColor: "#FF4D4D" });
@@ -294,7 +290,7 @@ function initCharts() {
     supSeries = mainChart.addLineSeries({ color: '#00FF88', lineWidth: 2, lineStyle: 2, priceLineVisible: false });
 
     rsiChart = LightweightCharts.createChart(document.getElementById("rsi-chart"), chartOptions);
-    rsiSeries = rsiChart.addLineSeries({ color: '#F59E0B', lineWidth: 2, priceLineVisible: false });
+    rsiSeries = rsiChart.addLineSeries({ color: '#F59E0B', lineWidth: 2 });
     
     rsiSeries.createPriceLine({ price: 70, color: '#FF4D4D', lineWidth: 1, lineStyle: 0, title: '70' });
     rsiSeries.createPriceLine({ price: 50, color: '#94A3B8', lineWidth: 1, lineStyle: 0, title: '50' });
@@ -355,7 +351,6 @@ function calculateSMC() {
         const lastCandleTime = candles[candles.length - 1].time;
         resSeries.setData([{ time: lastH.time, value: lastH.price }, { time: lastCandleTime, value: lastH.price }]);
         supSeries.setData([{ time: lastL.time, value: lastL.price }, { time: lastCandleTime, value: lastL.price }]);
-        
         const curPrice = candles[candles.length-1].close;
         if(curPrice >= lastH.price - (lastH.price*0.001)) analysis.sr = "AT RESISTANCE";
         else if(curPrice <= lastL.price + (lastL.price*0.001)) analysis.sr = "AT SUPPORT";
@@ -396,24 +391,10 @@ function updateIndicators() {
     rsiSeries.setData(rsiVal);
     if (ema9.length > 2) {
         const currE9 = ema9[ema9.length-1].value, currE21 = ema21[ema21.length-1].value;
-        const prevE9 = ema9[ema9.length-2].value, prevE21 = ema21[ema21.length-2].value;
-        if (prevE9 <= prevE21 && currE9 > currE21) analysis.ema = "CROSS BUY";
-        else if (prevE9 >= prevE21 && currE9 < currE21) analysis.ema = "CROSS SELL";
-        else analysis.ema = currE9 > currE21 ? "BULLISH" : "BEARISH";
+        analysis.ema = currE9 > currE21 ? "BULLISH" : "BEARISH";
     }
     if(rsiVal.length > 0) analysis.rsi = rsiVal[rsiVal.length-1].value;
     calculateSMC();
-}
-
-function playAlert(type) {
-    const context = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = context.createOscillator();
-    const gain = context.createGain();
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(type === "BUY" ? 880 : 440, context.currentTime);
-    gain.gain.setValueAtTime(0.1, context.currentTime);
-    osc.connect(gain); gain.connect(context.destination);
-    osc.start(); osc.stop(context.currentTime + 0.5);
 }
 
 function updateSmartUI() {
@@ -429,24 +410,22 @@ function updateSmartUI() {
     trendLed.className = "led-small " + (analysis.trend === "UPTREND" ? "led-green" : "led-red");
 
     bosEl.innerText = analysis.bos;
-    bosEl.style.color = (analysis.bos.includes("BULL") || analysis.bos.includes("BUY")) ? "var(--green)" : "var(--red)";
-    bosLed.className = "led-small " + ((analysis.bos.includes("BULL") || analysis.bos.includes("BUY")) ? "led-green" : "led-red");
+    bosLed.className = "led-small " + (analysis.bos.includes("BULL") || analysis.bos.includes("BUY") ? "led-green" : "led-red");
 
     emaEl.innerText = analysis.ema;
-    emaEl.style.color = (analysis.ema.includes("BULL") || analysis.ema.includes("BUY")) ? "var(--green)" : "var(--red)";
-    emaLed.className = "led-small " + ((analysis.ema.includes("BULL") || analysis.ema.includes("BUY")) ? "led-green" : "led-red");
+    emaLed.className = "led-small " + (analysis.ema === "BULLISH" ? "led-green" : "led-red");
 
     rsiEl.innerText = analysis.rsi.toFixed(2);
     rsiLed.className = "led-small " + (analysis.rsi > 50 ? "led-green" : "led-red");
 
     srEl.innerText = analysis.sr;
-    srLed.className = "led-small " + (analysis.sr === "AT SUPPORT" ? "led-green" : analysis.sr === "AT RESISTANCE" ? "led-red" : "");
+    srLed.className = "led-small " + (analysis.sr === "AT SUPPORT" ? "led-green" : analysis.sr === "AT RESISTANCE" ? "led-red" : "led-small");
 
     let buyPoints = 0, sellPoints = 0;
     if(analysis.trend === "UPTREND") buyPoints++; else if(analysis.trend === "DOWNTREND") sellPoints++;
-    if(analysis.ema.includes("BUY") || analysis.ema === "BULLISH") buyPoints++; else sellPoints++;
+    if(analysis.ema === "BULLISH") buyPoints++; else sellPoints++;
     if(analysis.rsi > 55) buyPoints++; else if(analysis.rsi < 45) sellPoints++;
-    if(analysis.bos.includes("BULLISH") || analysis.bos.includes("BUY")) buyPoints++; else if(analysis.bos.includes("BEARISH") || analysis.bos.includes("SELL")) sellPoints++;
+    if(analysis.bos.includes("BULL") || analysis.bos.includes("BUY")) buyPoints++; else if(analysis.bos.includes("BEAR") || analysis.bos.includes("SELL")) sellPoints++;
     if(analysis.sr === "AT SUPPORT") buyPoints++; else if(analysis.sr === "AT RESISTANCE") sellPoints++;
 
     let currentSignal = "NEUTRAL";
@@ -456,39 +435,32 @@ function updateSmartUI() {
     if (currentSignal !== lastSignal) {
         if (currentSignal !== "NEUTRAL") {
             playAlert(currentSignal.includes("BUY") ? "BUY" : "SELL");
-            const now = new Date();
-            mainDesc.innerText = "NEW SIGNAL @ " + now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
+            mainDesc.innerText = "NEW SIGNAL @ " + new Date().toLocaleTimeString();
             mainBg.classList.remove("signal-active-buy", "signal-active-sell");
             mainBg.classList.add(currentSignal.includes("BUY") ? "signal-active-buy" : "signal-active-sell");
-            
-            // වැදගත්: HTML එකෙන් නැතුව කෙලින්ම variable එකෙන් Entry මිල යවනවා
             logSignalToHistory(currentSignal, currentPriceRealtime);
         } else {
             mainBg.classList.remove("signal-active-buy", "signal-active-sell");
-            mainDesc.innerText = "Waiting for alignment... (B:" + buyPoints + " S:" + sellPoints + ")";
         }
         lastSignal = currentSignal;
     }
-
     mainSig.innerText = currentSignal;
-    if(currentSignal === "STRONG BUY") { mainSig.style.color = "var(--green)"; mainBg.style.borderColor = "var(--green)"; }
-    else if(currentSignal === "STRONG SELL") { mainSig.style.color = "var(--red)"; mainBg.style.borderColor = "var(--red)"; }
-    else { mainSig.style.color = "var(--muted)"; mainBg.style.borderColor = "var(--border)"; }
+    mainSig.style.color = currentSignal === "STRONG BUY" ? "var(--green)" : currentSignal === "STRONG SELL" ? "var(--red)" : "var(--muted)";
 }
 
 function connect() {
-    if (ws) { ws.close(); clearInterval(pingInterval); }
+    if (ws) ws.close();
     ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=" + APP_ID);
     ws.onopen = () => {
         document.getElementById("status").innerText = "ONLINE";
         document.getElementById("status").style.color = "var(--green)";
-        pingInterval = setInterval(() => { if(ws.readyState === 1) ws.send(JSON.stringify({ping: 1})); }, 30000);
         ws.send(JSON.stringify({ ticks_history: currentMarket, count: 500, end: "latest", granularity: TIMEFRAME, style: "candles" }));
     };
     ws.onmessage = (msg) => {
         const res = JSON.parse(msg.data);
         if (res.candles) {
             candles = res.candles.map(c => ({ time: Number(c.epoch), open: Number(c.open), high: Number(c.high), low: Number(c.low), close: Number(c.close) }));
+            currentPriceRealtime = candles[candles.length-1].close;
             candleSeries.setData(candles);
             updateIndicators();
             ws.send(JSON.stringify({ ohlc: currentMarket, granularity: TIMEFRAME, subscribe: 1 }));
@@ -496,15 +468,12 @@ function connect() {
         if (res.ohlc) {
             const o = res.ohlc;
             const newC = { time: Number(o.open_time), open: Number(o.open), high: Number(o.high), low: Number(o.low), close: Number(o.close) };
-            
-            // මෙතනදී තමයි මිල Variable එකට දාගන්නේ
-            currentPriceRealtime = Number(o.close);
-            
+            currentPriceRealtime = newC.close;
+            document.getElementById("lastTick").innerText = "PRICE: " + currentPriceRealtime.toFixed(2);
             candleSeries.update(newC);
-            document.getElementById("lastTick").innerText = "PRICE: " + newC.close.toFixed(2);
             const lastIdx = candles.length - 1;
-            if (lastIdx >= 0 && newC.time === candles[lastIdx].time) { candles[lastIdx] = newC; } 
-            else { candles.push(newC); if (candles.length > 500) candles.shift(); }
+            if (lastIdx >= 0 && newC.time === candles[lastIdx].time) candles[lastIdx] = newC;
+            else candles.push(newC);
             updateIndicators();
         }
     };
@@ -518,6 +487,7 @@ document.getElementById("market").addEventListener("change", (e) => {
 });
 
 initCharts(); connect();
+setInterval(() => { if(ws && ws.readyState === 1) ws.send(JSON.stringify({ping:1})); }, 25000);
 </script>
 </body>
 </html>
