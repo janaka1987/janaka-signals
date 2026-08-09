@@ -37,22 +37,32 @@ select{ width:100%; height:50px; background:#08111F; color:white; border:1px sol
 .led-green { background: var(--green); box-shadow: 0 0 10px var(--green); }
 .led-red { background: var(--red); box-shadow: 0 0 10px var(--red); }
 
-.final-signal-box { background: #111827; border: 2px solid var(--border); border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: 0.3s; padding: 20px; }
+.final-signal-box { background: #111827; border: 2px solid var(--border); border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: 0.3s; }
 .main-signal-text { font-size: 42px; font-weight: 900; margin-top: 10px; letter-spacing: 2px; }
 .signal-desc { color: var(--muted); font-size: 13px; margin-top: 5px; padding: 0 10px; }
 
-/* STATISTICS PANEL */
-.stats-panel { width: 100%; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.stat-item { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px; display: flex; flex-direction: column; }
-.stat-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; margin-bottom: 3px; }
-.stat-val { font-size: 16px; font-weight: 700; font-family: 'JetBrains Mono'; }
-.accuracy-box { grid-column: span 2; background: linear-gradient(90deg, #1e293b, #0f172a); border: 1px solid var(--gold); }
-
-/* ANIMATIONS */
+/* NEW SIGNAL FLASH ANIMATIONS */
 @keyframes flash-green { 0% { box-shadow: 0 0 0px var(--green); } 50% { box-shadow: 0 0 30px var(--green); } 100% { box-shadow: 0 0 0px var(--green); } }
 @keyframes flash-red { 0% { box-shadow: 0 0 0px var(--red); } 50% { box-shadow: 0 0 30px var(--red); } 100% { box-shadow: 0 0 0px var(--red); } }
 .signal-active-buy { animation: flash-green 1s infinite; border-color: var(--green) !important; }
 .signal-active-sell { animation: flash-red 1s infinite; border-color: var(--red) !important; }
+
+/* HISTORY STYLES ADDED */
+.history-card { margin-top: 20px; background: #0B1220; border: 1px solid var(--border); border-radius: 20px; padding: 20px; }
+.history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+.stat-pills { display: flex; gap: 10px; }
+.pill { padding: 5px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; font-family: 'JetBrains Mono'; border: 1px solid #1e293b; }
+.pill.blue { color: var(--blue); border-color: var(--blue); }
+.pill.green { color: var(--green); border-color: var(--green); }
+.pill.red { color: var(--red); border-color: var(--red); }
+.history-table-container { overflow-x: auto; max-height: 300px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; color: var(--text); }
+th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border); color: var(--muted); position: sticky; top: 0; background: #0B1220; }
+td { padding: 12px; border-bottom: 1px solid #1e293b; font-family: 'JetBrains Mono'; }
+.res-pending { color: var(--gold); animation: blink 1s infinite; }
+.res-win { color: var(--green); font-weight: bold; }
+.res-loss { color: var(--red); font-weight: bold; }
+@keyframes blink { 50% { opacity: 0.3; } }
 
 @media(max-width:900px){ .grid-top, .bottom-grid{ grid-template-columns:1fr; } }
 </style>
@@ -96,24 +106,58 @@ select{ width:100%; height:50px; background:#08111F; color:white; border:1px sol
             <h3 style="color:var(--gold); margin-bottom:15px; font-size:16px;">🔍 SMART ANALYSIS CHECKLIST</h3>
             
             <div class="check-item">
-                <div class="check-info"><span class="check-icon">📈</span><span class="check-text">SMC TREND</span></div>
-                <div style="display:flex; align-items:center; gap:15px;"><span id="status-trend" class="check-status">---</span><div id="led-trend" class="led-small"></div></div>
+                <div class="check-info">
+                    <span class="check-icon">📈</span>
+                    <span class="check-text">SMC TREND (HH/LL)</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <span id="status-trend" class="check-status">ANALYZING</span>
+                    <div id="led-trend" class="led-small"></div>
+                </div>
             </div>
+
             <div class="check-item">
-                <div class="check-info"><span class="check-icon">⚡</span><span class="check-text">STRUCTURE (BOS)</span></div>
-                <div style="display:flex; align-items:center; gap:15px;"><span id="status-bos" class="check-status">---</span><div id="led-bos" class="led-small"></div></div>
+                <div class="check-info">
+                    <span class="check-icon">⚡</span>
+                    <span class="check-text">STRUCTURE (BOS/CHOCH)</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <span id="status-bos" class="check-status">WAITING</span>
+                    <div id="led-bos" class="led-small"></div>
+                </div>
             </div>
+
             <div class="check-item">
-                <div class="check-info"><span class="check-icon">🔵</span><span class="check-text">EMA CROSS</span></div>
-                <div style="display:flex; align-items:center; gap:15px;"><span id="status-ema" class="check-status">---</span><div id="led-ema" class="led-small"></div></div>
+                <div class="check-info">
+                    <span class="check-icon">🔵</span>
+                    <span class="check-text">EMA CROSS (9/21)</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <span id="status-ema" class="check-status">STABLE</span>
+                    <div id="led-ema" class="led-small"></div>
+                </div>
             </div>
+
             <div class="check-item">
-                <div class="check-info"><span class="check-icon">🔋</span><span class="check-text">MOMENTUM (RSI)</span></div>
-                <div style="display:flex; align-items:center; gap:15px;"><span id="status-rsi" class="check-status">---</span><div id="led-rsi" class="led-small"></div></div>
+                <div class="check-info">
+                    <span class="check-icon">🔋</span>
+                    <span class="check-text">MOMENTUM (RSI)</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <span id="status-rsi" class="check-status">NEUTRAL</span>
+                    <div id="led-rsi" class="led-small"></div>
+                </div>
             </div>
+
             <div class="check-item">
-                <div class="check-info"><span class="check-icon">🛡️</span><span class="check-text">S/R ZONE</span></div>
-                <div style="display:flex; align-items:center; gap:15px;"><span id="status-sr" class="check-status">---</span><div id="led-sr" class="led-small"></div></div>
+                <div class="check-info">
+                    <span class="check-icon">🛡️</span>
+                    <span class="check-text">S/R ZONE LEVEL</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <span id="status-sr" class="check-status">MID-ZONE</span>
+                    <div id="led-sr" class="led-small"></div>
+                </div>
             </div>
         </div>
 
@@ -121,28 +165,34 @@ select{ width:100%; height:50px; background:#08111F; color:white; border:1px sol
             <div class="check-text" style="color:var(--muted)">AI FINAL DECISION</div>
             <div id="main-signal-text" class="main-signal-text">NEUTRAL</div>
             <div id="signal-desc" class="signal-desc">Waiting for market alignment...</div>
-            <div id="lastTick" style="margin-top:10px; font-family:'JetBrains Mono'; font-size:12px; color:var(--blue);">PRICE: 0.00</div>
+            <div id="lastTick" style="margin-top:15px; font-family:'JetBrains Mono'; font-size:12px; color:var(--blue);">PRICE: 0.00</div>
+        </div>
+    </div>
 
-            <!-- STATISTICS BOX -->
-            <div class="stats-panel">
-                <div class="stat-item">
-                    <span class="stat-lbl">Total</span>
-                    <span id="total-sig" class="stat-val">0</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-lbl">Wins</span>
-                    <span id="win-count" class="stat-val" style="color:var(--green)">0</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-lbl">Losses</span>
-                    <span id="loss-count" class="stat-val" style="color:var(--red)">0</span>
-                </div>
-                <div class="stat-item accuracy-box">
-                    <span class="stat-lbl" style="color:var(--gold)">Win Acc %</span>
-                    <span id="win-acc" class="stat-val" style="color:var(--gold)">0%</span>
-                </div>
-                <div id="trade-status" style="grid-column: span 2; font-size: 11px; color: var(--blue); margin-top: 5px;">NO ACTIVE TRADE</div>
+    <!-- NEW HISTORY SECTION -->
+    <div class="history-card">
+        <div class="history-header">
+            <h3 style="color:var(--text); font-size:16px;">📜 SIGNAL HISTORY (LAST 24H)</h3>
+            <div class="stat-pills">
+                <div class="pill blue">TOTAL: <span id="h-total">0</span></div>
+                <div class="pill green">WINS: <span id="h-wins">0</span></div>
+                <div class="pill red">LOSS: <span id="h-loss">0</span></div>
             </div>
+        </div>
+        <div class="history-table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>TIME</th>
+                        <th>SIGNAL</th>
+                        <th>ENTRY</th>
+                        <th>RESULT (3M)</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                    <!-- Data will be injected here -->
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -154,17 +204,79 @@ let ws = null, mainChart = null, rsiChart = null;
 let candleSeries = null, ema9Series = null, ema21Series = null, rsiSeries = null, resSeries = null, supSeries = null;
 let candles = [];
 let currentMarket = "R_50";
-let lastSignal = "NEUTRAL";
+let pingInterval = null;
+let lastSignal = "NEUTRAL"; 
 
-// PERFORMANCE TRACKING
-let signalStats = { total: 0, wins: 0, losses: 0 };
-let activeTrade = null; // { type: 'BUY/SELL', entry: 0, expiry: 0 }
+// History Management
+let historyData = JSON.parse(localStorage.getItem('janaka_history') || '[]');
+let stats = JSON.parse(localStorage.getItem('janaka_stats') || '{"total":0, "wins":0, "loss":0}');
+
+function checkDailyReset() {
+    const lastDate = localStorage.getItem('last_active_date');
+    const today = new Date().toLocaleDateString();
+    if (lastDate !== today) {
+        historyData = [];
+        stats = {total:0, wins:0, loss:0};
+        localStorage.setItem('last_active_date', today);
+        saveHistory();
+    }
+}
+checkDailyReset();
+
+function saveHistory() {
+    localStorage.setItem('janaka_history', JSON.stringify(historyData));
+    localStorage.setItem('janaka_stats', JSON.stringify(stats));
+    updateHistoryTable();
+}
+
+function updateHistoryTable() {
+    const body = document.getElementById("history-body");
+    body.innerHTML = "";
+    historyData.slice().reverse().forEach(item => {
+        const row = `<tr>
+            <td>${item.time}</td>
+            <td style="color:${item.type.includes('BUY') ? 'var(--green)' : 'var(--red)'}">${item.type}</td>
+            <td>${item.entry.toFixed(2)}</td>
+            <td class="res-${item.status.toLowerCase()}">${item.status}</td>
+        </tr>`;
+        body.innerHTML += row;
+    });
+    document.getElementById("h-total").innerText = stats.total;
+    document.getElementById("h-wins").innerText = stats.wins;
+    document.getElementById("h-loss").innerText = stats.loss;
+}
+
+function addSignal(type, entry) {
+    const id = Date.now();
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const newSignal = { id, time, type, entry, status: "PENDING" };
+    
+    historyData.push(newSignal);
+    stats.total++;
+    saveHistory();
+
+    // Set 3 minute timer (180000 ms)
+    setTimeout(() => {
+        const currentPrice = parseFloat(document.getElementById("lastTick").innerText.replace("PRICE: ", ""));
+        const signalObj = historyData.find(s => s.id === id);
+        if (signalObj) {
+            let win = false;
+            if (type.includes("BUY")) win = currentPrice > entry;
+            else win = currentPrice < entry;
+
+            signalObj.status = win ? "WIN" : "LOSS";
+            if (win) stats.wins++; else stats.loss++;
+            saveHistory();
+        }
+    }, 180000); 
+}
 
 function initCharts() {
     const chartOptions = {
         layout: { background: { color: "#05070A" }, textColor: "#94A3B8" },
         grid: { vertLines: { color: "#162033" }, horzLines: { color: "#162033" } },
-        timeScale: { borderColor: "#233044", timeVisible: true },
+        timeScale: { borderColor: "#233044", timeVisible: true, secondsVisible: false },
+        priceScale: { autoScale: true },
         crosshair: { mode: 0 }
     };
 
@@ -172,6 +284,7 @@ function initCharts() {
 
     mainChart = LightweightCharts.createChart(document.getElementById("chart"), chartOptions);
     candleSeries = mainChart.addCandlestickSeries({ upColor: "#00FF88", downColor: "#FF4D4D", borderVisible: false, wickUpColor: "#00FF88", wickDownColor: "#FF4D4D" });
+    
     ema9Series = mainChart.addLineSeries({ color: '#38BDF8', lineWidth: 1, priceLineVisible: false });
     ema21Series = mainChart.addLineSeries({ color: '#F59E0B', lineWidth: 1, priceLineVisible: false });
     resSeries = mainChart.addLineSeries({ color: '#FF4D4D', lineWidth: 2, lineStyle: 2, priceLineVisible: false });
@@ -179,13 +292,22 @@ function initCharts() {
 
     rsiChart = LightweightCharts.createChart(document.getElementById("rsi-chart"), chartOptions);
     rsiSeries = rsiChart.addLineSeries({ color: '#F59E0B', lineWidth: 2, priceLineVisible: false });
+    
+    rsiSeries.createPriceLine({ price: 70, color: '#FF4D4D', lineWidth: 1, lineStyle: 0, title: '70' });
+    rsiSeries.createPriceLine({ price: 50, color: '#94A3B8', lineWidth: 1, lineStyle: 0, title: '50' });
+    rsiSeries.createPriceLine({ price: 30, color: '#00FF88', lineWidth: 1, lineStyle: 0, title: '30' });
+    
+    updateHistoryTable();
 }
 
 let analysis = { trend: "", bos: "", ema: "", rsi: 50, sr: "" };
 
 function calculateSMC() {
     if (candles.length < 30) return;
-    let markers = [], swings = [], windowSize = 5;
+    let markers = [];
+    let swings = [];
+    let windowSize = 5;
+
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true, isLow = true;
         for (let j = 1; j <= windowSize; j++) {
@@ -195,24 +317,48 @@ function calculateSMC() {
         if (isHigh) swings.push({ type: 'H', price: candles[i].high, time: candles[i].time });
         if (isLow) swings.push({ type: 'L', price: candles[i].low, time: candles[i].time });
     }
+
     let lastH = null, lastL = null, currentDir = "", lastBOS = "NONE";
+    
     swings.forEach((s) => {
         let label = "", color = "#FFFFFF";
         if (s.type === 'H') {
-            if (lastH && s.price > lastH.price) { label = "HH"; color = "#00FF88"; markers.push({ time: s.time, position: 'aboveBar', color: '#FFD700', shape: 'arrowDown', text: 'BOS' }); currentDir = "UPTREND"; lastBOS = "BULLISH"; }
-            else if (lastH && s.price < lastH.price) { label = "LH"; color = "#FF4D4D"; if(currentDir === "UPTREND") markers.push({ time: s.time, position: 'aboveBar', color: '#FF00FF', shape: 'arrowDown', text: 'CHOCH' }); currentDir = "DOWNTREND"; }
+            if (lastH && s.price > lastH.price) {
+                label = "HH"; color = "#00FF88";
+                markers.push({ time: s.time, position: 'aboveBar', color: '#FFD700', shape: 'arrowDown', text: 'BOS' });
+                currentDir = "UPTREND"; lastBOS = "BULLISH";
+            } else if (lastH && s.price < lastH.price) {
+                label = "LH"; color = "#FF4D4D";
+                if(currentDir === "UPTREND") { markers.push({ time: s.time, position: 'aboveBar', color: '#FF00FF', shape: 'arrowDown', text: 'CHOCH' }); lastBOS = "CHOCH SELL"; }
+                currentDir = "DOWNTREND";
+            }
             lastH = s;
         } else {
-            if (lastL && s.price < lastL.price) { label = "LL"; color = "#FF4D4D"; markers.push({ time: s.time, position: 'belowBar', color: '#FFD700', shape: 'arrowUp', text: 'BOS' }); currentDir = "DOWNTREND"; lastBOS = "BEARISH"; }
-            else if (lastL && s.price > lastL.price) { label = "HL"; color = "#00FF88"; if(currentDir === "DOWNTREND") markers.push({ time: s.time, position: 'belowBar', color: '#FF00FF', shape: 'arrowUp', text: 'CHOCH' }); currentDir = "UPTREND"; }
+            if (lastL && s.price < lastL.price) {
+                label = "LL"; color = "#FF4D4D";
+                markers.push({ time: s.time, position: 'belowBar', color: '#FFD700', shape: 'arrowUp', text: 'BOS' });
+                currentDir = "DOWNTREND"; lastBOS = "BEARISH";
+            } else if (lastL && s.price > lastL.price) {
+                label = "HL"; color = "#00FF88";
+                if(currentDir === "DOWNTREND") { markers.push({ time: s.time, position: 'belowBar', color: '#FF00FF', shape: 'arrowUp', text: 'CHOCH' }); lastBOS = "CHOCH BUY"; }
+                currentDir = "UPTREND";
+            }
             lastL = s;
         }
         if (label !== "") markers.push({ time: s.time, position: s.type === 'H' ? 'aboveBar' : 'belowBar', color: color, shape: 'text', text: label });
     });
+
     if (lastH && lastL) {
+        const lastCandleTime = candles[candles.length - 1].time;
+        resSeries.setData([{ time: lastH.time, value: lastH.price }, { time: lastCandleTime, value: lastH.price }]);
+        supSeries.setData([{ time: lastL.time, value: lastL.price }, { time: lastCandleTime, value: lastL.price }]);
+        
         const curPrice = candles[candles.length-1].close;
-        analysis.sr = curPrice >= lastH.price - (lastH.price*0.001) ? "AT RESISTANCE" : curPrice <= lastL.price + (lastL.price*0.001) ? "AT SUPPORT" : "MID-ZONE";
+        if(curPrice >= lastH.price - (lastH.price*0.001)) analysis.sr = "AT RESISTANCE";
+        else if(curPrice <= lastL.price + (lastL.price*0.001)) analysis.sr = "AT SUPPORT";
+        else analysis.sr = "MID-ZONE";
     }
+
     candleSeries.setMarkers(markers);
     analysis.trend = currentDir;
     analysis.bos = lastBOS;
@@ -221,94 +367,143 @@ function calculateSMC() {
 
 function updateIndicators() {
     if (candles.length < 25) return;
+    
     const calcEMA = (data, p) => {
         let k = 2/(p+1), ema = [{time: data[0].time, value: data[0].close}];
-        for(let i=1; i<data.length; i++) ema.push({time: data[i].time, value: (data[i].close - ema[i-1].value) * k + ema[i-1].value});
+        for(let i=1; i<data.length; i++) {
+            ema.push({time: data[i].time, value: (data[i].close - ema[i-1].value) * k + ema[i-1].value});
+        }
         return ema;
     };
-    const ema9 = calcEMA(candles, 9), ema21 = calcEMA(candles, 21);
-    ema9Series.setData(ema9); ema21Series.setData(ema21);
-    const currE9 = ema9[ema9.length-1].value, currE21 = ema21[ema21.length-1].value;
-    analysis.ema = currE9 > currE21 ? "BULLISH" : "BEARISH";
+
+    const calcRSI = (data, p) => {
+        let results = [];
+        for (let i = p; i < data.length; i++) {
+            let up = 0, down = 0;
+            for (let j = 0; j < p; j++) {
+                let diff = data[i-j].close - data[i-j-1].close;
+                if (diff > 0) up += diff; else down -= diff;
+            }
+            let rs = (up/p) / (down/p || 0.00001);
+            results.push({ time: data[i].time, value: 100 - (100 / (1 + rs)) });
+        }
+        return results;
+    };
+
+    const ema9 = calcEMA(candles, 9);
+    const ema21 = calcEMA(candles, 21);
+    ema9Series.setData(ema9);
+    ema21Series.setData(ema21);
+    
+    const rsiVal = calcRSI(candles, 14);
+    rsiSeries.setData(rsiVal);
+
+    if (ema9.length > 2) {
+        const currE9 = ema9[ema9.length-1].value;
+        const currE21 = ema21[ema21.length-1].value;
+        const prevE9 = ema9[ema9.length-2].value;
+        const prevE21 = ema21[ema21.length-2].value;
+
+        if (prevE9 <= prevE21 && currE9 > currE21) analysis.ema = "CROSS BUY";
+        else if (prevE9 >= prevE21 && currE9 < currE21) analysis.ema = "CROSS SELL";
+        else analysis.ema = currE9 > currE21 ? "BULLISH" : "BEARISH";
+    }
+
+    if(rsiVal.length > 0) analysis.rsi = rsiVal[rsiVal.length-1].value;
     calculateSMC();
 }
 
-// RESULT TRACKING LOGIC
-function trackSignal(type) {
-    if (activeTrade) return;
-    const entryPrice = candles[candles.length - 1].close;
-    activeTrade = { type: type.includes("BUY") ? "BUY" : "SELL", entry: entryPrice, expiry: Math.floor(Date.now() / 1000) + 180 };
-    signalStats.total++;
-    updateStatsUI();
-}
-
-function checkTrade() {
-    if (!activeTrade) return;
-    const now = Math.floor(Date.now() / 1000), timeLeft = activeTrade.expiry - now;
-    if (timeLeft <= 0) {
-        const exitPrice = candles[candles.length - 1].close;
-        const isWin = activeTrade.type === "BUY" ? exitPrice > activeTrade.entry : exitPrice < activeTrade.entry;
-        if (isWin) signalStats.wins++; else signalStats.losses++;
-        activeTrade = null;
-        updateStatsUI();
-        document.getElementById("trade-status").innerText = isWin ? "LAST: WIN ✅" : "LAST: LOSS ❌";
-    } else {
-        document.getElementById("trade-status").innerText = `WAITING RESULT: ${timeLeft}s`;
-    }
-}
-
-function updateStatsUI() {
-    document.getElementById("total-sig").innerText = signalStats.total;
-    document.getElementById("win-count").innerText = signalStats.wins;
-    document.getElementById("loss-count").innerText = signalStats.losses;
-    const total = signalStats.wins + signalStats.losses;
-    const acc = total > 0 ? ((signalStats.wins / total) * 100).toFixed(1) : 0;
-    document.getElementById("win-acc").innerText = acc + "%";
+function playAlert(type) {
+    const context = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = context.createOscillator();
+    const gain = context.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(type === "BUY" ? 880 : 440, context.currentTime);
+    gain.gain.setValueAtTime(0.1, context.currentTime);
+    osc.connect(gain);
+    gain.connect(context.destination);
+    osc.start();
+    osc.stop(context.currentTime + 0.5);
 }
 
 function updateSmartUI() {
     const trendEl = document.getElementById("status-trend"), trendLed = document.getElementById("led-trend");
     const bosEl = document.getElementById("status-bos"), bosLed = document.getElementById("led-bos");
     const emaEl = document.getElementById("status-ema"), emaLed = document.getElementById("led-ema");
-    const mainSig = document.getElementById("main-signal-text"), mainBg = document.getElementById("main-signal-bg");
+    const rsiEl = document.getElementById("status-rsi"), rsiLed = document.getElementById("led-rsi");
+    const srEl = document.getElementById("status-sr"), srLed = document.getElementById("led-sr");
+    const mainSig = document.getElementById("main-signal-text"), mainDesc = document.getElementById("signal-desc"), mainBg = document.getElementById("main-signal-bg");
 
     trendEl.innerText = analysis.trend || "WAITING";
+    trendEl.style.color = analysis.trend === "UPTREND" ? "var(--green)" : "var(--red)";
     trendLed.className = "led-small " + (analysis.trend === "UPTREND" ? "led-green" : "led-red");
+
     bosEl.innerText = analysis.bos;
-    bosLed.className = "led-small " + (analysis.bos.includes("BULL") ? "led-green" : "led-red");
+    bosEl.style.color = (analysis.bos.includes("BULL") || analysis.bos.includes("BUY")) ? "var(--green)" : "var(--red)";
+    bosLed.className = "led-small " + ((analysis.bos.includes("BULL") || analysis.bos.includes("BUY")) ? "led-green" : "led-red");
+
     emaEl.innerText = analysis.ema;
-    emaLed.className = "led-small " + (analysis.ema === "BULLISH" ? "led-green" : "led-red");
+    emaEl.style.color = (analysis.ema.includes("BULL") || analysis.ema.includes("BUY")) ? "var(--green)" : "var(--red)";
+    emaLed.className = "led-small " + ((analysis.ema.includes("BULL") || analysis.ema.includes("BUY")) ? "led-green" : "led-red");
 
-    let buyP = 0, sellP = 0;
-    if(analysis.trend === "UPTREND") buyP++; else sellP++;
-    if(analysis.ema === "BULLISH") buyP++; else sellP++;
-    if(analysis.bos.includes("BULLISH")) buyP++; else sellP++;
+    rsiEl.innerText = analysis.rsi.toFixed(2);
+    rsiLed.className = "led-small " + (analysis.rsi > 50 ? "led-green" : "led-red");
 
-    let currentSignal = buyP >= 2 ? "STRONG BUY" : sellP >= 2 ? "STRONG SELL" : "NEUTRAL";
+    srEl.innerText = analysis.sr;
+    srLed.className = "led-small " + (analysis.sr === "AT SUPPORT" ? "led-green" : analysis.sr === "AT RESISTANCE" ? "led-red" : "");
+
+    let buyPoints = 0, sellPoints = 0;
+    if(analysis.trend === "UPTREND") buyPoints++; else if(analysis.trend === "DOWNTREND") sellPoints++;
+    if(analysis.ema.includes("BUY") || analysis.ema === "BULLISH") buyPoints++; else sellPoints++;
+    if(analysis.rsi > 55) buyPoints++; else if(analysis.rsi < 45) sellPoints++;
+    if(analysis.bos.includes("BULLISH") || analysis.bos.includes("BUY")) buyPoints++; else if(analysis.bos.includes("BEARISH") || analysis.bos.includes("SELL")) sellPoints++;
+    if(analysis.sr === "AT SUPPORT") buyPoints++; else if(analysis.sr === "AT RESISTANCE") sellPoints++;
+
+    let currentSignal = "NEUTRAL";
+    if(buyPoints >= 4) currentSignal = "STRONG BUY";
+    else if(sellPoints >= 4) currentSignal = "STRONG SELL";
 
     if (currentSignal !== lastSignal) {
         if (currentSignal !== "NEUTRAL") {
-            mainBg.className = "final-signal-box " + (currentSignal.includes("BUY") ? "signal-active-buy" : "signal-active-sell");
-            trackSignal(currentSignal);
-        } else { mainBg.className = "final-signal-box"; }
+            playAlert(currentSignal.includes("BUY") ? "BUY" : "SELL");
+            const now = new Date();
+            mainDesc.innerText = "NEW SIGNAL @ " + now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
+            mainBg.classList.remove("signal-active-buy", "signal-active-sell");
+            mainBg.classList.add(currentSignal.includes("BUY") ? "signal-active-buy" : "signal-active-sell");
+            
+            // LOG TO HISTORY
+            const priceVal = parseFloat(document.getElementById("lastTick").innerText.replace("PRICE: ", ""));
+            addSignal(currentSignal, priceVal);
+        } else {
+            mainBg.classList.remove("signal-active-buy", "signal-active-sell");
+            mainDesc.innerText = "Waiting for market alignment... (B:" + buyPoints + " S:" + sellPoints + ")";
+        }
         lastSignal = currentSignal;
     }
+
     mainSig.innerText = currentSignal;
-    mainSig.style.color = currentSignal.includes("BUY") ? "var(--green)" : currentSignal.includes("SELL") ? "var(--red)" : "var(--muted)";
+    if(currentSignal === "STRONG BUY") { mainSig.style.color = "var(--green)"; mainBg.style.borderColor = "var(--green)"; }
+    else if(currentSignal === "STRONG SELL") { mainSig.style.color = "var(--red)"; mainBg.style.borderColor = "var(--red)"; }
+    else { mainSig.style.color = "var(--muted)"; mainBg.style.borderColor = "var(--border)"; }
 }
 
 function connect() {
+    if (ws) { ws.close(); clearInterval(pingInterval); }
     ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=" + APP_ID);
+
     ws.onopen = () => {
         document.getElementById("status").innerText = "ONLINE";
         document.getElementById("status").style.color = "var(--green)";
+        pingInterval = setInterval(() => { if(ws.readyState === 1) ws.send(JSON.stringify({ping: 1})); }, 30000);
         ws.send(JSON.stringify({ ticks_history: currentMarket, count: 500, end: "latest", granularity: TIMEFRAME, style: "candles" }));
     };
+
     ws.onmessage = (msg) => {
         const res = JSON.parse(msg.data);
         if (res.candles) {
             candles = res.candles.map(c => ({ time: Number(c.epoch), open: Number(c.open), high: Number(c.high), low: Number(c.low), close: Number(c.close) }));
             candleSeries.setData(candles);
+            updateIndicators();
             ws.send(JSON.stringify({ ohlc: currentMarket, granularity: TIMEFRAME, subscribe: 1 }));
         }
         if (res.ohlc) {
@@ -317,11 +512,13 @@ function connect() {
             candleSeries.update(newC);
             document.getElementById("lastTick").innerText = "PRICE: " + newC.close.toFixed(2);
             const lastIdx = candles.length - 1;
-            if (newC.time === candles[lastIdx].time) candles[lastIdx] = newC; else candles.push(newC);
+            if (lastIdx >= 0 && newC.time === candles[lastIdx].time) { candles[lastIdx] = newC; } 
+            else { candles.push(newC); if (candles.length > 500) candles.shift(); }
             updateIndicators();
-            checkTrade();
         }
     };
+
+    ws.onclose = () => { setTimeout(connect, 3000); };
 }
 
 document.getElementById("market").addEventListener("change", (e) => {
