@@ -48,11 +48,16 @@ select{ width:100%; height:50px; background:#08111F; color:white; border:1px sol
 
 .history-card { margin-top: 20px; background: #0B1220; border: 1px solid var(--border); border-radius: 20px; padding: 20px; }
 .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-.stat-pills { display: flex; gap: 10px; }
+.stat-pills { display: flex; gap: 10px; align-items: center; }
 .pill { padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: bold; font-family: 'JetBrains Mono'; border: 1px solid #1e293b; }
 .pill.blue { color: var(--blue); border-color: var(--blue); }
 .pill.green { color: var(--green); border-color: var(--green); }
 .pill.red { color: var(--red); border-color: var(--red); }
+
+/* නව Clear Button Style එක පමණක් ඇතුළත් කළා */
+.btn-clear { background: rgba(255, 77, 77, 0.1); color: var(--red); border: 1px solid var(--red); padding: 6px 12px; border-radius: 8px; cursor: pointer; font-family: 'JetBrains Mono'; font-size: 11px; font-weight: bold; transition: 0.3s; }
+.btn-clear:hover { background: var(--red); color: white; }
+
 .history-table-container { overflow-x: auto; max-height: 350px; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; color: var(--text); }
 th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border); color: var(--muted); position: sticky; top: 0; background: #0B1220; }
@@ -86,7 +91,6 @@ td { padding: 12px; border-bottom: 1px solid #1e293b; font-family: 'JetBrains Mo
         <option value="1HZ100V">Volatility 100 (1s)</option>
     </optgroup>
     
-    <!-- --- JUMP & DAILY RESET --- -->
     <optgroup label="Jump & Others">
         <option value="JD10">Jump 10</option>
         <option value="JD25">Jump 25</option>
@@ -97,7 +101,6 @@ td { padding: 12px; border-bottom: 1px solid #1e293b; font-family: 'JetBrains Mo
         <option value="RDBULL">Bull Market</option>
     </optgroup>
 
-    <!-- --- FOREX MAJOR --- -->
     <optgroup label="Forex Major">
         <option value="frxEURUSD">EUR / USD</option>
         <option value="frxGBPUSD">GBP / USD</option>
@@ -108,7 +111,6 @@ td { padding: 12px; border-bottom: 1px solid #1e293b; font-family: 'JetBrains Mo
         <option value="frxNZDUSD">NZD / USD</option>
     </optgroup>
 
-    <!-- --- FOREX MINOR --- -->
     <optgroup label="Forex Minor">
         <option value="frxEURGBP">EUR / GBP</option>
         <option value="frxEURJPY">EUR / JPY</option>
@@ -116,7 +118,6 @@ td { padding: 12px; border-bottom: 1px solid #1e293b; font-family: 'JetBrains Mo
         <option value="frxEURAUD">EUR / AUD</option>
         <option value="frxAUDJPY">AUD / JPY</option>
         <option value="frxGBPAUD">GBP / AUD</option>
-        <!-- පින්තූරයේ තිබූ අලුත් ඒවා මෙතැන් සිට -->
         <option value="frxCADJPY">CAD / JPY</option>
         <option value="frxCHFJPY">CHF / JPY</option>
         <option value="frxEURCAD">EUR / CAD</option>
@@ -223,6 +224,8 @@ td { padding: 12px; border-bottom: 1px solid #1e293b; font-family: 'JetBrains Mo
                 <div class="pill blue">TOTAL: <span id="h-total">0</span></div>
                 <div class="pill green">WINS: <span id="h-wins">0</span></div>
                 <div class="pill red">LOSS: <span id="h-loss">0</span></div>
+                <!-- බොත්තම එකතු කළ තැන -->
+                <button class="btn-clear" onclick="clearHistory()">CLEAR HISTORY</button>
             </div>
         </div>
         <div class="history-table-container">
@@ -259,6 +262,16 @@ let stats = JSON.parse(localStorage.getItem('janaka_stats_v6') || '{"total":0, "
 function saveHistory() {
     localStorage.setItem('janaka_history_v6', JSON.stringify(historyData));
     localStorage.setItem('janaka_stats_v6', JSON.stringify(stats));
+}
+
+// දත්ත මකන අලුත් function එක
+function clearHistory() {
+    if (confirm("Signal History එක මකා දමන්න ඔබට විශ්වාසද?")) {
+        historyData = [];
+        stats = { total: 0, wins: 0, loss: 0 };
+        saveHistory();
+        updateHistoryTable();
+    }
 }
 
 function updateHistoryTable() {
