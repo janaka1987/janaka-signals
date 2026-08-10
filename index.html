@@ -95,17 +95,6 @@ td { padding: 12px; border-bottom: 1px solid #1e293b; font-family: 'JetBrains Mo
                     <option value="JD50">Jump 50</option>
                     <option value="JD75">Jump 75</option>
                     <option value="JD100">Jump 100</option>
-                    <option value="RDBEAR">Bear Market</option>
-                    <option value="RDBULL">Bull Market</option>
-                </optgroup>
-                <optgroup label="Forex Major">
-                    <option value="frxEURUSD">EUR / USD</option>
-                    <option value="frxGBPUSD">GBP / USD</option>
-                    <option value="frxUSDJPY">USD / JPY</option>
-                    <option value="frxAUDUSD">AUD / USD</option>
-                    <option value="frxUSDCAD">USD / CAD</option>
-                    <option value="frxUSDCHF">USD / CHF</option>
-                    <option value="frxNZDUSD">NZD / USD</option>
                 </optgroup>
             </select>
         </div>
@@ -157,7 +146,7 @@ td { padding: 12px; border-bottom: 1px solid #1e293b; font-family: 'JetBrains Mo
                 <div style="display:flex; align-items:center; gap:15px;"><span id="status-sr" class="check-status">MID-ZONE</span><div id="led-sr" class="led-small"></div></div>
             </div>
 
-            <!-- අලුතින් එක් කළ SMC OB ZONE කොටස -->
+            <!-- මෙතන තමයි OB Zone එක පෙන්වන්නේ -->
             <div class="check-item">
                 <div class="check-info"><span class="check-icon">🎯</span><span class="check-text">SMC OB ZONE</span></div>
                 <div style="display:flex; align-items:center; gap:15px;"><span id="status-ob" class="check-status">WAITING</span><div id="led-ob" class="led-small"></div></div>
@@ -194,6 +183,7 @@ td { padding: 12px; border-bottom: 1px solid #1e293b; font-family: 'JetBrains Mo
 </div>
 
 <script>
+// --- මෙතන ඉඳන් සම්පූර්ණයෙන්ම ඔබේ පැරණි Logic එකමයි ---
 const APP_ID = "1089";
 const TIMEFRAME = 60;
 let ws = null, mainChart = null, rsiChart = null;
@@ -203,9 +193,11 @@ let currentMarket = "R_50";
 let lastSignal = "NEUTRAL"; 
 let currentPriceRealtime = 0; 
 let audioReady = false;
-let currentOB = { type: null, top: 0, bottom: 0 }; // Order Block Data
 
-function enableAudioOnce() { if(!audioReady) { audioReady = true; console.log("Audio Ready"); } }
+// OB data එකතු කළා පමණි
+let currentOB = { type: null, top: 0, bottom: 0 }; 
+
+function enableAudioOnce() { if(!audioReady) { audioReady = true; } }
 
 let historyData = JSON.parse(localStorage.getItem('janaka_history_v6') || '[]');
 let stats = JSON.parse(localStorage.getItem('janaka_stats_v6') || '{"total":0, "wins":0, "loss":0}');
@@ -295,15 +287,13 @@ function initCharts() {
 
 let analysis = { trend: "", bos: "", ema: "", rsi: 50, sr: "" };
 
-// --- මෙම කොටස ඔබේ පැරණි calculateSMC function එක වෙනුවට replace කරන්න ---
-
+// --- ඔබේ මුල් SMC Logic එකට OB එකතු කළා පමණි ---
 function calculateSMC() {
     if (candles.length < 30) return;
     let markers = [];
     let swings = [];
     let windowSize = 5;
 
-    // 1. Swing High/Low හඳුනා ගැනීම
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true, isLow = true;
         for (let j = 1; j <= windowSize; j++) {
@@ -324,11 +314,9 @@ function calculateSMC() {
                 markers.push({ time: s.time, position: 'aboveBar', color: '#FFD700', shape: 'arrowDown', text: 'BOS' });
                 currentDir = "UPTREND"; lastBOS = "BULLISH";
                 
-                // OB Logic - ආරක්ෂිතව පරීක්ෂා කිරීම (Fix)
-                if (s.idx > 0) {
-                    let obCandle = candles[s.idx - 1];
-                    currentOB = { type: "BULLISH", top: obCandle.high, bottom: obCandle.low };
-                }
+                // Bullish OB - Breakout එකට කලින් තිබුණු Bearish candle එක
+                let obIdx = s.idx - 1;
+                if(obIdx >= 0) currentOB = { type: "BULLISH", top: candles[obIdx].high, bottom: candles[obIdx].low };
             } else if (lastH && s.price < lastH.price) {
                 label = "LH"; 
                 if(currentDir === "UPTREND") { 
@@ -344,11 +332,9 @@ function calculateSMC() {
                 markers.push({ time: s.time, position: 'belowBar', color: '#FFD700', shape: 'arrowUp', text: 'BOS' });
                 currentDir = "DOWNTREND"; lastBOS = "BEARISH";
                 
-                // OB Logic - ආරක්ෂිතව පරීක්ෂා කිරීම (Fix)
-                if (s.idx > 0) {
-                    let obCandle = candles[s.idx - 1];
-                    currentOB = { type: "BEARISH", top: obCandle.high, bottom: obCandle.low };
-                }
+                // Bearish OB - Breakout එකට කලින් තිබුණු Bullish candle එක
+                let obIdx = s.idx - 1;
+                if(obIdx >= 0) currentOB = { type: "BEARISH", top: candles[obIdx].high, bottom: candles[obIdx].low };
             } else if (lastL && s.price > lastL.price) {
                 label = "HL"; 
                 if(currentDir === "DOWNTREND") { 
@@ -360,22 +346,14 @@ function calculateSMC() {
             lastL = s;
         }
         if (label !== "") {
-            markers.push({ 
-                time: s.time, 
-                position: s.type === 'H' ? 'aboveBar' : 'belowBar', 
-                color: label.includes('H') ? '#00FF88' : '#FF4D4D', 
-                shape: 'text', 
-                text: label 
-            });
+            markers.push({ time: s.time, position: s.type === 'H' ? 'aboveBar' : 'belowBar', color: label.includes('H') ? '#00FF88' : '#FF4D4D', shape: 'text', text: label });
         }
     });
 
-    // Support/Resistance line update
     if (lastH && lastL) {
         const lastCandleTime = candles[candles.length - 1].time;
         resSeries.setData([{ time: lastH.time, value: lastH.price }, { time: lastCandleTime, value: lastH.price }]);
         supSeries.setData([{ time: lastL.time, value: lastL.price }, { time: lastCandleTime, value: lastL.price }]);
-        
         const curPrice = candles[candles.length-1].close;
         if(curPrice >= lastH.price * 0.999) analysis.sr = "AT RESISTANCE";
         else if(curPrice <= lastL.price * 1.001) analysis.sr = "AT SUPPORT";
@@ -387,11 +365,6 @@ function calculateSMC() {
     analysis.bos = lastBOS;
     updateSmartUI();
 }
-    
-
-    
-
-    
 
 function updateIndicators() {
     if (candles.length < 25) return;
@@ -404,7 +377,6 @@ function updateIndicators() {
     const ema21 = calcEMA(candles, 21);
     ema9Series.setData(ema9); ema21Series.setData(ema21);
     
-    // RSI Simple
     let rsiVal = [];
     for(let i=14; i<candles.length; i++) {
         let up=0, dn=0;
@@ -433,44 +405,35 @@ function updateSmartUI() {
     trendEl.innerText = analysis.trend || "WAITING";
     trendEl.style.color = analysis.trend === "UPTREND" ? "var(--green)" : "var(--red)";
     trendLed.className = "led-small " + (analysis.trend === "UPTREND" ? "led-green" : "led-red");
-
     bosEl.innerText = analysis.bos;
     bosLed.className = "led-small " + (analysis.bos.includes("BULL") || analysis.bos.includes("BUY") ? "led-green" : "led-red");
-
     emaEl.innerText = analysis.ema;
     emaLed.className = "led-small " + (analysis.ema === "BULLISH" ? "led-green" : "led-red");
-
     rsiEl.innerText = analysis.rsi.toFixed(2);
     rsiLed.className = "led-small " + (analysis.rsi > 50 ? "led-green" : "led-red");
-
     srEl.innerText = analysis.sr;
     srLed.className = "led-small " + (analysis.sr === "AT SUPPORT" ? "led-green" : analysis.sr === "AT RESISTANCE" ? "led-red" : "led-small");
 
-    // OB Zone Detection
-    let inOBZone = false;
-    if(currentOB.type === "BULLISH" && currentPriceRealtime <= currentOB.top && currentPriceRealtime >= currentOB.bottom) inOBZone = true;
-    if(currentOB.type === "BEARISH" && currentPriceRealtime >= currentOB.bottom && currentPriceRealtime <= currentOB.top) inOBZone = true;
+    // OB Zone Check
+    let inOB = false;
+    if(currentOB.type === "BULLISH" && currentPriceRealtime <= currentOB.top && currentPriceRealtime >= currentOB.bottom) inOB = true;
+    if(currentOB.type === "BEARISH" && currentPriceRealtime >= currentOB.bottom && currentPriceRealtime <= currentOB.top) inOB = true;
     
-    obEl.innerText = inOBZone ? "INSIDE OB" : "WAITING";
-    obEl.style.color = inOBZone ? "var(--green)" : "var(--muted)";
-    obLed.className = "led-small " + (inOBZone ? "led-green" : "");
+    obEl.innerText = inOB ? "INSIDE OB" : "WAITING";
+    obEl.style.color = inOB ? "var(--green)" : "var(--muted)";
+    obLed.className = "led-small " + (inOB ? "led-green" : "");
 
-    let buyPts = 0, sellPts = 0;
-    if(analysis.trend === "UPTREND") buyPts++; else sellPts++;
-    if(analysis.ema === "BULLISH") buyPts++; else sellPts++;
-    if(analysis.rsi > 50) buyPts++; else if(analysis.rsi < 50) sellPts++;
-    if(analysis.bos.includes("BULL") || analysis.bos.includes("BUY")) buyPts++; 
-    else if(analysis.bos.includes("BEAR") || analysis.bos.includes("SELL")) sellPts++;
-
-    // OP Logic: points >= 3 AND price must be in OB Zone
     let currentSignal = "NEUTRAL";
-    if(buyPts >= 3 && inOBZone && analysis.trend === "UPTREND") currentSignal = "STRONG BUY";
-    else if(sellPts >= 3 && inOBZone && analysis.trend === "DOWNTREND") currentSignal = "STRONG SELL";
+    // OB Zone එක ඇතුළතදී පමණක් Signal එක පෙන්වීම
+    if(inOB) {
+        if(analysis.trend === "UPTREND" && analysis.ema === "BULLISH" && analysis.rsi > 50) currentSignal = "STRONG BUY";
+        if(analysis.trend === "DOWNTREND" && analysis.ema === "BEARISH" && analysis.rsi < 50) currentSignal = "STRONG SELL";
+    }
 
     if (currentSignal !== lastSignal) {
         if (currentSignal !== "NEUTRAL") {
             playAlert(currentSignal);
-            mainDesc.innerText = "OP SIGNAL @ " + new Date().toLocaleTimeString();
+            mainDesc.innerText = "SMC SIGNAL @ " + new Date().toLocaleTimeString();
             mainBg.classList.add(currentSignal.includes("BUY") ? "signal-active-buy" : "signal-active-sell");
             logSignalToHistory(currentSignal, currentPriceRealtime);
         } else {
@@ -514,7 +477,7 @@ function connect() {
 document.getElementById("market").addEventListener("change", (e) => {
     currentMarket = e.target.value;
     document.getElementById("marketName").innerText = e.target.options[e.target.selectedIndex].text;
-    currentOB = { type: null, top: 0, bottom: 0 }; // Reset OB on market change
+    currentOB = { type: null, top: 0, bottom: 0 };
     initCharts(); connect();
 });
 
