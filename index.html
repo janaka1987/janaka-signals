@@ -295,12 +295,15 @@ function initCharts() {
 
 let analysis = { trend: "", bos: "", ema: "", rsi: 50, sr: "" };
 
+// --- මෙම කොටස ඔබේ පැරණි calculateSMC function එක වෙනුවට replace කරන්න ---
+
 function calculateSMC() {
     if (candles.length < 30) return;
     let markers = [];
     let swings = [];
     let windowSize = 5;
 
+    // 1. Swing High/Low හඳුනා ගැනීම
     for (let i = windowSize; i < candles.length - windowSize; i++) {
         let isHigh = true, isLow = true;
         for (let j = 1; j <= windowSize; j++) {
@@ -320,12 +323,18 @@ function calculateSMC() {
                 label = "HH"; 
                 markers.push({ time: s.time, position: 'aboveBar', color: '#FFD700', shape: 'arrowDown', text: 'BOS' });
                 currentDir = "UPTREND"; lastBOS = "BULLISH";
-                // OB Definition: The candle before the rally
-                let obCandle = candles[s.idx - 1];
-                currentOB = { type: "BULLISH", top: obCandle.high, bottom: obCandle.low };
+                
+                // OB Logic - ආරක්ෂිතව පරීක්ෂා කිරීම (Fix)
+                if (s.idx > 0) {
+                    let obCandle = candles[s.idx - 1];
+                    currentOB = { type: "BULLISH", top: obCandle.high, bottom: obCandle.low };
+                }
             } else if (lastH && s.price < lastH.price) {
                 label = "LH"; 
-                if(currentDir === "UPTREND") { markers.push({ time: s.time, position: 'aboveBar', color: '#FF00FF', shape: 'arrowDown', text: 'CHOCH' }); lastBOS = "CHOCH SELL"; }
+                if(currentDir === "UPTREND") { 
+                    markers.push({ time: s.time, position: 'aboveBar', color: '#FF00FF', shape: 'arrowDown', text: 'CHOCH' }); 
+                    lastBOS = "CHOCH SELL"; 
+                }
                 currentDir = "DOWNTREND";
             }
             lastH = s;
@@ -334,23 +343,39 @@ function calculateSMC() {
                 label = "LL"; 
                 markers.push({ time: s.time, position: 'belowBar', color: '#FFD700', shape: 'arrowUp', text: 'BOS' });
                 currentDir = "DOWNTREND"; lastBOS = "BEARISH";
-                // OB Definition: The candle before the drop
-                let obCandle = candles[s.idx - 1];
-                currentOB = { type: "BEARISH", top: obCandle.high, bottom: obCandle.low };
+                
+                // OB Logic - ආරක්ෂිතව පරීක්ෂා කිරීම (Fix)
+                if (s.idx > 0) {
+                    let obCandle = candles[s.idx - 1];
+                    currentOB = { type: "BEARISH", top: obCandle.high, bottom: obCandle.low };
+                }
             } else if (lastL && s.price > lastL.price) {
                 label = "HL"; 
-                if(currentDir === "DOWNTREND") { markers.push({ time: s.time, position: 'belowBar', color: '#FF00FF', shape: 'arrowUp', text: 'CHOCH' }); lastBOS = "CHOCH BUY"; }
+                if(currentDir === "DOWNTREND") { 
+                    markers.push({ time: s.time, position: 'belowBar', color: '#FF00FF', shape: 'arrowUp', text: 'CHOCH' }); 
+                    lastBOS = "CHOCH BUY"; 
+                }
                 currentDir = "UPTREND";
             }
             lastL = s;
         }
-        if (label !== "") markers.push({ time: s.time, position: s.type === 'H' ? 'aboveBar' : 'belowBar', color: label.includes('H')?'#00FF88':'#FF4D4D', shape: 'text', text: label });
+        if (label !== "") {
+            markers.push({ 
+                time: s.time, 
+                position: s.type === 'H' ? 'aboveBar' : 'belowBar', 
+                color: label.includes('H') ? '#00FF88' : '#FF4D4D', 
+                shape: 'text', 
+                text: label 
+            });
+        }
     });
 
+    // Support/Resistance line update
     if (lastH && lastL) {
         const lastCandleTime = candles[candles.length - 1].time;
         resSeries.setData([{ time: lastH.time, value: lastH.price }, { time: lastCandleTime, value: lastH.price }]);
         supSeries.setData([{ time: lastL.time, value: lastL.price }, { time: lastCandleTime, value: lastL.price }]);
+        
         const curPrice = candles[candles.length-1].close;
         if(curPrice >= lastH.price * 0.999) analysis.sr = "AT RESISTANCE";
         else if(curPrice <= lastL.price * 1.001) analysis.sr = "AT SUPPORT";
@@ -362,6 +387,11 @@ function calculateSMC() {
     analysis.bos = lastBOS;
     updateSmartUI();
 }
+    
+
+    
+
+    
 
 function updateIndicators() {
     if (candles.length < 25) return;
