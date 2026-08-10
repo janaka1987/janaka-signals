@@ -321,28 +321,34 @@ function logSignalToHistory(type, entryPrice) {
 
 function playAlert(type) {
     try {
-        // දැනට select කරලා තියෙන Market එකේ නම ගන්නවා (උදා: Volatility 50)
+        // දැනට තෝරාගෙන ඇති Market එකේ නම ලබා ගැනීම
         const marketSelect = document.getElementById("market");
         const marketName = marketSelect.options[marketSelect.selectedIndex].text;
         
         const msg = new SpeechSynthesisUtterance();
         
-        // සිග්නල් එක අනුව කියවිය යුතු වාක්‍යය සකස් කිරීම
-        if (type === "STRONG BUY") {
+        // type එක ඇතුලේ BUY හෝ SELL තියෙනවද කියා පරීක්ෂා කරයි (වැඩියෙන්ම සාර්ථක ක්‍රමය)
+        if (type.includes("BUY")) {
             msg.text = "New Buy Signal on " + marketName;
-        } else if (type === "STRONG SELL") {
+        } else if (type.includes("SELL")) {
             msg.text = "New Sell Signal on " + marketName;
+        } else {
+            return; // Neutral නම් කිසිවක් නොකියයි
         }
 
         msg.lang = 'en-US';
-        msg.rate = 0.9; // කටහඬේ වේගය (ටිකක් හෙමින් පැහැදිලිව කියවන්න)
-        msg.pitch = 1.1; // කටහඬේ පැහැදිලි බව
+        msg.rate = 0.9;  // කටහඬේ වේගය
+        msg.pitch = 1.0; // කටහඬේ තීව්‍රතාවය
 
+        // පරණ හඬවල් පෝලිමේ තිබේනම් ඒවා මකා දමා අලුත් එක වහාම පවසයි
+        window.speechSynthesis.cancel();
         window.speechSynthesis.speak(msg);
+
     } catch(e) {
-        console.error("Audio error:", e);
+        console.error("Audio Alert Error:", e);
     }
 }
+
 
 function initCharts() {
     const chartOptions = {
