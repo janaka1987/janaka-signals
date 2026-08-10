@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JANAKA SMC DASHBOARD V6 PRO - SMART SIGNALS</title>
+<title>JANAKA SMC DASHBOARD V6 PRO - STABLE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
@@ -108,7 +108,7 @@ td { padding: 12px; border-bottom: 1px solid #1e293b; font-family: 'JetBrains Mo
     </div>
 
     <div class="card" style="margin-bottom:20px;">
-        <h3>📈 LIVE SMC CANDLESTICK CHART (SMC LABELS ON)</h3>
+        <h3>📈 LIVE SMC CANDLESTICK CHART</h3>
         <div id="chart"></div>
     </div>
 
@@ -146,7 +146,6 @@ td { padding: 12px; border-bottom: 1px solid #1e293b; font-family: 'JetBrains Mo
                 <div style="display:flex; align-items:center; gap:15px;"><span id="status-sr" class="check-status">MID-ZONE</span><div id="led-sr" class="led-small"></div></div>
             </div>
 
-            <!-- මෙතන තමයි OB Zone එක පෙන්වන්නේ -->
             <div class="check-item">
                 <div class="check-info"><span class="check-icon">🎯</span><span class="check-text">SMC OB ZONE</span></div>
                 <div style="display:flex; align-items:center; gap:15px;"><span id="status-ob" class="check-status">WAITING</span><div id="led-ob" class="led-small"></div></div>
@@ -183,7 +182,6 @@ td { padding: 12px; border-bottom: 1px solid #1e293b; font-family: 'JetBrains Mo
 </div>
 
 <script>
-// --- මෙතන ඉඳන් සම්පූර්ණයෙන්ම ඔබේ පැරණි Logic එකමයි ---
 const APP_ID = "1089";
 const TIMEFRAME = 60;
 let ws = null, mainChart = null, rsiChart = null;
@@ -193,8 +191,6 @@ let currentMarket = "R_50";
 let lastSignal = "NEUTRAL"; 
 let currentPriceRealtime = 0; 
 let audioReady = false;
-
-// OB data එකතු කළා පමණි
 let currentOB = { type: null, top: 0, bottom: 0 }; 
 
 function enableAudioOnce() { if(!audioReady) { audioReady = true; } }
@@ -254,9 +250,7 @@ function playAlert(type) {
     try {
         const mName = document.getElementById("market").options[document.getElementById("market").selectedIndex].text;
         const msg = new SpeechSynthesisUtterance();
-        if (type.includes("BUY")) msg.text = "New Strong Buy Signal on " + mName;
-        else if (type.includes("SELL")) msg.text = "New Strong Sell Signal on " + mName;
-        else return;
+        msg.text = type.includes("BUY") ? "Strong Buy Signal " + mName : "Strong Sell Signal " + mName;
         window.speechSynthesis.cancel();
         window.speechSynthesis.speak(msg);
     } catch(e) {}
@@ -279,15 +273,12 @@ function initCharts() {
     supSeries = mainChart.addLineSeries({ color: '#00FF88', lineWidth: 2, lineStyle: 2, priceLineVisible: false });
     rsiChart = LightweightCharts.createChart(document.getElementById("rsi-chart"), chartOptions);
     rsiSeries = rsiChart.addLineSeries({ color: '#F59E0B', lineWidth: 2 });
-    rsiSeries.createPriceLine({ price: 70, color: '#FF4D4D', lineWidth: 1, lineStyle: 0 });
-    rsiSeries.createPriceLine({ price: 50, color: '#94A3B8', lineWidth: 1, lineStyle: 0 });
-    rsiSeries.createPriceLine({ price: 30, color: '#00FF88', lineWidth: 1, lineStyle: 0 });
     updateHistoryTable();
 }
 
 let analysis = { trend: "", bos: "", ema: "", rsi: 50, sr: "" };
 
-// --- ඔබේ මුල් SMC Logic එකට OB එකතු කළා පමණි ---
+// --- Optimized SMC Logic (Chart එක හිර නොවීමට) ---
 function calculateSMC() {
     if (candles.length < 30) return;
     let markers = [];
@@ -306,23 +297,18 @@ function calculateSMC() {
 
     let lastH = null, lastL = null, currentDir = "", lastBOS = "NONE";
     
-    swings.forEach((s) => {
+    swings.slice(-15).forEach((s) => {
         let label = "";
         if (s.type === 'H') {
             if (lastH && s.price > lastH.price) {
                 label = "HH"; 
                 markers.push({ time: s.time, position: 'aboveBar', color: '#FFD700', shape: 'arrowDown', text: 'BOS' });
                 currentDir = "UPTREND"; lastBOS = "BULLISH";
-                
-                // Bullish OB - Breakout එකට කලින් තිබුණු Bearish candle එක
                 let obIdx = s.idx - 1;
                 if(obIdx >= 0) currentOB = { type: "BULLISH", top: candles[obIdx].high, bottom: candles[obIdx].low };
             } else if (lastH && s.price < lastH.price) {
                 label = "LH"; 
-                if(currentDir === "UPTREND") { 
-                    markers.push({ time: s.time, position: 'aboveBar', color: '#FF00FF', shape: 'arrowDown', text: 'CHOCH' }); 
-                    lastBOS = "CHOCH SELL"; 
-                }
+                if(currentDir === "UPTREND") { markers.push({ time: s.time, position: 'aboveBar', color: '#FF00FF', shape: 'arrowDown', text: 'CHOCH' }); lastBOS = "CHOCH SELL"; }
                 currentDir = "DOWNTREND";
             }
             lastH = s;
@@ -331,23 +317,16 @@ function calculateSMC() {
                 label = "LL"; 
                 markers.push({ time: s.time, position: 'belowBar', color: '#FFD700', shape: 'arrowUp', text: 'BOS' });
                 currentDir = "DOWNTREND"; lastBOS = "BEARISH";
-                
-                // Bearish OB - Breakout එකට කලින් තිබුණු Bullish candle එක
                 let obIdx = s.idx - 1;
                 if(obIdx >= 0) currentOB = { type: "BEARISH", top: candles[obIdx].high, bottom: candles[obIdx].low };
             } else if (lastL && s.price > lastL.price) {
                 label = "HL"; 
-                if(currentDir === "DOWNTREND") { 
-                    markers.push({ time: s.time, position: 'belowBar', color: '#FF00FF', shape: 'arrowUp', text: 'CHOCH' }); 
-                    lastBOS = "CHOCH BUY"; 
-                }
+                if(currentDir === "DOWNTREND") { markers.push({ time: s.time, position: 'belowBar', color: '#FF00FF', shape: 'arrowUp', text: 'CHOCH' }); lastBOS = "CHOCH BUY"; }
                 currentDir = "UPTREND";
             }
             lastL = s;
         }
-        if (label !== "") {
-            markers.push({ time: s.time, position: s.type === 'H' ? 'aboveBar' : 'belowBar', color: label.includes('H') ? '#00FF88' : '#FF4D4D', shape: 'text', text: label });
-        }
+        if (label !== "") markers.push({ time: s.time, position: s.type === 'H' ? 'aboveBar' : 'belowBar', color: label.includes('H') ? '#00FF88' : '#FF4D4D', shape: 'text', text: label });
     });
 
     if (lastH && lastL) {
@@ -355,9 +334,7 @@ function calculateSMC() {
         resSeries.setData([{ time: lastH.time, value: lastH.price }, { time: lastCandleTime, value: lastH.price }]);
         supSeries.setData([{ time: lastL.time, value: lastL.price }, { time: lastCandleTime, value: lastL.price }]);
         const curPrice = candles[candles.length-1].close;
-        if(curPrice >= lastH.price * 0.999) analysis.sr = "AT RESISTANCE";
-        else if(curPrice <= lastL.price * 1.001) analysis.sr = "AT SUPPORT";
-        else analysis.sr = "MID-ZONE";
+        analysis.sr = curPrice >= lastH.price * 0.999 ? "AT RESISTANCE" : (curPrice <= lastL.price * 1.001 ? "AT SUPPORT" : "MID-ZONE");
     }
 
     candleSeries.setMarkers(markers);
@@ -387,53 +364,43 @@ function updateIndicators() {
         rsiVal.push({time: candles[i].time, value: 100 - (100/(1+(up/14)/(Math.abs(dn)/14 || 0.0001)))});
     }
     rsiSeries.setData(rsiVal);
-
-    if (ema9.length > 0) analysis.ema = ema9[ema9.length-1].value > ema21[ema21.length-1].value ? "BULLISH" : "BEARISH";
-    if (rsiVal.length > 0) analysis.rsi = rsiVal[rsiVal.length-1].value;
+    analysis.ema = ema9[ema9.length-1].value > ema21[ema21.length-1].value ? "BULLISH" : "BEARISH";
+    analysis.rsi = rsiVal[rsiVal.length-1].value;
     calculateSMC();
 }
 
 function updateSmartUI() {
-    const trendEl = document.getElementById("status-trend"), trendLed = document.getElementById("led-trend");
-    const bosEl = document.getElementById("status-bos"), bosLed = document.getElementById("led-bos");
-    const emaEl = document.getElementById("status-ema"), emaLed = document.getElementById("led-ema");
-    const rsiEl = document.getElementById("status-rsi"), rsiLed = document.getElementById("led-rsi");
-    const srEl = document.getElementById("status-sr"), srLed = document.getElementById("led-sr");
-    const obEl = document.getElementById("status-ob"), obLed = document.getElementById("led-ob");
-    const mainSig = document.getElementById("main-signal-text"), mainDesc = document.getElementById("signal-desc"), mainBg = document.getElementById("main-signal-bg");
+    document.getElementById("status-trend").innerText = analysis.trend || "WAITING";
+    document.getElementById("led-trend").className = "led-small " + (analysis.trend === "UPTREND" ? "led-green" : "led-red");
+    document.getElementById("status-bos").innerText = analysis.bos;
+    document.getElementById("led-bos").className = "led-small " + (analysis.bos.includes("BULL") || analysis.bos.includes("BUY") ? "led-green" : "led-red");
+    document.getElementById("status-ema").innerText = analysis.ema;
+    document.getElementById("led-ema").className = "led-small " + (analysis.ema === "BULLISH" ? "led-green" : "led-red");
+    document.getElementById("status-rsi").innerText = analysis.rsi.toFixed(2);
+    document.getElementById("led-rsi").className = "led-small " + (analysis.rsi > 50 ? "led-green" : "led-red");
+    document.getElementById("status-sr").innerText = analysis.sr;
+    document.getElementById("led-sr").className = "led-small " + (analysis.sr === "AT SUPPORT" ? "led-green" : analysis.sr === "AT RESISTANCE" ? "led-red" : "");
 
-    trendEl.innerText = analysis.trend || "WAITING";
-    trendEl.style.color = analysis.trend === "UPTREND" ? "var(--green)" : "var(--red)";
-    trendLed.className = "led-small " + (analysis.trend === "UPTREND" ? "led-green" : "led-red");
-    bosEl.innerText = analysis.bos;
-    bosLed.className = "led-small " + (analysis.bos.includes("BULL") || analysis.bos.includes("BUY") ? "led-green" : "led-red");
-    emaEl.innerText = analysis.ema;
-    emaLed.className = "led-small " + (analysis.ema === "BULLISH" ? "led-green" : "led-red");
-    rsiEl.innerText = analysis.rsi.toFixed(2);
-    rsiLed.className = "led-small " + (analysis.rsi > 50 ? "led-green" : "led-red");
-    srEl.innerText = analysis.sr;
-    srLed.className = "led-small " + (analysis.sr === "AT SUPPORT" ? "led-green" : analysis.sr === "AT RESISTANCE" ? "led-red" : "led-small");
-
-    // OB Zone Check
     let inOB = false;
     if(currentOB.type === "BULLISH" && currentPriceRealtime <= currentOB.top && currentPriceRealtime >= currentOB.bottom) inOB = true;
     if(currentOB.type === "BEARISH" && currentPriceRealtime >= currentOB.bottom && currentPriceRealtime <= currentOB.top) inOB = true;
     
+    const obEl = document.getElementById("status-ob");
     obEl.innerText = inOB ? "INSIDE OB" : "WAITING";
     obEl.style.color = inOB ? "var(--green)" : "var(--muted)";
-    obLed.className = "led-small " + (inOB ? "led-green" : "");
+    document.getElementById("led-ob").className = "led-small " + (inOB ? "led-green" : "");
 
     let currentSignal = "NEUTRAL";
-    // OB Zone එක ඇතුළතදී පමණක් Signal එක පෙන්වීම
     if(inOB) {
         if(analysis.trend === "UPTREND" && analysis.ema === "BULLISH" && analysis.rsi > 50) currentSignal = "STRONG BUY";
         if(analysis.trend === "DOWNTREND" && analysis.ema === "BEARISH" && analysis.rsi < 50) currentSignal = "STRONG SELL";
     }
 
     if (currentSignal !== lastSignal) {
+        const mainBg = document.getElementById("main-signal-bg");
         if (currentSignal !== "NEUTRAL") {
             playAlert(currentSignal);
-            mainDesc.innerText = "SMC SIGNAL @ " + new Date().toLocaleTimeString();
+            document.getElementById("signal-desc").innerText = "SMC SIGNAL @ " + new Date().toLocaleTimeString();
             mainBg.classList.add(currentSignal.includes("BUY") ? "signal-active-buy" : "signal-active-sell");
             logSignalToHistory(currentSignal, currentPriceRealtime);
         } else {
@@ -441,6 +408,7 @@ function updateSmartUI() {
         }
         lastSignal = currentSignal;
     }
+    const mainSig = document.getElementById("main-signal-text");
     mainSig.innerText = currentSignal;
     mainSig.style.color = currentSignal.includes("BUY") ? "var(--green)" : currentSignal.includes("SELL") ? "var(--red)" : "var(--muted)";
 }
@@ -467,9 +435,13 @@ function connect() {
             currentPriceRealtime = newC.close;
             document.getElementById("lastTick").innerText = "PRICE: " + currentPriceRealtime.toFixed(2);
             candleSeries.update(newC);
-            if (candles.length > 0 && newC.time === candles[candles.length-1].time) candles[candles.length-1] = newC;
-            else candles.push(newC);
-            updateIndicators();
+            if (candles.length > 0 && newC.time === candles[candles.length-1].time) {
+                candles[candles.length-1] = newC;
+            } else {
+                candles.push(newC);
+                updateIndicators(); // Candle එකක් ඉවර වුනාම විතරක් Indicators Update කරන්න (Performance fix)
+            }
+            updateSmartUI(); // හැම Tick එකටම UI එක විතරක් Update කරන්න
         }
     };
 }
