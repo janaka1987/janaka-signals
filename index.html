@@ -1,1 +1,38 @@
-
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JANAKA SMC PRO - Secure Access</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #00FF88; --bg: #05070A; }
+        body { margin: 0; background-color: var(--bg); font-family: 'Inter', sans-serif; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center; }
+        .login-card { background: rgba(17, 24, 39, 0.8); padding: 50px 40px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); width: 90%; max-width: 350px; }
+        h2 { background: linear-gradient(to right, #00FF88, #38BDF8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        input { width: 100%; padding: 16px; background: #08111F; border: 1px solid #334155; border-radius: 12px; color: white; font-size: 16px; text-align: center; outline: none; box-sizing: border-box; }
+        button { width: 100%; margin-top: 20px; padding: 16px; background: var(--primary); color: #05070A; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="login-card">
+    <h2>JANAKA SMC PRO</h2>
+    <p style="color:#94A3B8; font-size:13px;">Enter License Key to Continue</p>
+    <input type="password" id="keyInput" placeholder="License Key">
+    <button onclick="checkAuth()">ACTIVATE ACCESS</button>
+</div>
+<script>
+    function checkAuth() {
+        const input = document.getElementById("keyInput").value;
+        const validKeys = ["JANAKA-99X", "PRO-USER-2", "VIP-777"]; // ඔයාට ඕනේ keys මෙතන තියෙන්නේ
+        if (validKeys.includes(input)) {
+            localStorage.setItem("janaka_auth", "true");
+            alert("Success! Entering Dashboard...");
+            window.location.href = "dashboard.html";
+        } else {
+            alert("Invalid Key!");
+        }
+    }
+</script>
+</body>
+</html>
